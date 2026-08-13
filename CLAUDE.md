@@ -9,7 +9,8 @@
 生産管理（受注〜出荷）のドメイン連携を学ぶための、動くミニマムシミュレーター。
 木製イス（v5仕様書 §1.1、2階層BOM・購買3品目・内製2品目・工順3行）を題材に、受注を入力すると
 7ドメイン（受注・計画・発注・工程・在庫・出荷・マスタ）へ情報が伝播し出荷に至る様子を、
-MRP・工程管理・ペギング・KPIまで含めて可視化する。
+MRP・工程管理・ペギング・KPIまで含めて可視化する。7ドメイン間のデータの流れ自体も、
+BPMN風のプロセス連携図として可視化する（付加価値画面）。
 
 対象読者は開発チームメンバー。商用製品ではなく教材。
 
@@ -92,40 +93,37 @@ npm test          # vitestによる自動テスト実行（v5-spec.md §9 TC-01�
 
 ## 現在の実装状況
 
-**Phase 0〜4（プロジェクト初期化・型定義/初期マスタデータ・ドメインロジック本体・reducer・自動テスト拡充）完了。
-Phase 5（画面実装）は5f（分析画面）まで完了、5g（プロセス連携図）のみ未着手。**
+**Phase 0〜5（プロジェクト初期化・型定義/初期マスタデータ・ドメインロジック本体・reducer・自動テスト拡充・
+画面実装）まで全て完了。予定していた10画面がすべて揃った。**
 
 - `src/types.ts`：design.md §4の対応表どおり、v5仕様書の13テーブルをTypeScript型に落とした（`SimulationState`を含む）
 - `src/data/masterData.ts`：v5-spec.md §1.1（木製イス）の品目5・BOM4行・工順3行。
   顧客2件（design.md §6の複数受注演習用）・仕入先3件（BUY品目ごとに1件、`defaultSupplierId`で対応付け）
-- `src/domain/`：9モジュール（`pegging.ts`・`mrp.ts`・`procurement.ts`・`shipment.ts`・`production.ts`・
-  `salesOrder.ts`・`schedule.ts`・`inventory.ts`・`kpi.ts`）＋`reducer.ts`（design.md §7のaction一覧を実装。
-  `createInitialState()`・`simulationReducer()`）を実装済み
-- `src/domain/*.test.ts`：50件のテストで、v5-spec.md §9のTC-01〜18・TC-E1〜E3の全シナリオと、
-  reducerの委譲・不変性・エラーハンドリング・RESET時のマスタ保持を検証済み。design.md §6の複数受注演習も
-  TC-M1として`multiOrderExercise.test.ts`で検証済み
+- `src/domain/`：10モジュール（`pegging.ts`・`mrp.ts`・`procurement.ts`・`shipment.ts`・`production.ts`・
+  `salesOrder.ts`・`schedule.ts`・`inventory.ts`・`kpi.ts`・`processFlow.ts`）＋`reducer.ts`（design.md §7の
+  action一覧を実装。`createInitialState()`・`simulationReducer()`）を実装済み
+- `src/domain/*.test.ts`：58件のテストで、v5-spec.md §9のTC-01〜18・TC-E1〜E3の全シナリオと、
+  reducerの委譲・不変性・エラーハンドリング・RESET時のマスタ保持、`processFlow.ts`のフロー判定を検証済み。
+  design.md §6の複数受注演習もTC-M1として`multiOrderExercise.test.ts`で検証済み
 - `src/App.tsx`：`useReducer`でreducerを保持し、共通シェル（`ClockControls`・`AlertBar`・`EventLogPanel`）と、
-  タブ切り替え（受注／計画／発注／工程／在庫／出荷／マスタ／KPI／ペギング追跡）を実装済み。`SalesOrderPanel`
-  （受注登録・納期回答・取消）・`PlanningPanel`（MRP実行・計画オーダ確定）・`ProcurementPanel`（仕入先
-  納期回答・入荷計上、EXT-4の日程ガードをボタンdisabledで先回り）・`ProductionPanel`（リリース・工程
-  着手/完了、良品数・不良数入力）・`InventoryPanel`（現在庫・引当済・出荷可能量の3列、棚卸調整）・
-  `ShipmentPanel`（引当と出荷実績登録を別テーブル・別操作として分離）・`MasterDataPage`（品目/BOM/工順/
-  取引先、`EditableField`によるmin制約付きインライン編集）・`KpiDashboard`（12指標を組織目線/現場目線の
-  2ブロックで表示、EXT-14）・`PeggingTracePanel`（`traceFromOrder()`をツリー表示）が動作し、Playwrightで
-  v5-spec.md TC-02〜19相当の操作を実際にブラウザで確認済み。プロセス連携図はまだタブとして存在しない
-  （Phase 5g）
+  10個のタブ（受注／計画／発注／工程／在庫／出荷／マスタ／KPI／ペギング追跡／プロセス連携図）を実装済み。
+  `SalesOrderPanel`（受注登録・納期回答・取消）・`PlanningPanel`（MRP実行・計画オーダ確定）・
+  `ProcurementPanel`（仕入先納期回答・入荷計上、EXT-4の日程ガードをボタンdisabledで先回り）・
+  `ProductionPanel`（リリース・工程着手/完了、良品数・不良数入力）・`InventoryPanel`（現在庫・引当済・
+  出荷可能量の3列、棚卸調整）・`ShipmentPanel`（引当と出荷実績登録を別テーブル・別操作として分離）・
+  `MasterDataPage`（品目/BOM/工順/取引先、`EditableField`によるmin制約付きインライン編集）・
+  `KpiDashboard`（12指標を組織目線/現場目線の2ブロックで表示、EXT-14）・`PeggingTracePanel`
+  （`traceFromOrder()`をツリー表示）・`ProcessFlowDiagram`（7ドメイン間のデータフローをBPMN風に可視化、
+  直前の操作で動いたフローをハイライト）が動作し、Playwrightでv5-spec.md TC-02〜19相当の操作を実際に
+  ブラウザで確認済み
 
 ## 次にやるべきこと（優先順）
 
-`docs/implementation-plan.md` のPhase 5c〜7を参照。Phase 5はサブフェーズに分けて実装している
-（`docs/implementation-plan.md` §4の表）。概要は以下の通り。
+画面実装（Phase 5）が完了したため、`docs/implementation-plan.md` §5「Phase 7（先送り事項）」を参照。
 
-1. 残りのドメイン画面（発注・工程・在庫・出荷・マスタ）＋分析画面（KPI・ペギング追跡）＋
-   プロセス連携図の実装（Phase 5c〜5g）
-2. CI（Phase 0で追加済みのワークフローが正しく動くことを確認）
-
-演習ガイド（design.md DEV-4により先送り）・自動再生機能（DEV-2により先送り）はPhase1.5以降の課題として
-`docs/implementation-plan.md` に記載する。
+1. CI（Phase 0で追加済みのワークフローが全PRで正しく動作していることを継続的に確認）
+2. 演習ガイド（design.md DEV-4により先送り）・自動再生機能（DEV-2により先送り）・原価/トレーサビリティ
+   （Phase 2-A/2-B）など、`docs/implementation-plan.md` §5に記載の先送り事項の着手要否を検討する
 
 ## 実装時に確認すべき設計判断（design.mdの要点）
 

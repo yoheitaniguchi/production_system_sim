@@ -5,6 +5,13 @@
   --warn-bg: #fff3cd;
   --warn-border: #e0a800;
   --ok-bg: #e6f4ea;
+  --pf-active: #0a6e46;
+  --pf-idle: #999;
+  --pf-idle-text: #777;
+  --pf-label-bg: #fff;
+  --pf-node-fill: #fafafa;
+  --pf-active-fill: #e6f4ea;
+  --pf-text: #1a1a1a;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -14,6 +21,13 @@
     --warn-bg: #4a3b00;
     --warn-border: #cf9c00;
     --ok-bg: #143a1f;
+    --pf-active: #4ade80;
+    --pf-idle: #666;
+    --pf-idle-text: #999;
+    --pf-label-bg: #1a1a1a;
+    --pf-node-fill: #262626;
+    --pf-active-fill: #143a1f;
+    --pf-text: #eee;
   }
 }
 
@@ -117,6 +131,32 @@ body {
 .panel__empty {
   color: gray;
   text-align: center;
+}
+
+.panel__hint {
+  color: gray;
+  font-size: 0.85rem;
+  max-width: 60rem;
+}
+
+.process-flow-scroll {
+  overflow-x: auto;
+}
+
+.process-flow-legend {
+  color: gray;
+  font-size: 0.8rem;
+  margin-top: 0.5rem;
+}
+
+.process-flow-today {
+  margin-top: 1rem;
+}
+
+.process-flow-today__list {
+  margin: 0.5rem 0 0;
+  padding-left: 1.25rem;
+  font-size: 0.9rem;
 }
 
 .panel__group {
