@@ -2,19 +2,23 @@ import { useReducer, useState } from "react";
 import AlertBar from "./components/AlertBar";
 import ClockControls from "./components/ClockControls";
 import EventLogPanel from "./components/EventLogPanel";
+import InventoryPanel from "./components/InventoryPanel";
 import PlanningPanel from "./components/PlanningPanel";
 import ProcurementPanel from "./components/ProcurementPanel";
 import ProductionPanel from "./components/ProductionPanel";
 import SalesOrderPanel from "./components/SalesOrderPanel";
+import ShipmentPanel from "./components/ShipmentPanel";
 import { createInitialState, simulationReducer } from "./domain/reducer";
 
 // ドメイン画面のタブ一覧。design.md §5の順序どおり、実装済みのものから順に追加していく
-// （Phase 5d以降で在庫・出荷・マスタ・分析・プロセス連携図を追加する）。
+// （Phase 5e以降でマスタ・分析・プロセス連携図を追加する）。
 const TABS = [
   { id: "sales-order", label: "受注", Component: SalesOrderPanel },
   { id: "planning", label: "計画", Component: PlanningPanel },
   { id: "procurement", label: "発注", Component: ProcurementPanel },
   { id: "production", label: "工程", Component: ProductionPanel },
+  { id: "inventory", label: "在庫", Component: InventoryPanel },
+  { id: "shipment", label: "出荷", Component: ShipmentPanel },
 ] as const;
 
 function App() {
