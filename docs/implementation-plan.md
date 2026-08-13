@@ -70,6 +70,26 @@ BOM展開・MRPが他の全ドメインの前提になるため、以下の順�
 
 ---
 
+## 2.1 Phase 3 実施結果
+
+- `src/domain/reducer.ts`：design.md §7のaction一覧（16種）に、`SHIPMENT_CANCEL`（v5-spec.md §6.6の
+  引当解除。design.mdのaction一覧には無いが、`shipment.ts`のcancelShipmentAllocation()に対応する操作として
+  追加）と、`MASTER_UPDATE_*`を4種（品目リードタイム・BOM員数・工順標準時間・取引先名称）に分解した合計19種の
+  actionを実装した
+- データ増分ログ（EXT-8）は、action実行前後でSALES_ORDER〜SHIPMENTまで9テーブルの行数を比較する汎用の差分
+  ロジックとして実装（STOCK/PURCHASE_ORDERなど値の「更新」は行数が変わらないため対象外。v5-spec.md §8.2の
+  「更新」表記と自然に一致する）
+- 各ドメイン関数が投げる例外（`SalesOrderError`等）はreducer側でcatchし、`[エラー]`接頭辞付きのメッセージを
+  データ増分ログへ記録する。ガード違反前後で既に生じていた状態変化（バックフラッシュ中のHOLD遷移など）は
+  ロールバックせずそのまま保持する
+- `RESET`（UC-23）はマスタ（編集済みの値を含む）を保持し、トランザクション系テーブルのみ初期化するよう実装
+- `src/domain/testUtils.ts`の`createTestState()`は`reducer.ts`の`createInitialState()`を呼ぶ薄いラッパーに
+  置き換え、実装の重複を解消した
+- `src/domain/reducer.test.ts`（7件）で、action委譲・不変性・RESET時のマスタ保持・エラーハンドリングを検証。
+  `npm test`は合計44件が成功
+
+---
+
 ## 3. Phase 4（自動テスト）の進め方
 
 **Phase 2の時点で先取りした範囲**：各モジュールの単体テスト（`domain/*.test.ts`、37件）は、TC-02〜TC-09・
