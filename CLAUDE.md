@@ -93,7 +93,7 @@ npm test          # vitestによる自動テスト実行（v5-spec.md §9 TC-01�
 ## 現在の実装状況
 
 **Phase 0〜4（プロジェクト初期化・型定義/初期マスタデータ・ドメインロジック本体・reducer・自動テスト拡充）完了。
-Phase 5（画面実装）は5c（発注・工程画面）まで完了、5d以降は未着手。**
+Phase 5（画面実装）は5d（在庫・出荷画面）まで完了、5e以降は未着手。**
 
 - `src/types.ts`：design.md §4の対応表どおり、v5仕様書の13テーブルをTypeScript型に落とした（`SimulationState`を含む）
 - `src/data/masterData.ts`：v5-spec.md §1.1（木製イス）の品目5・BOM4行・工順3行。
@@ -105,11 +105,12 @@ Phase 5（画面実装）は5c（発注・工程画面）まで完了、5d以降
   reducerの委譲・不変性・エラーハンドリング・RESET時のマスタ保持を検証済み。design.md §6の複数受注演習も
   TC-M1として`multiOrderExercise.test.ts`で検証済み
 - `src/App.tsx`：`useReducer`でreducerを保持し、共通シェル（`ClockControls`・`AlertBar`・`EventLogPanel`）と、
-  タブ切り替え（受注／計画／発注／工程）を実装済み。`SalesOrderPanel`（受注登録・納期回答・取消）・
-  `PlanningPanel`（MRP実行・計画オーダ確定）・`ProcurementPanel`（仕入先納期回答・入荷計上、EXT-4の
-  日程ガードをボタンdisabledで先回り）・`ProductionPanel`（リリース・工程着手/完了、良品数・不良数入力）
-  が動作し、Playwrightでv5-spec.md TC-02〜14相当の操作を実際にブラウザで確認済み。在庫・出荷・マスタ・
-  分析画面・プロセス連携図はまだタブとして存在しない（Phase 5d以降）
+  タブ切り替え（受注／計画／発注／工程／在庫／出荷）を実装済み。`SalesOrderPanel`（受注登録・納期回答・
+  取消）・`PlanningPanel`（MRP実行・計画オーダ確定）・`ProcurementPanel`（仕入先納期回答・入荷計上、EXT-4
+  の日程ガードをボタンdisabledで先回り）・`ProductionPanel`（リリース・工程着手/完了、良品数・不良数入力）
+  ・`InventoryPanel`（現在庫・引当済・出荷可能量の3列、棚卸調整）・`ShipmentPanel`（引当と出荷実績登録を
+  別テーブル・別操作として分離）が動作し、Playwrightでv5-spec.md TC-02〜19相当の操作を実際にブラウザで
+  確認済み。マスタ・分析画面・プロセス連携図はまだタブとして存在しない（Phase 5e以降）
 
 ## 次にやるべきこと（優先順）
 

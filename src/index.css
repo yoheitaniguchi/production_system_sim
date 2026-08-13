@@ -70,6 +70,11 @@ body {
   margin: 0 0 0.75rem;
 }
 
+.panel h3 {
+  font-size: 0.95rem;
+  margin: 1.25rem 0 0.5rem;
+}
+
 .panel__form {
   display: flex;
   flex-wrap: wrap;
