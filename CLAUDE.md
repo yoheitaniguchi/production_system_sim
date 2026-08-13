@@ -93,7 +93,7 @@ npm test          # vitestによる自動テスト実行（v5-spec.md §9 TC-01�
 ## 現在の実装状況
 
 **Phase 0〜4（プロジェクト初期化・型定義/初期マスタデータ・ドメインロジック本体・reducer・自動テスト拡充）完了。
-Phase 5（画面実装）は5a（共通シェル）まで完了、5b以降は未着手。**
+Phase 5（画面実装）は5b（受注・計画画面）まで完了、5c以降は未着手。**
 
 - `src/types.ts`：design.md §4の対応表どおり、v5仕様書の13テーブルをTypeScript型に落とした（`SimulationState`を含む）
 - `src/data/masterData.ts`：v5-spec.md §1.1（木製イス）の品目5・BOM4行・工順3行。
@@ -104,16 +104,18 @@ Phase 5（画面実装）は5a（共通シェル）まで完了、5b以降は未
 - `src/domain/*.test.ts`：50件のテストで、v5-spec.md §9のTC-01〜18・TC-E1〜E3の全シナリオと、
   reducerの委譲・不変性・エラーハンドリング・RESET時のマスタ保持を検証済み。design.md §6の複数受注演習も
   TC-M1として`multiOrderExercise.test.ts`で検証済み
-- `src/App.tsx`：`useReducer`でreducerを保持し、共通シェル（`ClockControls`・`AlertBar`・`EventLogPanel`）を
-  結線済み。ドメイン画面・分析画面はまだタブとして存在しない（Phase 5b以降で追加）
+- `src/App.tsx`：`useReducer`でreducerを保持し、共通シェル（`ClockControls`・`AlertBar`・`EventLogPanel`）と、
+  タブ切り替え（受注／計画）を実装済み。`SalesOrderPanel`（受注登録・納期回答・取消）・`PlanningPanel`
+  （MRP実行・計画オーダ確定）が動作し、Playwrightでv5-spec.md TC-02〜06相当の操作を実際にブラウザで
+  確認済み。発注・工程・在庫・出荷・マスタ・分析画面・プロセス連携図はまだタブとして存在しない（Phase 5c以降）
 
 ## 次にやるべきこと（優先順）
 
-`docs/implementation-plan.md` のPhase 5b〜7を参照。Phase 5はサブフェーズに分けて実装している
+`docs/implementation-plan.md` のPhase 5c〜7を参照。Phase 5はサブフェーズに分けて実装している
 （`docs/implementation-plan.md` §4の表）。概要は以下の通り。
 
-1. 7ドメイン画面（受注・計画・発注・工程・在庫・出荷・マスタ）＋分析画面（KPI・ペギング追跡）＋
-   プロセス連携図の実装（Phase 5b〜5g）
+1. 残りのドメイン画面（発注・工程・在庫・出荷・マスタ）＋分析画面（KPI・ペギング追跡）＋
+   プロセス連携図の実装（Phase 5c〜5g）
 2. CI（Phase 0で追加済みのワークフローが正しく動くことを確認）
 
 演習ガイド（design.md DEV-4により先送り）・自動再生機能（DEV-2により先送り）はPhase1.5以降の課題として
