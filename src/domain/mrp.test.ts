@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 import { ITEM_IDS } from "../data/masterData";
 import { confirmDelivery, createSalesOrder } from "./salesOrder";
 import { firmAllPlannedOrders, runMRP } from "./mrp";
+import { ackPurchaseOrder, receivePurchaseOrder } from "./procurement";
+import { completeStep, releaseMfgOrder, startStep } from "./production";
 import { createTestState } from "./testUtils";
 
 // v5-spec.md §9.3 TC-02〜TC-06 に対応する単体テスト。
@@ -100,5 +102,44 @@ describe("runMRP / firmAllPlannedOrders", () => {
     expect(fgSteps.map((s) => s.stepNo)).toEqual([10, 20]);
     expect(fgSteps[0]).toMatchObject({ inputQty: 10, status: "WAIT" });
     expect(fgSteps[1]).toMatchObject({ inputQty: 0, status: "WAIT" });
+  });
+
+  it("TC-14: 不良1個の発生後にMRPを再実行すると、不足1個分の計画オーダ5件が再生成される", () => {
+    const state = createTestState(0);
+    const soNo = createSalesOrder(state, { customerId: "CUST-A", itemId: ITEM_IDS.FG_CHAIR, qty: 10, requestDay: 15 }, 0);
+    confirmDelivery(state, soNo, 15);
+    runMRP(state);
+    firmAllPlannedOrders(state, 0);
+
+    // TC-07〜12相当：3件のPOを入荷計上し、検査工程で良品9・不良1が出るところまで進める
+    // （直接stateへ在庫を注入するのではなくPOを実際にCLOSEDにする。そうしないとMRPの供給量計算が
+    // 注文残を二重に見てしまい、TC-14の再展開が起きなくなる）
+    for (const po of state.purchaseOrders) {
+      ackPurchaseOrder(state, po.poNo, po.dueDay);
+      receivePurchaseOrder(state, po.poNo, po.dueDay);
+    }
+    const saOrder = state.mfgOrders.find((mo) => mo.itemId === ITEM_IDS.SA_SEAT)!;
+    releaseMfgOrder(state, saOrder.moNo);
+    startStep(state, saOrder.moNo, 10, 12);
+    completeStep(state, saOrder.moNo, 10, 10, 0, 13);
+
+    const fgOrder = state.mfgOrders.find((mo) => mo.itemId === ITEM_IDS.FG_CHAIR)!;
+    releaseMfgOrder(state, fgOrder.moNo);
+    startStep(state, fgOrder.moNo, 10, 14);
+    completeStep(state, fgOrder.moNo, 10, 10, 0, 14);
+    startStep(state, fgOrder.moNo, 20, 14);
+    completeStep(state, fgOrder.moNo, 20, 9, 1, 14); // 良品9・不良1 → FG-100 onHand=9、受注は10のまま未充足
+
+    runMRP(state);
+
+    expect(state.plannedOrders).toHaveLength(5);
+    const byItem = Object.fromEntries(state.plannedOrders.map((p) => [p.itemId, p.qty]));
+    expect(byItem).toEqual({
+      [ITEM_IDS.FG_CHAIR]: 1,
+      [ITEM_IDS.SA_SEAT]: 1,
+      [ITEM_IDS.RM_BOARD]: 1,
+      [ITEM_IDS.PT_LEG]: 4,
+      [ITEM_IDS.PT_SCREW]: 8,
+    });
   });
 });

@@ -1,6 +1,7 @@
 // 日程整合チェック・未充足需要（v5-spec.md §7.5）。いずれも状態を変更しない導出値。
 import type { SimulationState } from "../types";
 import { computeSupply } from "./mrp";
+import { resolveRootPegKey } from "./pegging";
 
 export interface ScheduleAlert {
   level: "遅延";
@@ -11,16 +12,6 @@ export interface ScheduleAlert {
   delayDays: number;
   /** 辿り着いた受注のペグキー（"SO-001-1"形式） */
   affectedSoLine: string;
-}
-
-/** pegTo鎖を受注のペグキー（"SO-xxx-n"）に到達するまで遡る */
-function resolveRootPegKey(state: SimulationState, pegTo: string): string {
-  if (pegTo.startsWith("SO-")) return pegTo;
-  const mo = state.mfgOrders.find((m) => m.ploNo === pegTo);
-  if (mo) return resolveRootPegKey(state, mo.pegTo);
-  const po = state.purchaseOrders.find((p) => p.ploNo === pegTo);
-  if (po) return resolveRootPegKey(state, po.pegTo);
-  return pegTo;
 }
 
 /**

@@ -112,6 +112,30 @@ TC-11・TC-12・TC-15〜TC-18・TC-E1・TC-E2相当のシナリオをすでに�
 
 ---
 
+## 3.1 Phase 4 実施結果
+
+Phase 2〜3の時点で先取りできていなかったTC-01・TC-10・TC-14・TC-E3・複数受注演習（TC-M1）を追加した。
+統合テストファイルへの整理し直しは行わず、各ドメインモジュールの`*.test.ts`に追記する方針を維持した
+（モジュール単位の方が、どのロジックの検証かが分かりやすいと判断したため）。
+
+- `src/data/masterData.test.ts`：TC-01を明示的な名前のテストとして追加。design.md DEV-1により
+  PARTNERがCustomer 2件+Supplier 3件に分かれる点をコメントで明記した
+- `src/domain/procurement.test.ts`：TC-10（PT-400・PT-500の入荷、STOCK_TXN +2）を追加
+- `src/domain/mrp.test.ts`：TC-14（不良1個発生後のMRP再実行で5件の計画オーダが再生成される）を追加。
+  実装時、材料在庫を`state.stocks.push()`で直接注入すると、対応するPURCHASE_ORDERがORDERED状態のまま
+  残り「注文残」として二重にカウントされ、TC-14が再現できないことが判明した。`ackPurchaseOrder()`→
+  `receivePurchaseOrder()`を実際に呼んでPOをCLOSEDにするよう修正した
+- `src/domain/production.test.ts`：TC-E1〜E3を一連の流れとして追加（納期回答の遅延→日程整合チェックの
+  警告→警告を無視して着手した結果のHOLD）
+- `src/domain/multiOrderExercise.test.ts`（新設）：design.md §6のTC-M1。木板（RM-300）の手元在庫1枚を、
+  受注登録は後だが納期が早い受注（Z）が優先的に使い、登録が先の受注（Y）はその分を新規発注する、という
+  形でEXT-1の需要ソート順を検証する。実装中に、`traceFromOrder`と同様の「pegTo鎖をSO_LINEまで遡る」
+  ロジックがテストコード側にも必要になったため、`schedule.ts`にあった`resolveRootPegKey()`を
+  `pegging.ts`へ移設・export し、PLANNED_ORDER段階（確定前）でも遡れるよう拡張して共用した
+- `npm test`は合計48件が成功
+
+---
+
 ## 4. Phase 5（画面実装）の進め方
 
 `design.md` §5の対応表に従い、以下の順で実装する（データが揃わないと表示確認できないため、ドメイン画面は

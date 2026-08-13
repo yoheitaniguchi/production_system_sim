@@ -53,4 +53,26 @@ describe("ackPurchaseOrder / receivePurchaseOrder（v5-spec.md §6.5）", () => 
     const po = state.purchaseOrders.find((p) => p.itemId === ITEM_IDS.RM_BOARD)!;
     expect(() => receivePurchaseOrder(state, po.poNo, po.dueDay)).toThrow(ProcurementError);
   });
+
+  it("TC-10: PT-400・PT-500の入荷予定日にまとめて入荷計上すると、STOCK_TXNが2件（RCV +40 / +80）起票される", () => {
+    const { state } = setupPurchaseOrder();
+    const ptLegPo = state.purchaseOrders.find((p) => p.itemId === ITEM_IDS.PT_LEG)!;
+    const ptScrewPo = state.purchaseOrders.find((p) => p.itemId === ITEM_IDS.PT_SCREW)!;
+    ackPurchaseOrder(state, ptLegPo.poNo, ptLegPo.dueDay);
+    ackPurchaseOrder(state, ptScrewPo.poNo, ptScrewPo.dueDay);
+
+    const txnCountBefore = state.stockTxns.length;
+    receivePurchaseOrder(state, ptLegPo.poNo, ptLegPo.dueDay);
+    receivePurchaseOrder(state, ptScrewPo.poNo, ptScrewPo.dueDay);
+
+    expect(state.stockTxns).toHaveLength(txnCountBefore + 2);
+    expect(state.stocks.find((s) => s.itemId === ITEM_IDS.PT_LEG)?.onHand).toBe(40);
+    expect(state.stocks.find((s) => s.itemId === ITEM_IDS.PT_SCREW)?.onHand).toBe(80);
+    expect(state.stockTxns.filter((t) => t.txnType === "RCV")).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ itemId: ITEM_IDS.PT_LEG, qty: 40 }),
+        expect.objectContaining({ itemId: ITEM_IDS.PT_SCREW, qty: 80 }),
+      ]),
+    );
+  });
 });

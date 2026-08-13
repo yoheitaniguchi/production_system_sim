@@ -2,7 +2,9 @@ import { describe, expect, it } from "vitest";
 import { ITEM_IDS } from "../data/masterData";
 import { confirmDelivery, createSalesOrder } from "./salesOrder";
 import { firmAllPlannedOrders, runMRP } from "./mrp";
+import { ackPurchaseOrder } from "./procurement";
 import { completeStep, ProductionError, releaseMfgOrder, startStep } from "./production";
+import { checkSchedule } from "./schedule";
 import { createTestState } from "./testUtils";
 import type { SimulationState } from "../types";
 
@@ -93,5 +95,20 @@ describe("startStep / completeStep（v5-spec.md §7.3）", () => {
     releaseMfgOrder(state, saOrder.moNo);
     startStep(state, saOrder.moNo, 10, 12);
     expect(() => completeStep(state, saOrder.moNo, 10, 8, 1, 13)).toThrow(ProductionError);
+  });
+
+  it("TC-E1〜E3: 木板の納期回答が遅れて警告が出たまま製造着手を試みると、部品が無いためHOLDになる", () => {
+    const { state } = setupFirmOrder(10);
+    const rmPo = state.purchaseOrders.find((p) => p.itemId === ITEM_IDS.RM_BOARD)!;
+    ackPurchaseOrder(state, rmPo.poNo, 14); // TC-E1：D+12の希望に対しD+14回答（2日遅延）
+    expect(checkSchedule(state)).toHaveLength(1); // TC-E2：日程整合チェックで警告1件
+
+    // TC-E3：警告を確認しないまま（木板が未入荷＝在庫0のまま）製造着手を試みる
+    const saOrder = state.mfgOrders.find((mo) => mo.itemId === ITEM_IDS.SA_SEAT)!;
+    releaseMfgOrder(state, saOrder.moNo);
+    startStep(state, saOrder.moNo, 10, 12);
+
+    expect(() => completeStep(state, saOrder.moNo, 10, 10, 0, 12)).toThrow(ProductionError);
+    expect(state.mfgOrders.find((mo) => mo.moNo === saOrder.moNo)?.status).toBe("HOLD");
   });
 });

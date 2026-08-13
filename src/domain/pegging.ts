@@ -49,3 +49,19 @@ export function traceFromOrder(
 
   return { mfgOrders, purchaseOrders, stockTxns };
 }
+
+/**
+ * pegTo鎖を、受注のペグキー（"SO-xxx-n"形式）に到達するまで遡る。PLANNED_ORDER（確定前）・
+ * MFG_ORDER/PURCHASE_ORDER（確定後）のいずれの段階でも、各オーダが持つ「自身のploNo」を
+ * 手がかりに1階層ずつ親へたどる（v5-spec.md §7.4）。
+ */
+export function resolveRootPegKey(state: SimulationState, pegTo: string): string {
+  if (pegTo.startsWith("SO-")) return pegTo;
+  const plo = state.plannedOrders.find((p) => p.ploNo === pegTo);
+  if (plo) return resolveRootPegKey(state, plo.pegTo);
+  const mo = state.mfgOrders.find((m) => m.ploNo === pegTo);
+  if (mo) return resolveRootPegKey(state, mo.pegTo);
+  const po = state.purchaseOrders.find((p) => p.ploNo === pegTo);
+  if (po) return resolveRootPegKey(state, po.pegTo);
+  return pegTo;
+}
