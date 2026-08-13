@@ -100,7 +100,7 @@ npm test          # vitestによる自動テスト実行（v5-spec.md §9 TC-01�
 - `src/domain/`：9モジュール（`pegging.ts`・`mrp.ts`・`procurement.ts`・`shipment.ts`・`production.ts`・
   `salesOrder.ts`・`schedule.ts`・`inventory.ts`・`kpi.ts`）＋`reducer.ts`（design.md §7のaction一覧を実装。
   `createInitialState()`・`simulationReducer()`）を実装済み。まだUIからは呼ばれていない（Phase 5で結線する）
-- `src/domain/*.test.ts`：48件のテストで、v5-spec.md §9のTC-01〜18・TC-E1〜E3の全シナリオと、
+- `src/domain/*.test.ts`：50件のテストで、v5-spec.md §9のTC-01〜18・TC-E1〜E3の全シナリオと、
   reducerの委譲・不変性・エラーハンドリング・RESET時のマスタ保持を検証済み。design.md §6の複数受注演習も
   TC-M1として`multiOrderExercise.test.ts`で検証済み
 - `src/App.tsx`は引き続き環境構築確認用の最小UI（Phase 5で7ドメイン画面に置き換える）

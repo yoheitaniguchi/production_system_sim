@@ -136,10 +136,37 @@ Phase 2〜3の時点で先取りできていなかったTC-01・TC-10・TC-14・
 
 ---
 
+## 3.2 Phase 4b（レビュー指摘対応）実施結果
+
+Phase 4完了後、独立したレビュー（汎用エージェントによる、v5-spec.md疑似コードとの1行ずつの突き合わせ・
+TC-04/TC-17の手検算）を実施し、以下の指摘に対応した。中核ロジック（`mrp.ts`/`production.ts`/`pegging.ts`）
+・design.md EXT-1〜12/DEV-1〜4の反映・`reducer.ts`のaction一覧については問題は見つからなかった。
+
+- **KPI「在庫回転」の近似方法が未文書化**：design.md EXT-13として追加決定を記録した（期間平均の代わりに
+  現在の総在庫数量を分母とする近似。分母0の場合はnullを返す）。`kpi.ts`のコード内コメントが誤って
+  「EXT-11同様」と参照していたため`EXT-13`に修正。`kpi.test.ts`に、TC-17終了時点でnullになること
+  （全品目が出荷・消費済みで手元在庫が無いため）と、在庫が残っている時点での非null値の両方を検証する
+  テストを追加した
+- **reducer.test.tsのaction網羅漏れ**：`MFG_RELEASE`・`WI_START`・`WI_COMPLETE`・`SHIPMENT_ALLOCATE`・
+  `SHIPMENT_SHIP`・`SHIPMENT_CANCEL`・`STOCK_ADJUST`・`SO_CANCEL`は各ドメインモジュールの単体テストでは
+  検証済みだったが、reducer経由（`applyAction`のログ生成含む）では未検証だった。既存の一連の流れの
+  テストを拡張し、これらすべてをreducer経由で検証するようにした
+- **TC-01「PARTNER 3行」の数値差異、MASTER_UPDATE_*の入力値検証欠如**：いずれも既知の割り切りとして
+  許容する。前者はmasterData.test.tsのコメントで既に理由付け済み。後者（`leadTimeDays`や`qtyPer`への
+  負値・0のガードが無い点）は、Phase 5で画面のフォーム入力欄に妥当な制約（`min`等）を持たせることで
+  対応する方針とし、reducer/ドメイン層には現時点では追加しない（UIが無い段階でガードを先回りして
+  追加しても検証しようが無いため）
+- `npm test`は合計50件が成功
+
+---
+
 ## 4. Phase 5（画面実装）の進め方
 
 `design.md` §5の対応表に従い、以下の順で実装する（データが揃わないと表示確認できないため、ドメイン画面は
 概ねPhase 2の依存順に対応させる）。
+
+**Phase 4bで積み残した課題**：`MASTER_UPDATE_ITEM_LEAD_TIME`・`MASTER_UPDATE_BOM_QTY_PER`の入力欄には、
+0以下の値を入力できないよう`min`制約を設ける（`EditableField.tsx`実装時に反映する）。
 
 1. 共通シェル：`ClockControls.tsx`・`AlertBar.tsx`・`EventLogPanel.tsx`（データ増分ログ対応）
 2. `SalesOrderPanel.tsx`（受注）→ `PlanningPanel.tsx`（計画）→ `ProcurementPanel.tsx`（発注）→

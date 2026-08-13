@@ -51,6 +51,31 @@ describe("computeKpi（v5-spec.md §10）", () => {
     expect(kpi.firstPassYieldRate).toBeCloseTo(0.9); // 直行率90%
     expect(kpi.planAchievementRate).toBeCloseTo(0.9); // 計画達成率90%
     expect(kpi.orderBacklogQty).toBe(1); // 受注残1個
+    // 在庫回転（design.md EXT-13）：シナリオ終了時点では全品目が入荷・消費・出荷済みで手元在庫が
+    // 無い（分母が0）ため、算出不能としてnullを返す
+    expect(kpi.inventoryTurnover).toBeNull();
+  });
+
+  it("design.md EXT-13: 在庫回転は現在の総在庫数量を分母とした近似値になる", () => {
+    const state = createTestState(0);
+    const soNo = createSalesOrder(state, { customerId: "CUST-A", itemId: ITEM_IDS.FG_CHAIR, qty: 10, requestDay: 15 }, 0);
+    confirmDelivery(state, soNo, 15);
+    runMRP(state);
+    firmAllPlannedOrders(state, 0);
+
+    const rmPo = state.purchaseOrders.find((p) => p.itemId === ITEM_IDS.RM_BOARD)!;
+    ackPurchaseOrder(state, rmPo.poNo, rmPo.dueDay);
+    receivePurchaseOrder(state, rmPo.poNo, rmPo.dueDay);
+
+    const saOrder = state.mfgOrders.find((mo) => mo.itemId === ITEM_IDS.SA_SEAT)!;
+    releaseMfgOrder(state, saOrder.moNo);
+    startStep(state, saOrder.moNo, 10, 12);
+    completeStep(state, saOrder.moNo, 10, 10, 0, 13);
+    // この時点：RM-300 onHand=0（ISS -10）、SA-200 onHand=10（PRD +10）
+    // 出庫数量(ISS)=10、現在の総在庫=10 → 在庫回転=10/10=1
+
+    const kpi = computeKpi(state);
+    expect(kpi.inventoryTurnover).toBeCloseTo(1);
   });
 
   it("何も起きていない初期状態では大半のKPIがnullまたは0になる", () => {

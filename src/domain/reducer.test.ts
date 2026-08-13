@@ -64,6 +64,67 @@ describe("simulationReducer", () => {
     expect(firmLog?.tableDeltas).toEqual(
       expect.arrayContaining(["PLANNED_ORDER -5", "MFG_ORDER +2", "PURCHASE_ORDER +3", "WORK_INSTRUCTION +3"]),
     );
+
+    // 座面ASSY：リリース→着手→完了（バックフラッシュ）までreducer経由で進める
+    const saOrder = state.mfgOrders.find((mo) => mo.itemId === ITEM_IDS.SA_SEAT)!;
+    state = dispatch(state, { type: "MFG_RELEASE", payload: { moNo: saOrder.moNo } });
+    expect(state.mfgOrders.find((mo) => mo.moNo === saOrder.moNo)?.status).toBe("RELEASED");
+    state = dispatch(state, { type: "WI_START", payload: { moNo: saOrder.moNo, stepNo: 10 } });
+    expect(state.workInstructions.find((wi) => wi.moNo === saOrder.moNo)?.status).toBe("WIP");
+    state = dispatch(state, { type: "WI_COMPLETE", payload: { moNo: saOrder.moNo, stepNo: 10, goodQty: 10, scrapQty: 0 } });
+    expect(state.mfgOrders.find((mo) => mo.moNo === saOrder.moNo)).toMatchObject({ status: "DONE", goodQty: 10 });
+    expect(state.stocks.find((s) => s.itemId === ITEM_IDS.RM_BOARD)?.onHand).toBe(0);
+
+    // 脚・ネジも入荷予定日まで進めてから入荷計上し、木製イス本体を組立・検査まで進める（良品9・不良1）
+    const ptLegPo = state.purchaseOrders.find((p) => p.itemId === ITEM_IDS.PT_LEG)!;
+    while (state.day < ptLegPo.dueDay) state = dispatch(state, { type: "ADVANCE_DAY" });
+    for (const item of [ITEM_IDS.PT_LEG, ITEM_IDS.PT_SCREW]) {
+      const po = state.purchaseOrders.find((p) => p.itemId === item)!;
+      state = dispatch(state, { type: "PO_RECEIVE", payload: { poNo: po.poNo } });
+    }
+    const fgOrder = state.mfgOrders.find((mo) => mo.itemId === ITEM_IDS.FG_CHAIR)!;
+    state = dispatch(state, { type: "MFG_RELEASE", payload: { moNo: fgOrder.moNo } });
+    state = dispatch(state, { type: "WI_START", payload: { moNo: fgOrder.moNo, stepNo: 10 } });
+    state = dispatch(state, { type: "WI_COMPLETE", payload: { moNo: fgOrder.moNo, stepNo: 10, goodQty: 10, scrapQty: 0 } });
+    state = dispatch(state, { type: "WI_START", payload: { moNo: fgOrder.moNo, stepNo: 20 } });
+    state = dispatch(state, { type: "WI_COMPLETE", payload: { moNo: fgOrder.moNo, stepNo: 20, goodQty: 9, scrapQty: 1 } });
+    expect(state.stocks.find((s) => s.itemId === ITEM_IDS.FG_CHAIR)?.onHand).toBe(9);
+
+    // 出荷：引当→引当解除→再引当→出荷実績登録
+    state = dispatch(state, { type: "SHIPMENT_ALLOCATE", payload: { soNo, lineNo: 1 } });
+    const firstShipment = state.shipments[0];
+    expect(firstShipment).toMatchObject({ status: "ALLOCATED", qty: 9 });
+    state = dispatch(state, { type: "SHIPMENT_CANCEL", payload: { shipNo: firstShipment.shipNo } });
+    expect(state.shipments[0].status).toBe("CANCELED");
+    expect(state.stocks.find((s) => s.itemId === ITEM_IDS.FG_CHAIR)?.allocated).toBe(0);
+
+    state = dispatch(state, { type: "SHIPMENT_ALLOCATE", payload: { soNo, lineNo: 1 } });
+    const secondShipment = state.shipments[1];
+    state = dispatch(state, { type: "SHIPMENT_SHIP", payload: { shipNo: secondShipment.shipNo } });
+    expect(state.soLines[0]).toMatchObject({ shippedQty: 9, status: "PARTIAL" });
+
+    // 棚卸調整
+    state = dispatch(state, { type: "STOCK_ADJUST", payload: { itemId: ITEM_IDS.PT_SCREW, deltaQty: -2 } });
+    const adjTxn = state.stockTxns.find((t) => t.txnType === "ADJ");
+    expect(adjTxn).toMatchObject({ itemId: ITEM_IDS.PT_SCREW, qty: -2 });
+  });
+
+  it("SO_CANCELは実績の無い受注のペグ先オーダを連鎖的に取消する（design.md EXT-2）", () => {
+    let state = createInitialState();
+    state = dispatch(state, {
+      type: "SO_CREATE",
+      payload: { customerId: "CUST-A", itemId: ITEM_IDS.FG_CHAIR, qty: 10, requestDay: 15 },
+    });
+    const soNo = state.soLines[0].soNo;
+    state = dispatch(state, { type: "SO_CONFIRM_DELIVERY", payload: { soNo, confirmDay: 15 } });
+    state = dispatch(state, { type: "MRP_RUN" });
+    state = dispatch(state, { type: "PLANNED_ORDERS_FIRM" });
+
+    state = dispatch(state, { type: "SO_CANCEL", payload: { soNo } });
+
+    expect(state.soLines[0].status).toBe("CANCELED");
+    expect(state.mfgOrders.every((mo) => mo.status === "CANCELED")).toBe(true);
+    expect(state.purchaseOrders.every((po) => po.status === "CANCELED")).toBe(true);
   });
 
   it("ガード違反はエラーログに記録され、stateはクラッシュせずに返る", () => {
