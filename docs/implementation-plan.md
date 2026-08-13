@@ -168,6 +168,7 @@ TC-04/TC-17の手検算）を実施し、以下の指摘に対応した。中核
 
 **Phase 4bで積み残した課題**：`MASTER_UPDATE_ITEM_LEAD_TIME`・`MASTER_UPDATE_BOM_QTY_PER`の入力欄には、
 0以下の値を入力できないよう`min`制約を設ける（`EditableField.tsx`実装時に反映する）。
+→ Phase 5eで`EditableNumberField`の`min`制約として反映済み（4.5節参照）。
 
 | サブフェーズ | 内容 |
 |---|---|
@@ -253,6 +254,25 @@ TC-04/TC-17の手検算）を実施し、以下の指摘に対応した。中核
   →出荷タブで引当（出荷可能量10個の受注残10個を全量引当）→出荷実績登録→受注タブでSO-001がshippedQty
   10・状態CLOSEDになることを確認→在庫タブで現在庫が15-10=5に減っていることを確認、という一連の流れを
   実際にブラウザ操作で通した。ダークモード表示も確認済み
+- `npm run build`・`npm test`（50件、ドメイン層は変更していないため件数は変わらず）がともに成功
+
+### 4.5 Phase 5e 実施結果
+
+- `src/components/EditableField.tsx`：`EditableNumberField`（blur時にのみコミット、`min`未満・非数値は
+  コミットせず表示を確定済みの値へ戻す）・`EditableTextField`（空文字はコミットしない）を実装。
+  Phase 4bで独立レビューにより指摘され先送りしていた「`MASTER_UPDATE_*`系の入力値検証欠如」を、
+  ここで`min`制約付きの数値入力欄として反映した
+- `src/components/MasterDataPage.tsx`：品目（標準リードタイムのみ編集可）・BOM（員数のみ編集可）・
+  工順（標準時間のみ編集可、工程の追加削除は不可）・得意先/仕入先（名称のみ編集可）の4テーブルを配置。
+  区分・BOM構造・工程構成・新規追加はUI上そもそも編集不可とした（design.md §5・mini-simulatorの
+  マスタ画面の編集可否方針を踏襲）
+- `src/App.tsx`：`TABS`配列に「マスタ」を追加
+- `src/index.css`：`EditableField`用の入力欄スタイル（`.editable-field__number`/`.editable-field__text`）
+  を追加
+- Playwrightで、品目の標準リードタイムを2→4に変更（反映されることを確認）→0を入力してblur（min=1
+  未満のため元の値4に戻ることを確認）→BOM（脚の員数4→6）→工順（木製イス工程10の標準時間30→45）→
+  得意先名の変更、を実際にブラウザ操作で通し、いずれも即座に画面へ反映されることを確認した。
+  ダークモード表示も確認済み
 - `npm run build`・`npm test`（50件、ドメイン層は変更していないため件数は変わらず）がともに成功
 
 ---

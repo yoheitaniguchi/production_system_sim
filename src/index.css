@@ -140,6 +140,17 @@ body {
   padding: 0.2rem;
 }
 
+.editable-field__number {
+  width: 4.5rem;
+  padding: 0.2rem;
+}
+
+.editable-field__text {
+  width: 100%;
+  padding: 0.2rem;
+  box-sizing: border-box;
+}
+
 .clock-controls {
   display: flex;
   align-items: center;
