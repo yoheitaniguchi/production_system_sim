@@ -92,24 +92,27 @@ npm test          # vitestによる自動テスト実行（v5-spec.md §9 TC-01�
 
 ## 現在の実装状況
 
-**Phase 0（プロジェクト初期化）・Phase 1（型定義・初期マスタデータ）完了。Phase 2以降は未着手。**
+**Phase 0〜2（プロジェクト初期化・型定義/初期マスタデータ・ドメインロジック本体）完了。Phase 3以降は未着手。**
 
-- `src/types.ts`：design.md §4の対応表どおり、v5仕様書の13テーブルをTypeScript型に落とした
-  （`SimulationState`を含む）。ドメインロジック（`domain/`配下）はまだ存在しない
+- `src/types.ts`：design.md §4の対応表どおり、v5仕様書の13テーブルをTypeScript型に落とした（`SimulationState`を含む）
 - `src/data/masterData.ts`：v5-spec.md §1.1（木製イス）の品目5・BOM4行・工順3行。
-  顧客2件（design.md §6の複数受注演習用）・仕入先3件（BUY品目ごとに1件）
-- `src/data/masterData.test.ts`：品目数・BOM整合性・循環参照なし・工順の対象品目・員数を検証
+  顧客2件（design.md §6の複数受注演習用）・仕入先3件（BUY品目ごとに1件、`defaultSupplierId`で対応付け）
+- `src/domain/`：9モジュール（`pegging.ts`・`mrp.ts`・`procurement.ts`・`shipment.ts`・`production.ts`・
+  `salesOrder.ts`・`schedule.ts`・`inventory.ts`・`kpi.ts`）を実装済み。まだ`reducer.ts`は無く、
+  UIからは直接呼べない（Phase 3で結線する）
+- `src/domain/*.test.ts`：37件のテストで、v5-spec.md §9のTC-02〜09・11・12・15〜18・E1・E2相当のシナリオを
+  モジュール単位で検証済み（TC-01・TC-10・TC-13・TC-14・TC-E3・複数受注演習はPhase 4で対応）
 - `src/App.tsx`は引き続き環境構築確認用の最小UI（Phase 5で7ドメイン画面に置き換える）
 
 ## 次にやるべきこと（優先順）
 
-`docs/implementation-plan.md` のPhase 2〜7を参照。概要は以下の通り。
+`docs/implementation-plan.md` のPhase 3〜7を参照。概要は以下の通り。
 
-1. ドメインロジック本体（`domain/`配下、design.md §8のモジュール分割。実装順序はimplementation-plan.md §2参照）
-2. reducer・action一覧の実装（design.md §7）
-3. v5仕様書 §9 の受入テストケース（TC-01〜18、TC-E1〜3）＋複数受注演習（design.md §6）の自動テスト化
-4. 7ドメイン画面＋共通シェル（時計・警告バー・データ増分ログ）＋分析画面（KPI・ペギング追跡）の実装
-5. CI（Phase 0で追加済みのワークフローが正しく動くことを確認）
+1. reducer・action一覧の実装（design.md §7。`src/domain/testUtils.ts`の`createTestState()`を
+   `reducer.ts`の`createInitialState()`に統合する）
+2. v5仕様書 §9 の残りの受入テストケース（TC-01・TC-10・TC-13・TC-14・TC-E3）＋複数受注演習（design.md §6）の自動テスト化
+3. 7ドメイン画面＋共通シェル（時計・警告バー・データ増分ログ）＋分析画面（KPI・ペギング追跡）の実装
+4. CI（Phase 0で追加済みのワークフローが正しく動くことを確認）
 
 演習ガイド（design.md DEV-4により先送り）・自動再生機能（DEV-2により先送り）はPhase1.5以降の課題として
 `docs/implementation-plan.md` に記載する。

@@ -15,12 +15,37 @@ export const WORK_CENTERS = {
   INS: "WC-INS",
 } as const;
 
+export const SUPPLIER_IDS = {
+  RM_BOARD: "SUP-RM300",
+  PT_LEG: "SUP-PT400",
+  PT_SCREW: "SUP-PT500",
+} as const;
+
+// defaultSupplierId は design.md EXT-9（v5仕様書はITEMとPARTNERの対応を規定していない）に基づく追加項目
 export const initialItems: ItemMaster[] = [
   { itemId: ITEM_IDS.FG_CHAIR, name: "木製イス", makeBuy: "MAKE", leadTimeDays: 2 },
   { itemId: ITEM_IDS.SA_SEAT, name: "座面ASSY", makeBuy: "MAKE", leadTimeDays: 1 },
-  { itemId: ITEM_IDS.RM_BOARD, name: "木板", makeBuy: "BUY", leadTimeDays: 5 },
-  { itemId: ITEM_IDS.PT_LEG, name: "脚", makeBuy: "BUY", leadTimeDays: 3 },
-  { itemId: ITEM_IDS.PT_SCREW, name: "ネジ", makeBuy: "BUY", leadTimeDays: 3 },
+  {
+    itemId: ITEM_IDS.RM_BOARD,
+    name: "木板",
+    makeBuy: "BUY",
+    leadTimeDays: 5,
+    defaultSupplierId: SUPPLIER_IDS.RM_BOARD,
+  },
+  {
+    itemId: ITEM_IDS.PT_LEG,
+    name: "脚",
+    makeBuy: "BUY",
+    leadTimeDays: 3,
+    defaultSupplierId: SUPPLIER_IDS.PT_LEG,
+  },
+  {
+    itemId: ITEM_IDS.PT_SCREW,
+    name: "ネジ",
+    makeBuy: "BUY",
+    leadTimeDays: 3,
+    defaultSupplierId: SUPPLIER_IDS.PT_SCREW,
+  },
 ];
 
 export const initialBom: BomLine[] = [
@@ -45,7 +70,7 @@ export const initialCustomers: Customer[] = [
 ];
 
 export const initialSuppliers: Supplier[] = [
-  { supplierId: "SUP-RM300", name: "木板仕入先" },
-  { supplierId: "SUP-PT400", name: "脚仕入先" },
-  { supplierId: "SUP-PT500", name: "ネジ仕入先" },
+  { supplierId: SUPPLIER_IDS.RM_BOARD, name: "木板仕入先" },
+  { supplierId: SUPPLIER_IDS.PT_LEG, name: "脚仕入先" },
+  { supplierId: SUPPLIER_IDS.PT_SCREW, name: "ネジ仕入先" },
 ];
