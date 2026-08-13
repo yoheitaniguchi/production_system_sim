@@ -1,4 +1,4 @@
-// KPI算出（v5-spec.md §10、design.md EXT-11）
+// KPI算出（v5-spec.md §10、design.md EXT-11・EXT-12・EXT-13）
 import type { SimulationState } from "../types";
 import { checkSchedule } from "./schedule";
 
@@ -17,7 +17,7 @@ export interface KpiSnapshot {
   wipQty: number;
   /** 製造リードタイム実績：最終工程完了日 − 第1工程着手日（完了オーダの平均） */
   avgProductionLeadTimeDays: number | null;
-  /** 在庫回転：出庫数量（ISS+SHP） ÷ 現在の総在庫数量（design.md EXT-11同様、期間平均の代わりに現在値を採用） */
+  /** 在庫回転：出庫数量（ISS+SHP） ÷ 現在の総在庫数量（design.md EXT-13：期間平均の代わりに現在値を採用） */
   inventoryTurnover: number | null;
   /** 仕入先納期遵守率：入庫日 ≤ 回答納期 の件数 ÷ 入庫件数 */
   supplierDeliveryComplianceRate: number | null;
