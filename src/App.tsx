@@ -3,7 +3,9 @@ import AlertBar from "./components/AlertBar";
 import ClockControls from "./components/ClockControls";
 import EventLogPanel from "./components/EventLogPanel";
 import InventoryPanel from "./components/InventoryPanel";
+import KpiDashboard from "./components/KpiDashboard";
 import MasterDataPage from "./components/MasterDataPage";
+import PeggingTracePanel from "./components/PeggingTracePanel";
 import PlanningPanel from "./components/PlanningPanel";
 import ProcurementPanel from "./components/ProcurementPanel";
 import ProductionPanel from "./components/ProductionPanel";
@@ -12,7 +14,7 @@ import ShipmentPanel from "./components/ShipmentPanel";
 import { createInitialState, simulationReducer } from "./domain/reducer";
 
 // ドメイン画面のタブ一覧。design.md §5の順序どおり、実装済みのものから順に追加していく
-// （Phase 5f以降で分析画面・プロセス連携図を追加する）。
+// （Phase 5g以降でプロセス連携図を追加する）。
 const TABS = [
   { id: "sales-order", label: "受注", Component: SalesOrderPanel },
   { id: "planning", label: "計画", Component: PlanningPanel },
@@ -21,6 +23,8 @@ const TABS = [
   { id: "inventory", label: "在庫", Component: InventoryPanel },
   { id: "shipment", label: "出荷", Component: ShipmentPanel },
   { id: "master-data", label: "マスタ", Component: MasterDataPage },
+  { id: "kpi", label: "KPI", Component: KpiDashboard },
+  { id: "pegging", label: "ペギング追跡", Component: PeggingTracePanel },
 ] as const;
 
 function App() {
