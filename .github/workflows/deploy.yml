@@ -5,18 +5,19 @@ on:
     branches: [main]
   workflow_dispatch:
 
+# actions/deploy-pages（Actionsベース）は1回のデプロイでサイト全体を丸ごと置き換える方式のため、
+# pr-preview.ymlが管理するPRプレビュー（gh-pagesブランチのpr-preview/配下）と共存できない。
+# そのため本番デプロイもgh-pagesブランチへのpush方式（peaceiris/actions-gh-pages）に統一する。
 permissions:
-  contents: read
-  pages: write
-  id-token: write
+  contents: write
 
 # 同時デプロイの競合を避けるため、実行中のデプロイと入れ替わらずに直列化する
 concurrency:
-  group: pages
+  group: pages-main
   cancel-in-progress: false
 
 jobs:
-  build:
+  deploy:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -34,18 +35,11 @@ jobs:
           npm run build
           npm test
 
-      - name: Upload build artifact
-        uses: actions/upload-pages-artifact@v3
+      - name: Deploy to gh-pages branch
+        uses: peaceiris/actions-gh-pages@v4
         with:
-          path: dist
-
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./dist
+          # pr-preview.ymlが書き込むpr-preview/配下を本番デプロイのたびに消さないようkeep_filesする。
+          # 副作用として過去ビルドのハッシュ付きアセットが蓄積するが、教材規模のリポジトリでは許容する。
+          keep_files: true

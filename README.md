@@ -12,5 +12,14 @@ npm run dev
 ## 公開版
 
 `main` ブランチへの push を契機に GitHub Actions（`.github/workflows/deploy.yml`）が自動ビルドし、
-GitHub Pages へデプロイする。公開URL: `https://<owner>.github.io/production_system_sim/`
-（リポジトリの Settings → Pages → Build and deployment → Source を「GitHub Actions」に設定した後、有効になる）。
+`gh-pages` ブランチへ配信する。公開URL: `https://<owner>.github.io/production_system_sim/`
+（リポジトリの Settings → Pages → Build and deployment → Source を「Deploy from a branch」、
+ブランチを `gh-pages` / `/ (root)` に設定した後、有効になる。`gh-pages` ブランチは初回デプロイ時に自動作成される）。
+
+## PRプレビュー
+
+PRを作成・更新すると `.github/workflows/pr-preview.yml` が `gh-pages` ブランチの
+`pr-preview/pr-<番号>/` 配下へビルド成果物を配信し、PR上にプレビューURLをコメントする
+（`rossjrw/pr-preview-action`使用）。公開版のデプロイ（`gh-pages`ブランチのルート）とは
+別ディレクトリに配信されるため、双方が上書きし合うことはない。PRをクローズすると自動的に
+プレビューを削除する。

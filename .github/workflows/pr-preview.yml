@@ -1,0 +1,44 @@
+name: PR Preview
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, closed]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+# 同一PRへの立て続けのpushで前回分の配信とレースしないよう、PR番号単位で直列化・旧実行はキャンセルする
+concurrency:
+  group: pr-preview-${{ github.event.number }}
+  cancel-in-progress: true
+
+jobs:
+  preview:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        if: github.event.action != 'closed'
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        if: github.event.action != 'closed'
+        run: npm ci
+
+      # gh-pagesブランチの pr-preview/pr-<番号>/ 配下に配信されるため、
+      # 通常のbuildより一段深いパスをbaseに指定してビルドする（vite.config.tsのBASE_PATH参照）
+      - name: Build with PR preview base path
+        if: github.event.action != 'closed'
+        run: npm run build
+        env:
+          BASE_PATH: /production_system_sim/pr-preview/pr-${{ github.event.number }}/
+
+      - name: Deploy or remove PR preview
+        uses: rossjrw/pr-preview-action@v1
+        with:
+          source-dir: ./dist
+          action: auto

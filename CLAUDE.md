@@ -94,8 +94,16 @@ npm run preview   # build成果物をGitHub Pages相当のbaseパスで動作確
 
 ## デプロイ
 
-`main`へのpushを契機に`.github/workflows/deploy.yml`が自動ビルドし、GitHub Pagesへデプロイする
-（`vite.config.ts`の`base`はbuild/preview時のみ`/production_system_sim/`を付与、`npm run dev`はルート配信のまま）。
+- `main`へのpushを契機に`.github/workflows/deploy.yml`が自動ビルドし、`gh-pages`ブランチへpushする
+  （`peaceiris/actions-gh-pages`使用。Actionsベースの`actions/deploy-pages`は1回のデプロイでサイト全体を
+  丸ごと置き換える方式でPRプレビューと共存できないため採用していない）
+- PRの作成・更新時は`.github/workflows/pr-preview.yml`が`gh-pages`ブランチの`pr-preview/pr-<番号>/`配下へ
+  配信し、PR上にプレビューURLをコメントする（`rossjrw/pr-preview-action`使用、PRクローズで自動削除）
+- `vite.config.ts`の`base`はビルド用途ごとに変える：`npm run dev`はルート配信、通常のbuild/previewは
+  `/production_system_sim/`、PRプレビュー用ビルドはCI側が渡す`BASE_PATH`環境変数
+  （`/production_system_sim/pr-preview/pr-<番号>/`）を最優先する
+- リポジトリのSettings→Pages→Build and deploymentのSourceは「Deploy from a branch」／`gh-pages`／
+  `/(root)`に設定する（`gh-pages`ブランチは初回デプロイ時にワークフローが自動作成する）
 
 ## 現在の実装状況
 
