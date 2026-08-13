@@ -92,24 +92,28 @@ npm test          # vitestによる自動テスト実行（v5-spec.md §9 TC-01�
 
 ## 現在の実装状況
 
-**Phase 0〜4（プロジェクト初期化・型定義/初期マスタデータ・ドメインロジック本体・reducer・自動テスト拡充）完了。Phase 5以降は未着手。**
+**Phase 0〜4（プロジェクト初期化・型定義/初期マスタデータ・ドメインロジック本体・reducer・自動テスト拡充）完了。
+Phase 5（画面実装）は5a（共通シェル）まで完了、5b以降は未着手。**
 
 - `src/types.ts`：design.md §4の対応表どおり、v5仕様書の13テーブルをTypeScript型に落とした（`SimulationState`を含む）
 - `src/data/masterData.ts`：v5-spec.md §1.1（木製イス）の品目5・BOM4行・工順3行。
   顧客2件（design.md §6の複数受注演習用）・仕入先3件（BUY品目ごとに1件、`defaultSupplierId`で対応付け）
 - `src/domain/`：9モジュール（`pegging.ts`・`mrp.ts`・`procurement.ts`・`shipment.ts`・`production.ts`・
   `salesOrder.ts`・`schedule.ts`・`inventory.ts`・`kpi.ts`）＋`reducer.ts`（design.md §7のaction一覧を実装。
-  `createInitialState()`・`simulationReducer()`）を実装済み。まだUIからは呼ばれていない（Phase 5で結線する）
+  `createInitialState()`・`simulationReducer()`）を実装済み
 - `src/domain/*.test.ts`：50件のテストで、v5-spec.md §9のTC-01〜18・TC-E1〜E3の全シナリオと、
   reducerの委譲・不変性・エラーハンドリング・RESET時のマスタ保持を検証済み。design.md §6の複数受注演習も
   TC-M1として`multiOrderExercise.test.ts`で検証済み
-- `src/App.tsx`は引き続き環境構築確認用の最小UI（Phase 5で7ドメイン画面に置き換える）
+- `src/App.tsx`：`useReducer`でreducerを保持し、共通シェル（`ClockControls`・`AlertBar`・`EventLogPanel`）を
+  結線済み。ドメイン画面・分析画面はまだタブとして存在しない（Phase 5b以降で追加）
 
 ## 次にやるべきこと（優先順）
 
-`docs/implementation-plan.md` のPhase 5〜7を参照。概要は以下の通り。
+`docs/implementation-plan.md` のPhase 5b〜7を参照。Phase 5はサブフェーズに分けて実装している
+（`docs/implementation-plan.md` §4の表）。概要は以下の通り。
 
-1. 7ドメイン画面＋共通シェル（時計・警告バー・データ増分ログ）＋分析画面（KPI・ペギング追跡）の実装
+1. 7ドメイン画面（受注・計画・発注・工程・在庫・出荷・マスタ）＋分析画面（KPI・ペギング追跡）＋
+   プロセス連携図の実装（Phase 5b〜5g）
 2. CI（Phase 0で追加済みのワークフローが正しく動くことを確認）
 
 演習ガイド（design.md DEV-4により先送り）・自動再生機能（DEV-2により先送り）はPhase1.5以降の課題として
