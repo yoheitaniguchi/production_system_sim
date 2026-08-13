@@ -90,24 +90,23 @@ npm run build     # 型チェック＋ビルド
 npm test          # vitestによる自動テスト実行（v5-spec.md §9 TC-01〜18・TC-E1〜3・複数受注演習を含む）
 ```
 
-`package.json`等のプロジェクト初期化はまだ行っていない（下記「現在の実装状況」参照）。
-
 ## 現在の実装状況
 
-**仕様確定フェーズが完了し、実装フェーズは未着手。** `docs/v5-spec.md`（業務仕様）・`docs/design.md`
-（差分・追加決定）・本ファイルのみが存在する状態。実装計画は `docs/implementation-plan.md` を参照。
+**Phase 0（プロジェクト初期化）完了。Phase 1以降は未着手。** Vite + React + TypeScriptの雛形、
+`.github/workflows/test.yml`（PR時に`npm run build`・`npm test`を自動実行）、vitestの疎通確認用
+スモークテスト（`src/setup.smoke.test.ts`、Phase 4でドメインテストに置き換え次第削除）のみが存在する状態。
+`src/App.tsx`は環境構築確認用の最小UI。実装計画は `docs/implementation-plan.md` を参照。
 
 ## 次にやるべきこと（優先順）
 
-`docs/implementation-plan.md` のPhase 0〜7を参照。概要は以下の通り。
+`docs/implementation-plan.md` のPhase 1〜7を参照。概要は以下の通り。
 
-1. プロジェクト初期化（Vite + React + TypeScript、`package.json`・`tsconfig.json`・CI設定）
-2. 型定義（`types.ts`）・初期マスタデータ（木製イス）の実装
-3. ドメインロジック本体（`domain/`配下、design.md §8のモジュール分割）
-4. reducer・action一覧の実装（design.md §7）
-5. v5仕様書 §9 の受入テストケース（TC-01〜18、TC-E1〜3）＋複数受注演習（design.md §6）の自動テスト化
-6. 7ドメイン画面＋共通シェル（時計・警告バー・データ増分ログ）＋分析画面（KPI・ペギング追跡）の実装
-7. CI（GitHub Actionsで`npm run build`・`npm test`をPR時に自動実行）
+1. 型定義（`types.ts`）・初期マスタデータ（木製イス）の実装
+2. ドメインロジック本体（`domain/`配下、design.md §8のモジュール分割）
+3. reducer・action一覧の実装（design.md §7）
+4. v5仕様書 §9 の受入テストケース（TC-01〜18、TC-E1〜3）＋複数受注演習（design.md §6）の自動テスト化
+5. 7ドメイン画面＋共通シェル（時計・警告バー・データ増分ログ）＋分析画面（KPI・ペギング追跡）の実装
+6. CI（Phase 0で追加済みのワークフローが正しく動くことを確認）
 
 演習ガイド（design.md DEV-4により先送り）・自動再生機能（DEV-2により先送り）はPhase1.5以降の課題として
 `docs/implementation-plan.md` に記載する。
