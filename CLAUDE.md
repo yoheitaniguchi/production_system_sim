@@ -92,21 +92,24 @@ npm test          # vitestによる自動テスト実行（v5-spec.md §9 TC-01�
 
 ## 現在の実装状況
 
-**Phase 0（プロジェクト初期化）完了。Phase 1以降は未着手。** Vite + React + TypeScriptの雛形、
-`.github/workflows/test.yml`（PR時に`npm run build`・`npm test`を自動実行）、vitestの疎通確認用
-スモークテスト（`src/setup.smoke.test.ts`、Phase 4でドメインテストに置き換え次第削除）のみが存在する状態。
-`src/App.tsx`は環境構築確認用の最小UI。実装計画は `docs/implementation-plan.md` を参照。
+**Phase 0（プロジェクト初期化）・Phase 1（型定義・初期マスタデータ）完了。Phase 2以降は未着手。**
+
+- `src/types.ts`：design.md §4の対応表どおり、v5仕様書の13テーブルをTypeScript型に落とした
+  （`SimulationState`を含む）。ドメインロジック（`domain/`配下）はまだ存在しない
+- `src/data/masterData.ts`：v5-spec.md §1.1（木製イス）の品目5・BOM4行・工順3行。
+  顧客2件（design.md §6の複数受注演習用）・仕入先3件（BUY品目ごとに1件）
+- `src/data/masterData.test.ts`：品目数・BOM整合性・循環参照なし・工順の対象品目・員数を検証
+- `src/App.tsx`は引き続き環境構築確認用の最小UI（Phase 5で7ドメイン画面に置き換える）
 
 ## 次にやるべきこと（優先順）
 
-`docs/implementation-plan.md` のPhase 1〜7を参照。概要は以下の通り。
+`docs/implementation-plan.md` のPhase 2〜7を参照。概要は以下の通り。
 
-1. 型定義（`types.ts`）・初期マスタデータ（木製イス）の実装
-2. ドメインロジック本体（`domain/`配下、design.md §8のモジュール分割）
-3. reducer・action一覧の実装（design.md §7）
-4. v5仕様書 §9 の受入テストケース（TC-01〜18、TC-E1〜3）＋複数受注演習（design.md §6）の自動テスト化
-5. 7ドメイン画面＋共通シェル（時計・警告バー・データ増分ログ）＋分析画面（KPI・ペギング追跡）の実装
-6. CI（Phase 0で追加済みのワークフローが正しく動くことを確認）
+1. ドメインロジック本体（`domain/`配下、design.md §8のモジュール分割。実装順序はimplementation-plan.md §2参照）
+2. reducer・action一覧の実装（design.md §7）
+3. v5仕様書 §9 の受入テストケース（TC-01〜18、TC-E1〜3）＋複数受注演習（design.md §6）の自動テスト化
+4. 7ドメイン画面＋共通シェル（時計・警告バー・データ増分ログ）＋分析画面（KPI・ペギング追跡）の実装
+5. CI（Phase 0で追加済みのワークフローが正しく動くことを確認）
 
 演習ガイド（design.md DEV-4により先送り）・自動再生機能（DEV-2により先送り）はPhase1.5以降の課題として
 `docs/implementation-plan.md` に記載する。
