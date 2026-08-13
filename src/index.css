@@ -43,9 +43,87 @@ body {
   margin: 0;
 }
 
-.app__placeholder {
+.app__tabs {
+  display: flex;
+  gap: 0.25rem;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+
+.app__tab {
+  padding: 0.4rem 0.9rem;
+  border: none;
+  background: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  font-size: 0.95rem;
+}
+
+.app__tab--active {
+  border-bottom-color: currentColor;
+  font-weight: bold;
+}
+
+.panel h2 {
+  font-size: 1.05rem;
+  margin: 0 0 0.75rem;
+}
+
+.panel__form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: end;
+  margin-bottom: 1rem;
+}
+
+.panel__form label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  font-size: 0.85rem;
+}
+
+.panel__form input,
+.panel__form select {
+  padding: 0.3rem;
+}
+
+.panel__toolbar {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.panel__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.panel__table th,
+.panel__table td {
+  border: 1px solid var(--border);
+  padding: 0.35rem 0.5rem;
+  text-align: left;
+}
+
+.panel__empty {
   color: gray;
-  font-style: italic;
+  text-align: center;
+}
+
+.panel__actions {
+  display: flex;
+  gap: 0.4rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.panel__inline-input {
+  width: 4rem;
+  padding: 0.2rem;
 }
 
 .clock-controls {

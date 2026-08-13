@@ -1,13 +1,23 @@
-import { useReducer } from "react";
+import { useReducer, useState } from "react";
 import AlertBar from "./components/AlertBar";
 import ClockControls from "./components/ClockControls";
 import EventLogPanel from "./components/EventLogPanel";
+import PlanningPanel from "./components/PlanningPanel";
+import SalesOrderPanel from "./components/SalesOrderPanel";
 import { createInitialState, simulationReducer } from "./domain/reducer";
 
-// Phase 5a：共通シェル（時計操作・警告バー・データ増分ログ）のみ。
-// 7ドメイン画面・分析画面・プロセス連携図はPhase 5b以降でタブとして追加する。
+// ドメイン画面のタブ一覧。design.md §5の順序どおり、実装済みのものから順に追加していく
+// （Phase 5c以降で発注・工程・在庫・出荷・マスタ・分析・プロセス連携図を追加する）。
+const TABS = [
+  { id: "sales-order", label: "受注", Component: SalesOrderPanel },
+  { id: "planning", label: "計画", Component: PlanningPanel },
+] as const;
+
 function App() {
   const [state, dispatch] = useReducer(simulationReducer, undefined, createInitialState);
+  const [activeTab, setActiveTab] = useState<(typeof TABS)[number]["id"]>(TABS[0].id);
+
+  const ActiveComponent = TABS.find((t) => t.id === activeTab)?.Component ?? TABS[0].Component;
 
   return (
     <div className="app">
@@ -20,10 +30,20 @@ function App() {
         />
       </header>
       <AlertBar state={state} />
+      <nav className="app__tabs">
+        {TABS.map((tab) => (
+          <button
+            key={tab.id}
+            type="button"
+            className={tab.id === activeTab ? "app__tab app__tab--active" : "app__tab"}
+            onClick={() => setActiveTab(tab.id)}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </nav>
       <main className="app__main">
-        <p className="app__placeholder">
-          ドメイン画面（受注・計画・発注・工程・在庫・出荷・マスタ）と分析画面は Phase 5b 以降で追加する。
-        </p>
+        <ActiveComponent state={state} dispatch={dispatch} />
       </main>
       <EventLogPanel entries={state.eventLog} />
     </div>
