@@ -7,14 +7,14 @@ import KpiDashboard from "./components/KpiDashboard";
 import MasterDataPage from "./components/MasterDataPage";
 import PeggingTracePanel from "./components/PeggingTracePanel";
 import PlanningPanel from "./components/PlanningPanel";
+import ProcessFlowDiagram from "./components/ProcessFlowDiagram";
 import ProcurementPanel from "./components/ProcurementPanel";
 import ProductionPanel from "./components/ProductionPanel";
 import SalesOrderPanel from "./components/SalesOrderPanel";
 import ShipmentPanel from "./components/ShipmentPanel";
 import { createInitialState, simulationReducer } from "./domain/reducer";
 
-// ドメイン画面のタブ一覧。design.md §5の順序どおり、実装済みのものから順に追加していく
-// （Phase 5g以降でプロセス連携図を追加する）。
+// ドメイン画面のタブ一覧。design.md §5の順序どおり実装済みのものから順に追加してきた（Phase 5a〜5g完了）。
 const TABS = [
   { id: "sales-order", label: "受注", Component: SalesOrderPanel },
   { id: "planning", label: "計画", Component: PlanningPanel },
@@ -25,6 +25,7 @@ const TABS = [
   { id: "master-data", label: "マスタ", Component: MasterDataPage },
   { id: "kpi", label: "KPI", Component: KpiDashboard },
   { id: "pegging", label: "ペギング追跡", Component: PeggingTracePanel },
+  { id: "process-flow", label: "プロセス連携図", Component: ProcessFlowDiagram },
 ] as const;
 
 function App() {
