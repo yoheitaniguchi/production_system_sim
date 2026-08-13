@@ -9,10 +9,15 @@ import {
 } from "./masterData";
 
 describe("初期マスタデータ（v5-spec.md §1.1：木製イス）", () => {
-  it("品目5、BOM行4、工順3行を持つ（v5-spec.md §1.1）", () => {
+  it("TC-01: 品目5・BOM行4・工順3行。取引先は顧客2件+仕入先3件（design.md DEV-1によりPARTNER3行ではなく分離）", () => {
+    // v5-spec.md TC-01は「ITEM 5行 / BOM_LINE 4行 / ROUTING_STEP 3行 / PARTNER 3行」を期待するが、
+    // design.md DEV-1によりPARTNERはCustomer/Supplierに分離しているため、本実装では
+    // 「顧客2件（複数受注演習用）＋仕入先3件（BUY品目ごとに1件）」の計5件が対応する期待値になる
     expect(initialItems).toHaveLength(5);
     expect(initialBom).toHaveLength(4);
     expect(initialRoutingSteps).toHaveLength(3);
+    expect(initialCustomers).toHaveLength(2);
+    expect(initialSuppliers).toHaveLength(3);
   });
 
   it("BOMの親子はすべて実在する品目を参照する", () => {
@@ -47,11 +52,6 @@ describe("初期マスタデータ（v5-spec.md §1.1：木製イス）", () => 
     for (const step of initialRoutingSteps) {
       expect(makeItemIds.has(step.itemId)).toBe(true);
     }
-  });
-
-  it("BUY品目それぞれに仕入先が1つ以上、顧客は複数受注演習のため2件以上存在する", () => {
-    expect(initialSuppliers.length).toBeGreaterThanOrEqual(3);
-    expect(initialCustomers.length).toBeGreaterThanOrEqual(2);
   });
 
   it("木製イスの完成には座面ASSY x1・脚 x4・ネジ x8・木板(座面経由) x1が必要", () => {

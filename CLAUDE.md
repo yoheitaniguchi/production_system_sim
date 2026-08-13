@@ -92,7 +92,7 @@ npm test          # vitestによる自動テスト実行（v5-spec.md §9 TC-01�
 
 ## 現在の実装状況
 
-**Phase 0〜3（プロジェクト初期化・型定義/初期マスタデータ・ドメインロジック本体・reducer）完了。Phase 4以降は未着手。**
+**Phase 0〜4（プロジェクト初期化・型定義/初期マスタデータ・ドメインロジック本体・reducer・自動テスト拡充）完了。Phase 5以降は未着手。**
 
 - `src/types.ts`：design.md §4の対応表どおり、v5仕様書の13テーブルをTypeScript型に落とした（`SimulationState`を含む）
 - `src/data/masterData.ts`：v5-spec.md §1.1（木製イス）の品目5・BOM4行・工順3行。
@@ -100,18 +100,17 @@ npm test          # vitestによる自動テスト実行（v5-spec.md §9 TC-01�
 - `src/domain/`：9モジュール（`pegging.ts`・`mrp.ts`・`procurement.ts`・`shipment.ts`・`production.ts`・
   `salesOrder.ts`・`schedule.ts`・`inventory.ts`・`kpi.ts`）＋`reducer.ts`（design.md §7のaction一覧を実装。
   `createInitialState()`・`simulationReducer()`）を実装済み。まだUIからは呼ばれていない（Phase 5で結線する）
-- `src/domain/*.test.ts`：44件のテストで、v5-spec.md §9のTC-02〜09・11・12・15〜18・E1・E2相当のシナリオと
-  reducerの委譲・不変性・エラーハンドリング・RESET時のマスタ保持を検証済み
-  （TC-01・TC-10・TC-13・TC-14・TC-E3・複数受注演習はPhase 4で対応）
+- `src/domain/*.test.ts`：48件のテストで、v5-spec.md §9のTC-01〜18・TC-E1〜E3の全シナリオと、
+  reducerの委譲・不変性・エラーハンドリング・RESET時のマスタ保持を検証済み。design.md §6の複数受注演習も
+  TC-M1として`multiOrderExercise.test.ts`で検証済み
 - `src/App.tsx`は引き続き環境構築確認用の最小UI（Phase 5で7ドメイン画面に置き換える）
 
 ## 次にやるべきこと（優先順）
 
-`docs/implementation-plan.md` のPhase 4〜7を参照。概要は以下の通り。
+`docs/implementation-plan.md` のPhase 5〜7を参照。概要は以下の通り。
 
-1. v5仕様書 §9 の残りの受入テストケース（TC-01・TC-10・TC-13・TC-14・TC-E3）＋複数受注演習（design.md §6）の自動テスト化
-2. 7ドメイン画面＋共通シェル（時計・警告バー・データ増分ログ）＋分析画面（KPI・ペギング追跡）の実装
-3. CI（Phase 0で追加済みのワークフローが正しく動くことを確認）
+1. 7ドメイン画面＋共通シェル（時計・警告バー・データ増分ログ）＋分析画面（KPI・ペギング追跡）の実装
+2. CI（Phase 0で追加済みのワークフローが正しく動くことを確認）
 
 演習ガイド（design.md DEV-4により先送り）・自動再生機能（DEV-2により先送り）はPhase1.5以降の課題として
 `docs/implementation-plan.md` に記載する。
@@ -122,8 +121,8 @@ npm test          # vitestによる自動テスト実行（v5-spec.md §9 TC-01�
   fungibleな残高管理（STOCK/STOCK_TXN）に統一する。ペギングは追跡専用の別レイヤ（design.md §4コラム）
 - **操作粒度**：MRP実行・オーダ確定・工程着手/完了・入荷計上・出荷引当/実績はすべて個別のユーザー操作
   （design.md §7の action一覧）。「日を進める」ボタンに業務処理は紐付かない
-- **v5仕様書が未規定の点への追加決定（EXT-1〜8）**：MRP展開の需要処理順序、取消時のカスケード、
-  取消ガードの厳密な判定基準、入荷計上のタイミング制約、納期回答の算出方法など。詳細はdesign.md §3
+- **v5仕様書が未規定の点への追加決定（EXT-1〜12）**：MRP展開の需要処理順序、取消時のカスケード、
+  取消ガードの厳密な判定基準、入荷計上のタイミング制約、納期回答の算出方法、KPIの集計対象など。詳細はdesign.md §3
 
 ## コーディング上の注意
 
