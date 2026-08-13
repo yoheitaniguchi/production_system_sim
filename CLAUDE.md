@@ -89,7 +89,13 @@ npm install
 npm run dev       # 開発サーバー起動
 npm run build     # 型チェック＋ビルド
 npm test          # vitestによる自動テスト実行（v5-spec.md §9 TC-01〜18・TC-E1〜3・複数受注演習を含む）
+npm run preview   # build成果物をGitHub Pages相当のbaseパスで動作確認
 ```
+
+## デプロイ
+
+`main`へのpushを契機に`.github/workflows/deploy.yml`が自動ビルドし、GitHub Pagesへデプロイする
+（`vite.config.ts`の`base`はbuild/preview時のみ`/production_system_sim/`を付与、`npm run dev`はルート配信のまま）。
 
 ## 現在の実装状況
 
