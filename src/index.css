@@ -114,6 +114,15 @@ body {
   text-align: center;
 }
 
+.panel__group {
+  margin-bottom: 1.5rem;
+}
+
+.panel__group .panel__toolbar {
+  justify-content: space-between;
+  align-items: center;
+}
+
 .panel__actions {
   display: flex;
   gap: 0.4rem;
