@@ -163,20 +163,40 @@ TC-04/TC-17の手検算）を実施し、以下の指摘に対応した。中核
 ## 4. Phase 5（画面実装）の進め方
 
 `design.md` §5の対応表に従い、以下の順で実装する（データが揃わないと表示確認できないため、ドメイン画面は
-概ねPhase 2の依存順に対応させる）。
+概ねPhase 2の依存順に対応させる）。Phase 5は他フェーズよりコンポーネント数が多く差分が大きくなるため、
+以下のサブフェーズに分けて1つずつPRを発行する。
 
 **Phase 4bで積み残した課題**：`MASTER_UPDATE_ITEM_LEAD_TIME`・`MASTER_UPDATE_BOM_QTY_PER`の入力欄には、
 0以下の値を入力できないよう`min`制約を設ける（`EditableField.tsx`実装時に反映する）。
 
-1. 共通シェル：`ClockControls.tsx`・`AlertBar.tsx`・`EventLogPanel.tsx`（データ増分ログ対応）
-2. `SalesOrderPanel.tsx`（受注）→ `PlanningPanel.tsx`（計画）→ `ProcurementPanel.tsx`（発注）→
-   `ProductionPanel.tsx`（工程、良品/不良入力UI）→ `InventoryPanel.tsx`（在庫、3列表示）→
-   `ShipmentPanel.tsx`（出荷、引当/実績を分離）
-3. `MasterDataPage.tsx`（工順マスタ含む）
-4. 分析画面：`KpiDashboard.tsx`・`PeggingTracePanel.tsx`
-5. `ProcessFlowDiagram.tsx`（7ドメイン・v5のIPOに合わせて構成）
+| サブフェーズ | 内容 |
+|---|---|
+| 5a | 共通シェル：`ClockControls.tsx`・`AlertBar.tsx`・`EventLogPanel.tsx`（データ増分ログ対応）＋タブ切り替えを行う`App.tsx`の骨格 |
+| 5b | `SalesOrderPanel.tsx`（受注）・`PlanningPanel.tsx`（計画） |
+| 5c | `ProcurementPanel.tsx`（発注）・`ProductionPanel.tsx`（工程、良品/不良入力UI） |
+| 5d | `InventoryPanel.tsx`（在庫、3列表示）・`ShipmentPanel.tsx`（出荷、引当/実績を分離） |
+| 5e | `MasterDataPage.tsx`（工順マスタ含む）・`EditableField.tsx` |
+| 5f | 分析画面：`KpiDashboard.tsx`・`PeggingTracePanel.tsx` |
+| 5g | `ProcessFlowDiagram.tsx`（7ドメイン・v5のIPOに合わせて構成）・`domain/processFlow.ts`新設 |
 
-各画面実装後、v5-spec.md §9の演習をブラウザ操作で通し、テストの期待値と画面表示が一致することを確認する。
+各サブフェーズ実装後、`npm run dev`で実際に操作し、当該画面が関わるv5-spec.md §9の演習をブラウザ操作で
+通して、テストの期待値と画面表示が一致することを確認する（5a単体では日送りとログ表示のみの確認になる）。
+
+### 4.1 Phase 5a 実施結果
+
+- `src/components/ClockControls.tsx`：Day表示・次の日へ進む・リセット（自動再生は無し、design.md DEV-2）
+- `src/components/AlertBar.tsx`：`domain/schedule.ts`の`checkSchedule()`/`unmetDemand()`を毎回呼び出す
+  導出表示。警告が無ければ「警告なし」の緑バー、あれば日程遅延・未充足需要のメッセージを列挙する
+- `src/components/EventLogPanel.tsx`：`state.eventLog`を新しい順に表示。EXT-8のテーブル別行数差分も併記
+- `src/App.tsx`：`useReducer(simulationReducer, undefined, createInitialState)`でreducerを保持し、
+  上記3コンポーネントを結線した。ドメイン画面・分析画面はまだタブとして存在せず、プレースホルダ表示のみ
+  （Phase 5bでタブ切り替えを導入する予定）
+- `src/index.css`：システムフォント・`prefers-color-scheme`によるライト/ダーク対応の最小限のスタイル。
+  mini-simulatorにあるような複数プリセットのテーマ切替は本プロジェクトのスコープに含めない
+- Playwright（`/opt/pw-browsers`の既存Chromiumバイナリを使用）でブラウザ動作を確認：初期表示・
+  「次の日へ進む」を3回クリックしてD+3になること・ADVANCE_DAYではログが増えないこと・ダークモードでの
+  表示、をスクリーンショット付きで確認済み
+- `npm run build`・`npm test`（50件、ドメイン層は変更していないため件数は変わらず）がともに成功
 
 ---
 
