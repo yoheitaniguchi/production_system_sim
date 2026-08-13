@@ -11,6 +11,8 @@ export interface ItemMaster {
   makeBuy: MakeBuy;
   /** 標準リードタイム（日数）。MAKEなら製造、BUYなら調達のリードタイムとして扱う */
   leadTimeDays: number;
+  /** 発注先の仕入先（BUY品目のみ。design.md EXT-9：v5仕様書はITEMとPARTNERの対応を規定していない） */
+  defaultSupplierId?: string;
 }
 
 /** BOMの親子関係。1行 = 親品目1つに対する子品目1つとその員数 */
@@ -193,9 +195,9 @@ export interface SimulationState {
 
   eventLog: EventLogEntry[];
 
-  // 採番用シーケンス
+  // 採番用シーケンス。PLANNED_ORDERはMRP実行のたびに全削除・全再生成される揮発データ
+  // （v5-spec.md §6.2）であり、番号もrunMRP()内でPLO-001から採番し直すため、ここには持たない
   nextSoSeq: number;
-  nextPloSeq: number;
   nextMoSeq: number;
   nextPoSeq: number;
   nextTxnSeq: number;

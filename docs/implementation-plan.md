@@ -28,7 +28,7 @@
 |---|---|---|
 | 0 | プロジェクト初期化（本書§0） | — |
 | 1 | 型定義（`types.ts`）・初期マスタデータ（木製イス、`masterData.ts`） | design.md §4、v5-spec.md §1.1・§4 |
-| 2 | ドメインロジック本体（8モジュール） | design.md §8、v5-spec.md §6・§7 |
+| 2 | ドメインロジック本体（9モジュール） | design.md §8、v5-spec.md §6・§7 |
 | 3 | reducer・16 action種別の実装 | design.md §7 |
 | 4 | 自動テスト（TC-01〜18、TC-E1〜3、複数受注演習） | v5-spec.md §9、design.md §6 |
 | 5 | 画面実装（共通シェル・7ドメイン画面・分析2画面・プロセス連携図） | design.md §5 |
@@ -41,25 +41,46 @@ Phase 0〜6を次回以降のセッションのスコープとする。Phase 7�
 
 ## 2. Phase 2（ドメインロジック）の実装順序と依存関係
 
-BOM展開・MRPが他の全ドメインの前提になるため、以下の順で実装する（後続ほど前段のモジュールに依存する）。
+BOM展開・MRPが他の全ドメインの前提になるため、以下の順で実装した（後続ほど前段のモジュールに依存する。
+実装時に判明した依存関係の都合上、`pegging.ts`は`salesOrder.ts`より先に実装した）。
 
-1. `salesOrder.ts` — 受注登録・納期回答・取消（v5-spec.md §6.1）。取消はEXT-2/3のカスケードを含むため、
-   このモジュールは`mrp.ts`（ペグ先探索）に依存する形で最後に実装してもよい
-2. `mrp.ts` — `runMRP()`/`explode()`（v5-spec.md §7.1、design.md EXT-1の需要ソート順を実装）。
-   オーダ確定（Firm）処理（`PLANNED_ORDER`→`MFG_ORDER`/`PURCHASE_ORDER`/`WORK_INSTRUCTION`生成）もここに含める
+1. `pegging.ts` — `pegKey()`/`traceFromOrder()`（v5-spec.md §7.4）。`salesOrder.ts`の取消カスケードが
+   これに依存するため先に実装する
+2. `mrp.ts` — `runMRP()`/`explode()`/`firmAllPlannedOrders()`（v5-spec.md §7.1、design.md EXT-1・EXT-6・EXT-9）
 3. `procurement.ts` — 仕入先納期回答・入荷計上（v5-spec.md §6.5、design.md EXT-4のガード）
-4. `production.ts` — 工程着手・完了・バックフラッシュ（v5-spec.md §7.3、投入数ベースの消費）
-5. `shipment.ts` — 引当・出荷可否判定・出荷実績（v5-spec.md §7.2）
-6. `pegging.ts` — `traceFromOrder()`（v5-spec.md §7.4）
+4. `shipment.ts` — 引当・出荷可否判定・出荷実績・`shippableQty()`（v5-spec.md §7.2、design.md EXT-5・DEV-3）。
+   `production.ts`のバックフラッシュが`shippableQty()`に依存するため先に実装する
+5. `production.ts` — 工程着手・完了・バックフラッシュ（v5-spec.md §7.3、design.md EXT-10）
+6. `salesOrder.ts` — 受注登録・納期回答・取消（v5-spec.md §6.1、design.md EXT-2・EXT-3・EXT-7）
 7. `schedule.ts` — `checkSchedule()`/`unmetDemand()`（v5-spec.md §7.5）
-8. `kpi.ts` — v5-spec.md §10の12指標
+8. `inventory.ts` — 棚卸調整（v5-spec.md UC-17）。8モジュールでは在庫調整の置き場所が無いことが実装中に
+   判明し追加した
+9. `kpi.ts` — v5-spec.md §10の12指標（design.md EXT-11・EXT-12）
 
 各モジュールは「呼び出し側が渡した状態を直接書き換える」設計とし、`reducer.ts`側で`structuredClone`してから
 渡す（CLAUDE.md記載の方針）。
 
+**実装中に見つかった主な修正**（詳細はdesign.md参照）：
+- `pegging.ts`のペグ鎖の遡り方を、v5-spec.md §7.4疑似コードどおり「オーダ自身の`ploNo`」で辿るよう修正
+  （実装当初は誤って`moNo`/`poNo`で辿っていた）
+- 出荷の引当量を「受注残と出荷可能量の少ない方」に修正（design.md DEV-3。当初は受注残の全量を要求しており、
+  TC-15の一部出荷シナリオが成立しなかった）
+- KPI「計画達成率」「直行率」を末端の受注確定オーダに限定する集計へ修正（design.md EXT-12。中間のサブアセンブリ
+  まで含めるとTC-17の期待値を再現できなかった）
+
 ---
 
 ## 3. Phase 4（自動テスト）の進め方
+
+**Phase 2の時点で先取りした範囲**：各モジュールの単体テスト（`domain/*.test.ts`、37件）は、TC-02〜TC-09・
+TC-11・TC-12・TC-15〜TC-18・TC-E1・TC-E2相当のシナリオをすでにモジュール単位で検証済み。Phase 4では、
+これらを維持しつつ次の残課題に対応する。
+
+- TC-01（マスタ初期化の行数検証。design.md DEV-1によりPARTNERが14行相当に分かれる点を明記した上でテスト化）
+- TC-10・TC-13・TC-14・TC-E3（未実施）
+- 複数受注演習（TC-M1〜）の新設
+- 現状は複数の`.test.ts`に分散して検証している一連の流れを、`v5-spec.md`のTC番号に対応付けた通しテストとして
+  整理し直すか判断する（モジュール単位のテストのまま維持するか、統合テストファイルを別途起こすか）
 
 1. `v5-spec.md` §9.3のTC-01〜TC-18を、各ドメインモジュールの`*.test.ts`に期待値付きでそのまま書き起こす
 2. `v5-spec.md` §9.5のTC-E1〜TC-E3（納期遅延の例外系）を同様に書き起こす
