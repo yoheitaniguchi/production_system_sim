@@ -70,9 +70,11 @@ function ProductionPanel({ state, dispatch }: ProductionPanelProps) {
                   </tr>
                 </thead>
                 <tbody>
-                  {steps.map((wi) => {
+                  {steps.map((wi, idx) => {
                     const draft = draftFor(wi.moNo, wi.stepNo, wi.inputQty);
                     const draftInvalid = draft.goodQty + draft.scrapQty !== wi.inputQty;
+                    const prevStep = idx > 0 ? steps[idx - 1] : undefined;
+                    const readyToStart = !prevStep || prevStep.status === "DONE";
                     return (
                       <tr key={`${wi.moNo}-${wi.stepNo}`}>
                         <td>{wi.stepNo}</td>
@@ -84,15 +86,21 @@ function ProductionPanel({ state, dispatch }: ProductionPanelProps) {
                         <td>{wi.actualEndDay != null ? `D+${wi.actualEndDay}` : "—"}</td>
                         <td>{wi.status}</td>
                         <td className="panel__actions">
-                          {wi.status === "WAIT" && (
+                          {wi.status === "WAIT" && readyToStart && (
                             <button
                               type="button"
+                              className="panel__btn--primary"
                               onClick={() =>
                                 dispatch({ type: "WI_START", payload: { moNo: wi.moNo, stepNo: wi.stepNo } })
                               }
                             >
                               着手
                             </button>
+                          )}
+                          {wi.status === "WAIT" && !readyToStart && (
+                            <span title={`前工程（工程${prevStep?.stepNo}）が完了するまで着手できません`}>
+                              前工程待ち
+                            </span>
                           )}
                           {wi.status === "WIP" && (
                             <>
@@ -122,6 +130,7 @@ function ProductionPanel({ state, dispatch }: ProductionPanelProps) {
                               </label>
                               <button
                                 type="button"
+                                className={draftInvalid ? undefined : "panel__btn--primary"}
                                 disabled={draftInvalid}
                                 title={draftInvalid ? `良品数＋不良数は投入数（${wi.inputQty}）と一致させてください` : undefined}
                                 onClick={() =>

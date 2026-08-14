@@ -40,6 +40,18 @@ export function startStep(state: SimulationState, moNo: string, stepNo: number, 
   if (!wi) throw new ProductionError(`作業指示が見つかりません: ${moNo} 工程${stepNo}`);
   if (wi.status !== "WAIT") throw new ProductionError(`未着手（WAIT）以外は着手できません: ${moNo} 工程${stepNo}`);
 
+  // 前工程が完了していないと投入数が確定しない（v5-spec.md §7.3 投入数の決定ルール）ため、
+  // 工順の順序どおりにしか着手できないようにガードする
+  const steps = stepsOf(state, mo.itemId);
+  const stepIdx = steps.indexOf(stepNo);
+  if (stepIdx > 0) {
+    const prevStepNo = steps[stepIdx - 1];
+    const prevWi = state.workInstructions.find((w) => w.moNo === moNo && w.stepNo === prevStepNo);
+    if (!prevWi || prevWi.status !== "DONE") {
+      throw new ProductionError(`前工程（工程${prevStepNo}）が完了するまで着手できません: ${moNo} 工程${stepNo}`);
+    }
+  }
+
   if (stepNo === firstStepNo(state, mo.itemId)) {
     if (mo.status !== "RELEASED") {
       throw new ProductionError(`発行済（RELEASED）以外は第1工程を着手できません: ${moNo}`);

@@ -230,9 +230,25 @@ button {
   font-family: inherit;
   cursor: pointer;
   color: var(--color-text);
-  background: var(--color-surface);
-  border: 1px solid var(--border);
+  background: var(--bg-subtle);
+  border: 1px solid var(--color-accent);
   border-radius: 6px;
+  padding: 0.3rem 0.6rem;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.panel__btn--primary {
+  background: var(--color-accent);
+  color: var(--color-accent-contrast);
+  border-color: var(--color-accent);
+}
+
+.panel__btn--primary:hover:not(:disabled) {
+  filter: brightness(1.1);
 }
 
 input,
@@ -350,6 +366,19 @@ textarea {
   border: 1px solid var(--border);
   padding: 0.35rem 0.5rem;
   text-align: left;
+}
+
+.panel__table-scroll {
+  overflow-x: auto;
+  max-width: 100%;
+}
+
+.panel__table-scroll .panel__table th:last-child,
+.panel__table-scroll .panel__table td:last-child {
+  position: sticky;
+  right: 0;
+  background: var(--color-surface);
+  box-shadow: -2px 0 4px rgba(0, 0, 0, 0.12);
 }
 
 .panel__empty {

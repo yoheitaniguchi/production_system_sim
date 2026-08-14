@@ -97,6 +97,22 @@ describe("startStep / completeStep（v5-spec.md §7.3）", () => {
     expect(() => completeStep(state, saOrder.moNo, 10, 8, 1, 13)).toThrow(ProductionError);
   });
 
+  it("前工程が完了していないと次工程には着手できない（未完了のまま投入数0で完成入庫されるのを防ぐ）", () => {
+    const { state } = setupFirmOrder(10);
+    state.stocks.push(
+      { itemId: ITEM_IDS.SA_SEAT, onHand: 10, allocated: 0 },
+      { itemId: ITEM_IDS.PT_LEG, onHand: 40, allocated: 0 },
+      { itemId: ITEM_IDS.PT_SCREW, onHand: 80, allocated: 0 },
+    );
+    const fgOrder = state.mfgOrders.find((mo) => mo.itemId === ITEM_IDS.FG_CHAIR)!;
+    releaseMfgOrder(state, fgOrder.moNo);
+    startStep(state, fgOrder.moNo, 10, 13);
+    // 工程10がWIPのまま、工程20（投入数0）へ先に着手しようとするとエラーになる
+    expect(() => startStep(state, fgOrder.moNo, 20, 13)).toThrow(ProductionError);
+    const step20 = state.workInstructions.find((wi) => wi.moNo === fgOrder.moNo && wi.stepNo === 20)!;
+    expect(step20.status).toBe("WAIT");
+  });
+
   it("TC-E1〜E3: 木板の納期回答が遅れて警告が出たまま製造着手を試みると、部品が無いためHOLDになる", () => {
     const { state } = setupFirmOrder(10);
     const rmPo = state.purchaseOrders.find((p) => p.itemId === ITEM_IDS.RM_BOARD)!;
