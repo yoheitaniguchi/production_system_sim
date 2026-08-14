@@ -22,6 +22,17 @@ function LotTracePanel({ state }: LotTracePanelProps) {
   const backward = selectedLotNo ? traceBackward(state, selectedLotNo) : [];
   const forward = selectedLotNo ? traceForward(state, selectedLotNo) : [];
 
+  const selectedIndex = options.findIndex((lot) => lot.lotNo === selectedLotNo);
+  const goToOffset = (offset: number) => {
+    if (options.length === 0) return;
+    const baseIndex = selectedIndex === -1 ? 0 : selectedIndex;
+    const nextIndex = baseIndex + offset;
+    if (nextIndex < 0 || nextIndex >= options.length) return;
+    setSelectedLotNo(options[nextIndex].lotNo);
+  };
+  const hasPrev = selectedIndex > 0;
+  const hasNext = selectedIndex !== -1 && selectedIndex < options.length - 1;
+
   return (
     <div className="panel">
       <h2>ロット追跡</h2>
@@ -38,6 +49,12 @@ function LotTracePanel({ state }: LotTracePanelProps) {
             ))}
           </select>
         </label>
+        <button type="button" onClick={() => goToOffset(-1)} disabled={!hasPrev}>
+          前のロット
+        </button>
+        <button type="button" onClick={() => goToOffset(1)} disabled={!hasNext}>
+          次のロット
+        </button>
       </form>
 
       {selectedLot ? (
