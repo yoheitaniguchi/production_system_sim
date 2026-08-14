@@ -87,6 +87,7 @@ function ProductionPanel({ state, dispatch }: ProductionPanelProps) {
                           {wi.status === "WAIT" && (
                             <button
                               type="button"
+                              className="panel__btn--primary"
                               onClick={() =>
                                 dispatch({ type: "WI_START", payload: { moNo: wi.moNo, stepNo: wi.stepNo } })
                               }
@@ -122,6 +123,7 @@ function ProductionPanel({ state, dispatch }: ProductionPanelProps) {
                               </label>
                               <button
                                 type="button"
+                                className={draftInvalid ? undefined : "panel__btn--primary"}
                                 disabled={draftInvalid}
                                 title={draftInvalid ? `良品数＋不良数は投入数（${wi.inputQty}）と一致させてください` : undefined}
                                 onClick={() =>

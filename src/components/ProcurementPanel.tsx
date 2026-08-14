@@ -18,86 +18,89 @@ function ProcurementPanel({ state, dispatch }: ProcurementPanelProps) {
     <div className="panel">
       <h2>発注</h2>
 
-      <table className="panel__table">
-        <thead>
-          <tr>
-            <th>購買オーダ番号</th>
-            <th>ペグ先</th>
-            <th>仕入先</th>
-            <th>品目</th>
-            <th>数量</th>
-            <th>発注日</th>
-            <th>希望納期</th>
-            <th>回答納期</th>
-            <th>入荷済数</th>
-            <th>状態</th>
-            <th>操作</th>
-          </tr>
-        </thead>
-        <tbody>
-          {state.purchaseOrders.length === 0 ? (
+      <div className="panel__table-scroll">
+        <table className="panel__table">
+          <thead>
             <tr>
-              <td colSpan={11} className="panel__empty">
-                購買オーダはありません。計画オーダを確定してください。
-              </td>
+              <th>購買オーダ番号</th>
+              <th>ペグ先</th>
+              <th>仕入先</th>
+              <th>品目</th>
+              <th>数量</th>
+              <th>発注日</th>
+              <th>希望納期</th>
+              <th>回答納期</th>
+              <th>入荷済数</th>
+              <th>状態</th>
+              <th>操作</th>
             </tr>
-          ) : (
-            state.purchaseOrders.map((po) => {
-              const promisedDay = po.confirmDay ?? po.dueDay;
-              const canReceive = po.status === "ACKED" || po.status === "PARTIAL";
-              return (
-                <tr key={po.poNo}>
-                  <td>{po.poNo}</td>
-                  <td>{po.pegTo}</td>
-                  <td>{supplierName(po.supplierId)}</td>
-                  <td>{itemName(po.itemId)}</td>
-                  <td>{po.qty}</td>
-                  <td>D+{po.orderDay}</td>
-                  <td>D+{po.dueDay}</td>
-                  <td>{po.confirmDay != null ? `D+${po.confirmDay}` : "—"}</td>
-                  <td>{po.receivedQty}</td>
-                  <td>{po.status}</td>
-                  <td className="panel__actions">
-                    {po.status === "ORDERED" && (
-                      <>
-                        <input
-                          type="number"
-                          className="panel__inline-input"
-                          value={confirmDayDrafts[po.poNo] ?? po.dueDay}
-                          onChange={(e) =>
-                            setConfirmDayDrafts((prev) => ({ ...prev, [po.poNo]: Number(e.target.value) }))
-                          }
-                        />
+          </thead>
+          <tbody>
+            {state.purchaseOrders.length === 0 ? (
+              <tr>
+                <td colSpan={11} className="panel__empty">
+                  購買オーダはありません。計画オーダを確定してください。
+                </td>
+              </tr>
+            ) : (
+              state.purchaseOrders.map((po) => {
+                const promisedDay = po.confirmDay ?? po.dueDay;
+                const canReceive = po.status === "ACKED" || po.status === "PARTIAL";
+                return (
+                  <tr key={po.poNo}>
+                    <td>{po.poNo}</td>
+                    <td>{po.pegTo}</td>
+                    <td>{supplierName(po.supplierId)}</td>
+                    <td>{itemName(po.itemId)}</td>
+                    <td>{po.qty}</td>
+                    <td>D+{po.orderDay}</td>
+                    <td>D+{po.dueDay}</td>
+                    <td>{po.confirmDay != null ? `D+${po.confirmDay}` : "—"}</td>
+                    <td>{po.receivedQty}</td>
+                    <td>{po.status}</td>
+                    <td className="panel__actions">
+                      {po.status === "ORDERED" && (
+                        <>
+                          <input
+                            type="number"
+                            className="panel__inline-input"
+                            value={confirmDayDrafts[po.poNo] ?? po.dueDay}
+                            onChange={(e) =>
+                              setConfirmDayDrafts((prev) => ({ ...prev, [po.poNo]: Number(e.target.value) }))
+                            }
+                          />
+                          <button
+                            type="button"
+                            onClick={() =>
+                              dispatch({
+                                type: "PO_ACK",
+                                payload: { poNo: po.poNo, confirmDay: confirmDayDrafts[po.poNo] ?? po.dueDay },
+                              })
+                            }
+                          >
+                            納期回答
+                          </button>
+                        </>
+                      )}
+                      {canReceive && (
                         <button
                           type="button"
-                          onClick={() =>
-                            dispatch({
-                              type: "PO_ACK",
-                              payload: { poNo: po.poNo, confirmDay: confirmDayDrafts[po.poNo] ?? po.dueDay },
-                            })
-                          }
+                          className={state.day >= promisedDay ? "panel__btn--primary" : undefined}
+                          disabled={state.day < promisedDay}
+                          title={state.day < promisedDay ? `入荷予定日 D+${promisedDay} 以降に計上できます` : undefined}
+                          onClick={() => dispatch({ type: "PO_RECEIVE", payload: { poNo: po.poNo } })}
                         >
-                          納期回答
+                          入荷計上
                         </button>
-                      </>
-                    )}
-                    {canReceive && (
-                      <button
-                        type="button"
-                        disabled={state.day < promisedDay}
-                        title={state.day < promisedDay ? `入荷予定日 D+${promisedDay} 以降に計上できます` : undefined}
-                        onClick={() => dispatch({ type: "PO_RECEIVE", payload: { poNo: po.poNo } })}
-                      >
-                        入荷計上
-                      </button>
-                    )}
-                  </td>
-                </tr>
-              );
-            })
-          )}
-        </tbody>
-      </table>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })
+            )}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }
