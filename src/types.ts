@@ -13,6 +13,16 @@ export interface ItemMaster {
   leadTimeDays: number;
   /** 発注先の仕入先（BUY品目のみ。design.md EXT-9：v5仕様書はITEMとPARTNERの対応を規定していない） */
   defaultSupplierId?: string;
+  /** 購入単価（BUY品目のみ。v5-spec.md §11.2の原価積上げで材料費として使う） */
+  purchasePrice?: number;
+  /** 売価（受注される品目のみ。v5-spec.md §11.2の受注残高（金額）換算で使う） */
+  salesPrice?: number;
+}
+
+/** 作業区マスタ（v5-spec.md §11.2）。原価積上げの加工費計算に使う賃率を持つ */
+export interface WorkCenter {
+  workCenter: string;
+  ratePerHour: number;
 }
 
 /** BOMの親子関係。1行 = 親品目1つに対する子品目1つとその員数 */
@@ -181,6 +191,7 @@ export interface SimulationState {
   routingSteps: RoutingStep[];
   customers: Customer[];
   suppliers: Supplier[];
+  workCenters: WorkCenter[];
 
   // トランザクション・状態を持つテーブル
   salesOrders: SalesOrder[];

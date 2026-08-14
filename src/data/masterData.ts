@@ -1,5 +1,5 @@
 // 初期マスタデータ（docs/v5-spec.md §1.1：木製イス）
-import type { BomLine, Customer, ItemMaster, RoutingStep, Supplier } from "../types";
+import type { BomLine, Customer, ItemMaster, RoutingStep, Supplier, WorkCenter } from "../types";
 
 export const ITEM_IDS = {
   FG_CHAIR: "FG-100",
@@ -21,9 +21,10 @@ export const SUPPLIER_IDS = {
   PT_SCREW: "SUP-PT500",
 } as const;
 
-// defaultSupplierId は design.md EXT-9（v5仕様書はITEMとPARTNERの対応を規定していない）に基づく追加項目
+// defaultSupplierId は design.md EXT-9（v5仕様書はITEMとPARTNERの対応を規定していない）に基づく追加項目。
+// purchasePrice・salesPriceは design.md EXT-15（v5-spec.md §11.2の原価積上げ例と一致する値を採用）に基づく追加項目
 export const initialItems: ItemMaster[] = [
-  { itemId: ITEM_IDS.FG_CHAIR, name: "木製イス", makeBuy: "MAKE", leadTimeDays: 2 },
+  { itemId: ITEM_IDS.FG_CHAIR, name: "木製イス", makeBuy: "MAKE", leadTimeDays: 2, salesPrice: 6000 },
   { itemId: ITEM_IDS.SA_SEAT, name: "座面ASSY", makeBuy: "MAKE", leadTimeDays: 1 },
   {
     itemId: ITEM_IDS.RM_BOARD,
@@ -31,6 +32,7 @@ export const initialItems: ItemMaster[] = [
     makeBuy: "BUY",
     leadTimeDays: 5,
     defaultSupplierId: SUPPLIER_IDS.RM_BOARD,
+    purchasePrice: 800,
   },
   {
     itemId: ITEM_IDS.PT_LEG,
@@ -38,6 +40,7 @@ export const initialItems: ItemMaster[] = [
     makeBuy: "BUY",
     leadTimeDays: 3,
     defaultSupplierId: SUPPLIER_IDS.PT_LEG,
+    purchasePrice: 250,
   },
   {
     itemId: ITEM_IDS.PT_SCREW,
@@ -45,6 +48,7 @@ export const initialItems: ItemMaster[] = [
     makeBuy: "BUY",
     leadTimeDays: 3,
     defaultSupplierId: SUPPLIER_IDS.PT_SCREW,
+    purchasePrice: 20,
   },
 ];
 
@@ -73,4 +77,11 @@ export const initialSuppliers: Supplier[] = [
   { supplierId: SUPPLIER_IDS.RM_BOARD, name: "木板仕入先" },
   { supplierId: SUPPLIER_IDS.PT_LEG, name: "脚仕入先" },
   { supplierId: SUPPLIER_IDS.PT_SCREW, name: "ネジ仕入先" },
+];
+
+// 賃率はv5-spec.md §11.2の計算例（賃率2,000円/時）に合わせ、3作業区とも同一値とする
+export const initialWorkCenters: WorkCenter[] = [
+  { workCenter: WORK_CENTERS.CUT, ratePerHour: 2000 },
+  { workCenter: WORK_CENTERS.ASM, ratePerHour: 2000 },
+  { workCenter: WORK_CENTERS.INS, ratePerHour: 2000 },
 ];

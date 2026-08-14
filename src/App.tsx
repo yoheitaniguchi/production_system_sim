@@ -2,6 +2,7 @@ import { useLayoutEffect, useReducer, useState } from "react";
 import AlertBar from "./components/AlertBar";
 import BurgerMenu from "./components/BurgerMenu";
 import ClockControls from "./components/ClockControls";
+import CostPanel from "./components/CostPanel";
 import EventLogPanel from "./components/EventLogPanel";
 import InventoryPanel from "./components/InventoryPanel";
 import KpiDashboard from "./components/KpiDashboard";
@@ -28,6 +29,7 @@ const TABS = [
   { id: "shipment", label: "出荷", Component: ShipmentPanel },
   { id: "master-data", label: "マスタ", Component: MasterDataPage },
   { id: "kpi", label: "KPI", Component: KpiDashboard },
+  { id: "cost", label: "原価", Component: CostPanel },
   { id: "pegging", label: "ペギング追跡", Component: PeggingTracePanel },
   { id: "process-flow", label: "プロセス連携図", Component: ProcessFlowDiagram },
 ] as const;
