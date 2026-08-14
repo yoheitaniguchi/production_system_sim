@@ -62,9 +62,38 @@ function requireNumber(row: Record<string, unknown>, key: string, where: string)
   return value;
 }
 
-function optionalNumber(row: Record<string, unknown>, key: string, where: string): number | undefined {
+/**
+ * CRUD側（masterData.ts）が課している数値の範囲制約を、JSON取り込み時にも同じ強さで課す。
+ * ここが緩いと、負のqtyPer等がCRUDでは拒否される値のままインポートだけを素通りし、
+ * production.tsのバックフラッシュで在庫が減るはずが増える、といった実害につながる（design.md EXT-26）。
+ */
+function requireNonNegative(row: Record<string, unknown>, key: string, where: string): number {
+  const value = requireNumber(row, key, where);
+  if (value < 0) throw new MasterIOError(`${where}: ${key} は0以上である必要があります`);
+  return value;
+}
+
+function optionalNonNegative(row: Record<string, unknown>, key: string, where: string): number | undefined {
   if (row[key] === undefined || row[key] === null) return undefined;
-  return requireNumber(row, key, where);
+  return requireNonNegative(row, key, where);
+}
+
+function requireNonNegativeInt(row: Record<string, unknown>, key: string, where: string): number {
+  const value = requireNonNegative(row, key, where);
+  if (!Number.isInteger(value)) throw new MasterIOError(`${where}: ${key} は整数である必要があります`);
+  return value;
+}
+
+function requirePositive(row: Record<string, unknown>, key: string, where: string): number {
+  const value = requireNumber(row, key, where);
+  if (value <= 0) throw new MasterIOError(`${where}: ${key} は正の数である必要があります`);
+  return value;
+}
+
+function requirePositiveInt(row: Record<string, unknown>, key: string, where: string): number {
+  const value = requirePositive(row, key, where);
+  if (!Number.isInteger(value)) throw new MasterIOError(`${where}: ${key} は整数である必要があります`);
+  return value;
 }
 
 function optionalString(row: Record<string, unknown>, key: string, where: string): string | undefined {
@@ -105,10 +134,10 @@ export function parseMasterSnapshot(json: string): MasterSnapshot {
       itemId: requireString(record, "itemId", where),
       name: requireString(record, "name", where),
       makeBuy,
-      leadTimeDays: requireNumber(record, "leadTimeDays", where),
+      leadTimeDays: requireNonNegativeInt(record, "leadTimeDays", where),
       defaultSupplierId: makeBuy === "BUY" ? optionalString(record, "defaultSupplierId", where) : undefined,
-      purchasePrice: makeBuy === "BUY" ? optionalNumber(record, "purchasePrice", where) : undefined,
-      salesPrice: optionalNumber(record, "salesPrice", where),
+      purchasePrice: makeBuy === "BUY" ? optionalNonNegative(record, "purchasePrice", where) : undefined,
+      salesPrice: optionalNonNegative(record, "salesPrice", where),
     };
   });
 
@@ -118,7 +147,7 @@ export function parseMasterSnapshot(json: string): MasterSnapshot {
     return {
       parentItemId: requireString(record, "parentItemId", where),
       childItemId: requireString(record, "childItemId", where),
-      qtyPer: requireNumber(record, "qtyPer", where),
+      qtyPer: requirePositive(record, "qtyPer", where),
     };
   });
 
@@ -127,9 +156,9 @@ export function parseMasterSnapshot(json: string): MasterSnapshot {
     const record = requireRow(row, where);
     return {
       itemId: requireString(record, "itemId", where),
-      stepNo: requireNumber(record, "stepNo", where),
+      stepNo: requirePositiveInt(record, "stepNo", where),
       workCenter: requireString(record, "workCenter", where),
-      stdTimeMin: requireNumber(record, "stdTimeMin", where),
+      stdTimeMin: requireNonNegative(record, "stdTimeMin", where),
     };
   });
 
@@ -138,7 +167,7 @@ export function parseMasterSnapshot(json: string): MasterSnapshot {
     const record = requireRow(row, where);
     return {
       workCenter: requireString(record, "workCenter", where),
-      ratePerHour: requireNumber(record, "ratePerHour", where),
+      ratePerHour: requireNonNegative(record, "ratePerHour", where),
     };
   });
 

@@ -45,6 +45,60 @@ describe("スキーマ検証", () => {
   });
 });
 
+describe("数値の範囲検証（CRUD側と同じ強さで課す）", () => {
+  // CRUD経路（domain/masterData.ts）が拒否する値が、JSON取り込みだけを素通りしないことを確認する。
+  // 特にqtyPer<=0はproduction.tsのバックフラッシュで「在庫が減るはずが増える」実害に繋がるため重要
+  it("負の員数（qtyPer）を拒否する", () => {
+    const broken = { ...CHAIR_PRESET, bom: [{ ...CHAIR_PRESET.bom[0], qtyPer: -1 }] };
+    expect(() => parseMasterSnapshot(JSON.stringify(broken))).toThrow(/qtyPer は正の数/);
+  });
+
+  it("qtyPer=0を拒否する", () => {
+    const broken = { ...CHAIR_PRESET, bom: [{ ...CHAIR_PRESET.bom[0], qtyPer: 0 }] };
+    expect(() => parseMasterSnapshot(JSON.stringify(broken))).toThrow(/qtyPer は正の数/);
+  });
+
+  it("負の標準リードタイムを拒否する", () => {
+    const broken = { ...CHAIR_PRESET, items: [{ ...CHAIR_PRESET.items[0], leadTimeDays: -1 }] };
+    expect(() => parseMasterSnapshot(JSON.stringify(broken))).toThrow(/leadTimeDays は0以上/);
+  });
+
+  it("非整数の標準リードタイムを拒否する", () => {
+    const broken = { ...CHAIR_PRESET, items: [{ ...CHAIR_PRESET.items[0], leadTimeDays: 1.5 }] };
+    expect(() => parseMasterSnapshot(JSON.stringify(broken))).toThrow(/leadTimeDays は整数/);
+  });
+
+  it("負の購入単価・売価を拒否する", () => {
+    const negativePurchase = {
+      ...CHAIR_PRESET,
+      items: CHAIR_PRESET.items.map((i) => (i.itemId === ITEM_IDS.RM_BOARD ? { ...i, purchasePrice: -1 } : i)),
+    };
+    expect(() => parseMasterSnapshot(JSON.stringify(negativePurchase))).toThrow(/purchasePrice は0以上/);
+
+    const negativeSales = {
+      ...CHAIR_PRESET,
+      items: CHAIR_PRESET.items.map((i) => (i.itemId === ITEM_IDS.FG_CHAIR ? { ...i, salesPrice: -1 } : i)),
+    };
+    expect(() => parseMasterSnapshot(JSON.stringify(negativeSales))).toThrow(/salesPrice は0以上/);
+  });
+
+  it("工程順序（stepNo）が0以下・非整数の行を拒否する", () => {
+    const zero = { ...CHAIR_PRESET, routingSteps: [{ ...CHAIR_PRESET.routingSteps[0], stepNo: 0 }] };
+    expect(() => parseMasterSnapshot(JSON.stringify(zero))).toThrow(/stepNo は正の数/);
+
+    const fractional = { ...CHAIR_PRESET, routingSteps: [{ ...CHAIR_PRESET.routingSteps[0], stepNo: 1.5 }] };
+    expect(() => parseMasterSnapshot(JSON.stringify(fractional))).toThrow(/stepNo は整数/);
+  });
+
+  it("負の標準時間・賃率を拒否する", () => {
+    const negativeStdTime = { ...CHAIR_PRESET, routingSteps: [{ ...CHAIR_PRESET.routingSteps[0], stdTimeMin: -1 }] };
+    expect(() => parseMasterSnapshot(JSON.stringify(negativeStdTime))).toThrow(/stdTimeMin は0以上/);
+
+    const negativeRate = { ...CHAIR_PRESET, workCenters: [{ ...CHAIR_PRESET.workCenters[0], ratePerHour: -1 }] };
+    expect(() => parseMasterSnapshot(JSON.stringify(negativeRate))).toThrow(/ratePerHour は0以上/);
+  });
+});
+
 describe("業務的な整合性検証（all-or-nothing）", () => {
   it("主キーが重複する入力を拒否する", () => {
     const broken = { ...CHAIR_PRESET, items: [...CHAIR_PRESET.items, CHAIR_PRESET.items[0]] };
