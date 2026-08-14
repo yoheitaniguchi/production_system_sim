@@ -51,8 +51,11 @@ production_system_sim/
     ├── App.tsx             # 画面本体。タブ切り替えとreducerの保持のみを行う
     ├── types.ts            # ドメインの型定義（design.md §4：v5の13テーブルとの対応）
     ├── data/
-    │   └── masterData.ts   # 初期マスタデータ（design.md §1 S2：木製イス）
+    │   └── masterData.ts   # 初期マスタデータ＝既定プリセット（design.md §1 S2：木製イス、EXT-26）
     ├── domain/             # ドメインロジック本体（design.md §7〜§8）★最重要ディレクトリ
+    │   ├── masterData.ts     # マスタCRUD（v5-spec.md §3.7、design.md EXT-20〜EXT-24）
+    │   ├── masterIntegrity.ts # BOM循環・参照検査・健全性チェック（v5-spec.md §3.7 最小機能5、EXT-19/21/22）
+    │   ├── masterIO.ts       # マスタ一式のJSON入出力（design.md EXT-26）
     │   ├── mrp.ts            # MRP展開（v5-spec.md §7.1）
     │   ├── production.ts     # 工程着手・完了・バックフラッシュ（v5-spec.md §7.3）
     │   ├── procurement.ts    # 発注・納期回答・入荷計上（v5-spec.md §6.5）
@@ -79,8 +82,16 @@ production_system_sim/
         ├── ProductionPanel.tsx    # 工程：リリース・着手/完了（良品数・不良数）
         ├── InventoryPanel.tsx     # 在庫：現在庫・引当済・出荷可能量の3列
         ├── ShipmentPanel.tsx      # 出荷：引当（出荷指示）・出荷実績登録
-        ├── MasterDataPage.tsx     # マスタ：品目・BOM・工順・取引先・作業区
-        ├── EditableField.tsx      # マスタ画面用の編集可能フィールド
+        ├── MasterDataPage.tsx     # マスタ：レイアウトのみ。各テーブルはmaster/配下へ分割
+        ├── master/                # マスタCRUDのテーブル群（design.md §5）
+        │   ├── ItemMasterTable.tsx   # 品目（追加・編集・削除。コードは作成後不変）
+        │   ├── BomTable.tsx          # BOM（ツリー表示＋行の追加・削除。循環は登録時に拒否）
+        │   ├── RoutingTable.tsx      # 工順（BOP）。未完了オーダがある品目は構造変更不可
+        │   ├── WorkCenterTable.tsx   # 作業区
+        │   ├── PartnerTable.tsx      # 得意先／仕入先（partnerTypeで使い分け）
+        │   ├── MasterIOToolbar.tsx   # JSON入出力・既定プリセットに戻す
+        │   └── DeleteRowButton.tsx   # 参照中はdisabled＋理由をtitle表示
+        ├── EditableField.tsx      # マスタ画面用の編集可能フィールド（数値・テキスト・選択）
         ├── KpiDashboard.tsx       # 分析：KPIダッシュボード（組織目線/現場目線）
         ├── CostPanel.tsx          # 分析：原価（金額指標・品目別標準原価・オーダ別原価差異）
         ├── PeggingTracePanel.tsx  # 分析：ペギング追跡（受注→オーダ→実績）
@@ -96,7 +107,8 @@ production_system_sim/
 npm install
 npm run dev       # 開発サーバー起動
 npm run build     # 型チェック＋ビルド
-npm test          # vitestによる自動テスト実行（v5-spec.md §9 TC-01〜18・TC-E1〜3・複数受注演習を含む）
+npm test          # vitestによる自動テスト実行（v5-spec.md §9 TC-01〜18・TC-E1〜3・複数受注演習・
+                  # マスタCRUDのガード・4階層BOMの通し演習を含む）
 npm run preview   # build成果物をGitHub Pages相当のbaseパスで動作確認
 ```
 
@@ -117,34 +129,43 @@ npm run preview   # build成果物をGitHub Pages相当のbaseパスで動作確
 
 **Phase 0〜5（プロジェクト初期化・型定義/初期マスタデータ・ドメインロジック本体・reducer・自動テスト拡充・
 画面実装）に加え、`docs/implementation-plan.md` §5「Phase 7（先送り事項）」の全項目
-（自動再生の軽量代替案・Phase 2-A原価・演習ガイドD3・Phase 2-Bトレーサビリティ）も完了。**
+（自動再生の軽量代替案・Phase 2-A原価・演習ガイドD3・Phase 2-Bトレーサビリティ）も完了。
+さらに品目・BOM・工順（BOP）・作業区・取引先の自由登録（フルCRUD＋JSON入出力、design.md EXT-19〜EXT-27）も完了。**
 
 - `src/types.ts`：design.md §4の対応表どおり、v5仕様書の13テーブルをTypeScript型に落とした（`SimulationState`を含む）。
-  Phase 2-A/2-Bで`WorkCenter`・`Lot`・`LotGenealogy`と、`ItemMaster`/`StockTxn`への拡張フィールドを追加
+  Phase 2-A/2-Bで`WorkCenter`・`Lot`・`LotGenealogy`と、`ItemMaster`/`StockTxn`への拡張フィールドを追加。
+  マスタ自由登録で`MasterSnapshot`（JSON入出力・プリセット定義用）を追加
 - `src/data/masterData.ts`：v5-spec.md §1.1（木製イス）の品目5・BOM4行・工順3行・作業区3件。
-  顧客2件（design.md §6の複数受注演習用）・仕入先3件（BUY品目ごとに1件、`defaultSupplierId`で対応付け）
-- `src/domain/`：14モジュール（`pegging.ts`・`mrp.ts`・`procurement.ts`・`shipment.ts`・`production.ts`・
+  顧客2件（design.md §6の複数受注演習用）・仕入先3件（BUY品目ごとに1件、`defaultSupplierId`で対応付け）。
+  これらは`CHAIR_PRESET`として既定プリセットにまとめてあり、`createInitialState()`の戻り値は従来どおり
+- `src/domain/`：17モジュール（`pegging.ts`・`mrp.ts`・`procurement.ts`・`shipment.ts`・`production.ts`・
   `salesOrder.ts`・`schedule.ts`・`inventory.ts`・`kpi.ts`・`cost.ts`・`lot.ts`・`todayActions.ts`・
-  `exerciseGuide.ts`・`processFlow.ts`）＋`reducer.ts`（design.md §7の action一覧を実装。
-  `createInitialState()`・`simulationReducer()`）を実装済み
-- `src/domain/*.test.ts`：84件のテストで、v5-spec.md §9のTC-01〜18・TC-E1〜E3の全シナリオ、
+  `exerciseGuide.ts`・`processFlow.ts`・`masterData.ts`・`masterIntegrity.ts`・`masterIO.ts`）＋
+  `reducer.ts`（design.md §7の action一覧を実装。`createInitialState()`・`simulationReducer()`）を実装済み
+- `src/domain/*.test.ts`：137件のテストで、v5-spec.md §9のTC-01〜18・TC-E1〜E3の全シナリオ、
   reducerの委譲・不変性・エラーハンドリング・RESET時のマスタ保持、`processFlow.ts`のフロー判定、
   §11.2の原価計算例・§11.3のロット系譜（後方/前方追跡）を検証済み。design.md §6の複数受注演習も
-  TC-M1として`multiOrderExercise.test.ts`で検証済み
+  TC-M1として`multiOrderExercise.test.ts`で検証済み。マスタ自由登録は`masterData.test.ts`・
+  `masterIntegrity.test.ts`・`masterIO.test.ts`でガードを個別に、`multiLevelBom.test.ts`で
+  **4階層BOMをマスタ操作だけで組み立てて受注〜出荷まで通す**通し演習として検証済み
 - `src/App.tsx`：`useReducer`でreducerを保持し、共通シェル（`ClockControls`・`AlertBar`・`TodayActionsBar`・
   `EventLogPanel`）と、13個のタブ（受注／計画／発注／工程／在庫／出荷／マスタ／KPI／原価／ペギング追跡／
   ロット追跡／演習ガイド／プロセス連携図）を実装済み。各画面はPlaywrightでv5-spec.md TC-02〜19相当の
-  操作・§11.2/§11.3相当の操作を実際にブラウザで確認済み（ライト/ダーク両テーマ）
+  操作・§11.2/§11.3相当の操作を実際にブラウザで確認済み（ライト/ダーク両テーマ）。
+  マスタ自由登録も、4階層マスタのJSONインポート→受注〜出荷の通し操作・循環BOMの登録拒否・
+  参照中マスタの削除ブロックをブラウザで確認済み
 
 ## 次にやるべきこと（優先順）
 
-`docs/implementation-plan.md` §5「Phase 7（先送り事項）」は全項目完了した。次の一手は特に決まっていない
-ため、着手前にユーザーに優先順位を確認すること。候補：
+`docs/implementation-plan.md` §5「Phase 7（先送り事項）」とマスタ自由登録は全項目完了した。次の一手は
+特に決まっていないため、着手前にユーザーに優先順位を確認すること。候補：
 
 1. CI（既存ワークフローが全PRで正しく動作していることの継続的な確認）
 2. Phase 2-Bで簡略化した点（design.md EXT-18：STOCKの主キーは変更せずLOT/LOT_GENEALOGYを並行追加した）を
    踏まえ、より厳密な実装（STOCKの主キー変更を含む）へ発展させる必要性の検討
-3. その他、`docs/v5-spec.md` §11に記載のロードマップ上の拡張項目の検討
+3. マスタ自由登録で見送った点：品目コードの改名（EXT-24でカスケードを断念し「削除→再登録」に倒した）、
+   マスタのlocalStorage永続化、複数プリセットの同梱、演習ガイドのマスタ非依存化（EXT-27）
+4. その他、`docs/v5-spec.md` §11に記載のロードマップ上の拡張項目の検討
 
 ## 実装時に確認すべき設計判断（design.mdの要点）
 
@@ -154,13 +175,24 @@ npm run preview   # build成果物をGitHub Pages相当のbaseパスで動作確
   （design.md §7の action一覧）。「日を進める」ボタンに業務処理は紐付かない
 - **v5仕様書が未規定の点への追加決定（EXT-1〜12）**：MRP展開の需要処理順序、取消時のカスケード、
   取消ガードの厳密な判定基準、入荷計上のタイミング制約、納期回答の算出方法、KPIの集計対象など。詳細はdesign.md §3
+- **マスタ編集の「禁止」と「警告」の線引き（EXT-20）**：復旧不能・原因不明の停止を生むものだけを禁止する。
+  禁止＝BOM循環／工順ゼロの内製品目の計画オーダ確定／未完了オーダがある品目の工順の**構造**変更／
+  参照中マスタの削除／前提を満たさない区分変更。警告のみ＝仕掛中オーダがある品目のBOM編集（EXT-23）。
+  コード（品目・作業区・取引先）は作成後不変で、改名は削除→再登録（EXT-24）
 
 ## コーディング上の注意
 
 - ドメインロジックの関数群は、呼び出し側（`reducer.ts`）が渡した状態のクローンを直接書き換える設計にする
   （`reducer.ts`側で`structuredClone`してから渡す）。この層の外側（UI等）からは純粋関数として扱うこと
 - BOMの階層探索・所要量計算（MRP展開・バックフラッシュ）は`domain/mrp.ts`・`domain/production.ts`に集約する。
-  UI側でBOM階層を独自に辿るロジックを重複させないこと
+  UI側でBOM階層を独自に辿るロジックを重複させないこと（BOMツリー表示は`domain/masterIntegrity.ts`の
+  `buildBomIndex()`を使う）
+- **BOMを再帰的に辿るコードを新しく書くときは、必ず訪問済み集合または深さ上限を持たせること**
+  （design.md EXT-19）。マスタが自由に編集できるため循環したデータが入りうる。永続化が無いので、
+  無限再帰でブラウザが固まると演習内容がすべて失われる
+- **マスタ編集のガードは`domain/masterData.ts`に集約する**。UI側（`components/master/*`）は
+  `masterIntegrity.ts`の検査関数を「ボタンを無効化して理由を見せる」目的でのみ使い、
+  独自の判定ロジックを持たないこと
 - `docs/v5-spec.md` は原文のまま保持する一次資料であり、直接編集しない。v5仕様書自体への疑問・矛盾点が
   見つかった場合は`docs/design.md` §3（追加決定）に解釈を追記する形で解消する
 

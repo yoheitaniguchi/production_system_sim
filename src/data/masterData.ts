@@ -1,5 +1,9 @@
 // 初期マスタデータ（docs/v5-spec.md §1.1：木製イス）
-import type { BomLine, Customer, ItemMaster, RoutingStep, Supplier, WorkCenter } from "../types";
+//
+// マスタが自由に登録できるようになった後も、この木製イスは「既定プリセット」として維持する
+// （design.md EXT-26）。v5-spec.md §9のTC-01〜18・演習ガイド・既存の自動テストはすべて
+// このプリセットを前提にしており、createInitialState()の戻り値は従来どおりである。
+import type { BomLine, Customer, ItemMaster, MasterSnapshot, RoutingStep, Supplier, WorkCenter } from "../types";
 
 export const ITEM_IDS = {
   FG_CHAIR: "FG-100",
@@ -85,3 +89,14 @@ export const initialWorkCenters: WorkCenter[] = [
   { workCenter: WORK_CENTERS.ASM, ratePerHour: 2000 },
   { workCenter: WORK_CENTERS.INS, ratePerHour: 2000 },
 ];
+
+/** 木製イスの既定プリセット（design.md EXT-26）。「プリセットに戻す」とJSONエクスポートの基準 */
+export const CHAIR_PRESET: MasterSnapshot = {
+  version: 1,
+  items: initialItems,
+  bom: initialBom,
+  routingSteps: initialRoutingSteps,
+  workCenters: initialWorkCenters,
+  customers: initialCustomers,
+  suppliers: initialSuppliers,
+};

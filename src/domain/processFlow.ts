@@ -51,6 +51,13 @@ export const FLOWS: FlowDef[] = [
   { id: "master-shipment", from: "master", to: "shipment", label: "前提", static: true },
 ];
 
+/** masterData.tsの業務メッセージの行頭（エンティティ名）。マスタ操作の判定に使う */
+const MASTER_MESSAGE_PREFIXES = ["品目 ", "BOM ", "工順 ", "作業区 ", "得意先 ", "仕入先 ", "マスタを"];
+
+function isMasterMessage(message: string): boolean {
+  return MASTER_MESSAGE_PREFIXES.some((prefix) => message.startsWith(prefix));
+}
+
 export interface ActiveFlows {
   /** 直前の操作の業務メッセージ。まだ何も操作していなければnull */
   lastMessage: string | null;
@@ -77,6 +84,10 @@ export function computeActiveFlows(state: SimulationState): ActiveFlows {
   const msg = last.message;
   if (msg.startsWith("[エラー]")) {
     // 操作が失敗した場合は状態が変化していない可能性が高いため、フローはハイライトしない
+  } else if (isMasterMessage(msg)) {
+    // マスタCRUD（masterData.ts）の業務メッセージ。「〜を登録した」は受注・出荷実績のメッセージとも
+    // 部分一致しうるため、includesではなく行頭のエンティティ名で判定する
+    activeDomains.add("master");
   } else if (msg.includes("MRPを実行した")) {
     // runMRP()は受注残・現在庫・注文残・仕掛の4種類の供給/需要を同時に読むため、4本すべて動く
     addFlow("salesOrder-planning");

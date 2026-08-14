@@ -205,6 +205,20 @@ export interface EventLogEntry {
   tableDeltas: string[];
 }
 
+/**
+ * マスタ一式のスナップショット（design.md EXT-26）。JSON入出力とプリセット定義に使う。
+ * トランザクションは含まない（取り込み時は全トランザクションを初期化するため）。
+ */
+export interface MasterSnapshot {
+  version: 1;
+  items: ItemMaster[];
+  bom: BomLine[];
+  routingSteps: RoutingStep[];
+  workCenters: WorkCenter[];
+  customers: Customer[];
+  suppliers: Supplier[];
+}
+
 export interface SimulationState {
   day: number;
 

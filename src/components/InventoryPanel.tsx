@@ -10,8 +10,14 @@ interface InventoryPanelProps {
 }
 
 function InventoryPanel({ state, dispatch }: InventoryPanelProps) {
-  const [itemId, setItemId] = useState(state.items[0]?.itemId ?? "");
+  const [selectedItemId, setSelectedItemId] = useState(state.items[0]?.itemId ?? "");
   const [deltaQty, setDeltaQty] = useState(0);
+
+  // マスタは自由に編集できるため、選択中の品目が削除されていることがある。
+  // その場合は先頭の品目へ読み替える（存在しないIDのままdispatchしない）
+  const itemId = state.items.some((i) => i.itemId === selectedItemId)
+    ? selectedItemId
+    : (state.items[0]?.itemId ?? "");
 
   const handleAdjust = (e: React.FormEvent) => {
     e.preventDefault();
@@ -27,7 +33,7 @@ function InventoryPanel({ state, dispatch }: InventoryPanelProps) {
       <form className="panel__form" onSubmit={handleAdjust}>
         <label>
           品目
-          <select value={itemId} onChange={(e) => setItemId(e.target.value)}>
+          <select value={itemId} onChange={(e) => setSelectedItemId(e.target.value)}>
             {state.items.map((i) => (
               <option key={i.itemId} value={i.itemId}>
                 {i.name}（{i.itemId}）

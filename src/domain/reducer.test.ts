@@ -136,8 +136,8 @@ describe("simulationReducer", () => {
   it("RESETはマスタの編集を保持したままトランザクションのみ初期化する", () => {
     let state = createInitialState();
     state = dispatch(state, {
-      type: "MASTER_UPDATE_ITEM_LEAD_TIME",
-      payload: { itemId: ITEM_IDS.RM_BOARD, leadTimeDays: 3 },
+      type: "MASTER_UPDATE_ITEM",
+      payload: { itemId: ITEM_IDS.RM_BOARD, patch: { leadTimeDays: 3 } },
     });
     state = dispatch(state, {
       type: "SO_CREATE",
@@ -156,16 +156,16 @@ describe("simulationReducer", () => {
   it("MASTER_UPDATE系はBOM員数・工順標準時間・取引先名称を更新できる", () => {
     let state = createInitialState();
     state = dispatch(state, {
-      type: "MASTER_UPDATE_BOM_QTY_PER",
-      payload: { parentItemId: ITEM_IDS.FG_CHAIR, childItemId: ITEM_IDS.PT_LEG, qtyPer: 5 },
+      type: "MASTER_UPDATE_BOM_LINE",
+      payload: { parentItemId: ITEM_IDS.FG_CHAIR, childItemId: ITEM_IDS.PT_LEG, patch: { qtyPer: 5 } },
     });
     expect(
       state.bom.find((b) => b.parentItemId === ITEM_IDS.FG_CHAIR && b.childItemId === ITEM_IDS.PT_LEG)?.qtyPer,
     ).toBe(5);
 
     state = dispatch(state, {
-      type: "MASTER_UPDATE_ROUTING_STD_TIME",
-      payload: { itemId: ITEM_IDS.FG_CHAIR, stepNo: 10, stdTimeMin: 40 },
+      type: "MASTER_UPDATE_ROUTING_STEP",
+      payload: { itemId: ITEM_IDS.FG_CHAIR, stepNo: 10, patch: { stdTimeMin: 40 } },
     });
     expect(
       state.routingSteps.find((s) => s.itemId === ITEM_IDS.FG_CHAIR && s.stepNo === 10)?.stdTimeMin,

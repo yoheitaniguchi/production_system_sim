@@ -9,9 +9,18 @@ interface SalesOrderPanelProps {
 }
 
 function SalesOrderPanel({ state, dispatch }: SalesOrderPanelProps) {
-  const [customerId, setCustomerId] = useState(state.customers[0]?.customerId ?? "");
-  const [itemId, setItemId] = useState(state.items[0]?.itemId ?? "");
+  const [selectedCustomerId, setSelectedCustomerId] = useState(state.customers[0]?.customerId ?? "");
+  const [selectedItemId, setSelectedItemId] = useState(state.items[0]?.itemId ?? "");
   const [qty, setQty] = useState(1);
+
+  // マスタは自由に編集できるため、選択中の得意先・品目が削除されていることがある。
+  // その場合は先頭へ読み替える（存在しないIDのままdispatchしない）
+  const customerId = state.customers.some((c) => c.customerId === selectedCustomerId)
+    ? selectedCustomerId
+    : (state.customers[0]?.customerId ?? "");
+  const itemId = state.items.some((i) => i.itemId === selectedItemId)
+    ? selectedItemId
+    : (state.items[0]?.itemId ?? "");
   const [requestDay, setRequestDay] = useState(state.day + 1);
   const [confirmDayDrafts, setConfirmDayDrafts] = useState<Record<string, number>>({});
 
@@ -31,7 +40,7 @@ function SalesOrderPanel({ state, dispatch }: SalesOrderPanelProps) {
       <form className="panel__form" onSubmit={handleCreate}>
         <label>
           得意先
-          <select value={customerId} onChange={(e) => setCustomerId(e.target.value)}>
+          <select value={customerId} onChange={(e) => setSelectedCustomerId(e.target.value)}>
             {state.customers.map((c) => (
               <option key={c.customerId} value={c.customerId}>
                 {c.name}
@@ -41,7 +50,7 @@ function SalesOrderPanel({ state, dispatch }: SalesOrderPanelProps) {
         </label>
         <label>
           品目
-          <select value={itemId} onChange={(e) => setItemId(e.target.value)}>
+          <select value={itemId} onChange={(e) => setSelectedItemId(e.target.value)}>
             {state.items.map((i) => (
               <option key={i.itemId} value={i.itemId}>
                 {i.name}（{i.itemId}）

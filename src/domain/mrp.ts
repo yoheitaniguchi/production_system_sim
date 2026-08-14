@@ -1,6 +1,9 @@
-// MRP展開・計画オーダ確定（v5-spec.md §7.1、design.md EXT-1・EXT-6・EXT-9）
+// MRP展開・計画オーダ確定（v5-spec.md §7.1、design.md EXT-1・EXT-6・EXT-9・EXT-19・EXT-22）
 import type { BomLine, ItemMaster, MfgOrder, PlannedOrder, PurchaseOrder, SimulationState } from "../types";
+import { MAX_BOM_DEPTH } from "./masterIntegrity";
 import { pegKey } from "./pegging";
+
+export class MrpError extends Error {}
 
 function pad3(n: number): string {
   return String(n).padStart(3, "0");
@@ -33,10 +36,27 @@ function explode(
   dueDay: number,
   pegTo: string,
   level: number,
-  ctx: { items: ItemMaster[]; bom: BomLine[]; supply: Record<string, number>; ploSeq: number; plannedOrders: PlannedOrder[] },
+  ctx: {
+    items: ItemMaster[];
+    bom: BomLine[];
+    supply: Record<string, number>;
+    ploSeq: number;
+    plannedOrders: PlannedOrder[];
+    /** 現在の展開経路上にある品目。BOM循環を検出して無限再帰を防ぐ（design.md EXT-19） */
+    path: Set<string>;
+  },
 ): void {
   const item = ctx.items.find((i) => i.itemId === itemId);
   if (!item) return;
+
+  // マスタ登録時の循環チェック（masterIntegrity.wouldCreateBomCycle）をすり抜けたデータへの保険。
+  // ここを抜けると再帰が止まらずブラウザごと固まるため、必ず例外にする
+  if (ctx.path.has(itemId)) {
+    throw new MrpError(`BOMが循環しているためMRPを実行できません: ${[...ctx.path, itemId].join(" -> ")}`);
+  }
+  if (level >= MAX_BOM_DEPTH) {
+    throw new MrpError(`BOMの階層が深すぎます（上限${MAX_BOM_DEPTH}階層）: ${itemId}`);
+  }
 
   const available = ctx.supply[itemId] ?? 0;
   const use = Math.min(available, grossQty);
@@ -59,9 +79,11 @@ function explode(
   });
 
   if (item.makeBuy === "MAKE") {
+    ctx.path.add(itemId);
     for (const line of ctx.bom.filter((b) => b.parentItemId === itemId)) {
       explode(line.childItemId, netQty * line.qtyPer, startDay, ploNo, level + 1, ctx);
     }
+    ctx.path.delete(itemId);
   }
 }
 
@@ -84,7 +106,14 @@ export function runMRP(state: SimulationState): void {
     }))
     .sort((a, b) => a.due - b.due || a.soNo.localeCompare(b.soNo));
 
-  const ctx = { items: state.items, bom: state.bom, supply, ploSeq: 1, plannedOrders: state.plannedOrders };
+  const ctx = {
+    items: state.items,
+    bom: state.bom,
+    supply,
+    ploSeq: 1,
+    plannedOrders: state.plannedOrders,
+    path: new Set<string>(),
+  };
   for (const demand of demands) {
     explode(demand.itemId, demand.qty, demand.due, demand.pegTo, 0, ctx);
   }
@@ -95,6 +124,26 @@ export function runMRP(state: SimulationState): void {
  * BUYはPURCHASE_ORDERへ転記し、PLANNED_ORDERは全削除する。
  */
 export function firmAllPlannedOrders(state: SimulationState, day: number): void {
+  // 確定してしまうと復旧できない不整合（完了不能な製造オーダ／発注先不明の購買オーダ）を
+  // 事前に全件検査し、1件でも該当すれば何も確定しない（design.md EXT-22）
+  for (const plo of state.plannedOrders) {
+    if (plo.orderType === "MAKE") {
+      if (!state.routingSteps.some((s) => s.itemId === plo.itemId)) {
+        throw new MrpError(
+          `工順が1行も無いため製造オーダを起票できません（作業指示が作られず完了できなくなります）: ${plo.itemId}`,
+        );
+      }
+    } else {
+      const item = state.items.find((i) => i.itemId === plo.itemId);
+      if (!item?.defaultSupplierId) {
+        throw new MrpError(`既定仕入先が未設定のため購買オーダを起票できません: ${plo.itemId}`);
+      }
+      if (!state.suppliers.some((s) => s.supplierId === item.defaultSupplierId)) {
+        throw new MrpError(`既定仕入先が仕入先マスタに存在しません: ${plo.itemId} -> ${item.defaultSupplierId}`);
+      }
+    }
+  }
+
   for (const plo of state.plannedOrders) {
     if (plo.orderType === "MAKE") {
       const moNo = `MO-${pad3(state.nextMoSeq)}`;

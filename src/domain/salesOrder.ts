@@ -13,6 +13,16 @@ export interface CreateSalesOrderInput {
 
 /** 受注登録（v5-spec.md UC-04）。design.md §4により1受注＝1明細を同時に生成する */
 export function createSalesOrder(state: SimulationState, input: CreateSalesOrderInput, day: number): string {
+  // マスタが自由に編集できるようになったため、画面の選択値が削除済みの品目・得意先を
+  // 指したまま送られてくる可能性がある（design.md EXT-25）
+  if (!state.customers.some((c) => c.customerId === input.customerId)) {
+    throw new SalesOrderError(`得意先が見つかりません: ${input.customerId}`);
+  }
+  if (!state.items.some((i) => i.itemId === input.itemId)) {
+    throw new SalesOrderError(`品目が見つかりません: ${input.itemId}`);
+  }
+  if (input.qty <= 0) throw new SalesOrderError("数量は1以上で入力してください");
+
   const soNo = `SO-${String(state.nextSoSeq).padStart(3, "0")}`;
   state.nextSoSeq += 1;
 

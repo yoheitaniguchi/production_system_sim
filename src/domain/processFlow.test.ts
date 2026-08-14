@@ -98,8 +98,8 @@ describe("computeActiveFlows", () => {
   it("マスタ変更はマスタドメインのみをハイライトし、フローは動かさない", () => {
     let state = createInitialState();
     state = dispatch(state, {
-      type: "MASTER_UPDATE_ITEM_LEAD_TIME",
-      payload: { itemId: ITEM_IDS.RM_BOARD, leadTimeDays: 3 },
+      type: "MASTER_UPDATE_ITEM",
+      payload: { itemId: ITEM_IDS.RM_BOARD, patch: { leadTimeDays: 3 } },
     });
     const result = computeActiveFlows(state);
     expect(result.activeDomains).toEqual(new Set(["master"]));

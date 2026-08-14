@@ -168,6 +168,18 @@ const STEPS: InternalStep[] = [
   },
 ];
 
+/**
+ * 現在のマスタが演習用プリセット（木製イス）と一致しているか。
+ * マスタが自由に登録できるようになったため、別題材のマスタでは上記の判定（品目コード直指定）が
+ * 成立しない。画面側でその旨を案内するために使う（design.md EXT-27）。
+ */
+export function isPresetMaster(state: SimulationState): boolean {
+  const expected = Object.values(ITEM_IDS);
+  return (
+    state.items.length === expected.length && expected.every((itemId) => state.items.some((i) => i.itemId === itemId))
+  );
+}
+
 /** 全ステップの完了状況（design.md DEV-4：TCを画面上で自動判定する） */
 export function computeGuideProgress(state: SimulationState): GuideStepResult[] {
   return STEPS.map(({ isDone, ...step }) => ({ ...step, done: isDone(state) }));

@@ -514,6 +514,105 @@ textarea {
   box-sizing: border-box;
 }
 
+.editable-field__select {
+  padding: 0.2rem;
+}
+
+/* マスタ画面（品目・BOM・工順・作業区・取引先のCRUD） */
+.master__toolbar {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+
+.master__file-input {
+  display: none;
+}
+
+.master__io-error {
+  flex-basis: 100%;
+  margin: 0;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--warn-border);
+  border-radius: 4px;
+  background: var(--warn-bg);
+  font-size: 0.85rem;
+  white-space: pre-wrap;
+}
+
+.master__new-row td {
+  background: var(--bg-subtle);
+}
+
+.master__new-row input[type="text"],
+.master__new-row input[type="number"],
+.master__new-row select {
+  width: 100%;
+  padding: 0.2rem;
+  box-sizing: border-box;
+}
+
+.master__add,
+.master__delete {
+  padding: 0.2rem 0.6rem;
+  white-space: nowrap;
+}
+
+.master__delete:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.master__note {
+  margin: 0.35rem 0 1.25rem;
+  font-size: 0.8rem;
+  opacity: 0.75;
+}
+
+.master__tree {
+  list-style: none;
+  margin: 0.5rem 0 1rem;
+  padding-left: 1.25rem;
+  border-left: 1px dashed var(--border);
+}
+
+.master__tree ul {
+  list-style: none;
+  margin: 0.25rem 0;
+  padding-left: 1.25rem;
+  border-left: 1px dashed var(--border);
+}
+
+.master__tree li {
+  margin: 0.25rem 0;
+}
+
+.master__tree-node {
+  font-size: 0.9rem;
+}
+
+.master__tree-qty {
+  font-weight: 600;
+}
+
+.master__tree-kind,
+.master__tree-cycle {
+  margin-left: 0.5rem;
+  padding: 0 0.35rem;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  font-size: 0.7rem;
+  opacity: 0.8;
+}
+
+.master__tree-cycle {
+  border-color: var(--warn-border);
+  background: var(--warn-bg);
+  opacity: 1;
+}
+
 .pegging-tree {
   list-style: none;
   margin: 0.5rem 0 0;
