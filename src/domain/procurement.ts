@@ -1,5 +1,6 @@
 // 発注・仕入先納期回答・入荷計上（v5-spec.md §6.5、design.md EXT-4・DEV-3）
 import type { SimulationState } from "../types";
+import { createLot } from "./lot";
 
 export class ProcurementError extends Error {}
 
@@ -40,6 +41,9 @@ export function receivePurchaseOrder(state: SimulationState, poNo: string, day: 
     state.stocks.push({ itemId: po.itemId, onHand: receiveQty, allocated: 0 });
   }
 
+  // 入庫のたびに1ロット採番する（v5-spec.md §11.3 Phase 2-B）
+  const lot = createLot(state, po.itemId, receiveQty, day, po.poNo);
+
   state.stockTxns.push({
     txnId: `TXN-${String(state.nextTxnSeq).padStart(4, "0")}`,
     itemId: po.itemId,
@@ -47,6 +51,7 @@ export function receivePurchaseOrder(state: SimulationState, poNo: string, day: 
     qty: receiveQty,
     txnDay: day,
     refNo: po.poNo,
+    lotNo: lot.lotNo,
   });
   state.nextTxnSeq += 1;
 }

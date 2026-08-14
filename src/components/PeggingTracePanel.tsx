@@ -60,7 +60,12 @@ function PegNodeView({ node, itemName }: { node: PegNode; itemName: (id: string)
         状態 {node.status}）
         {node.txns.length > 0 && (
           <span className="pegging-tree__txns">
-            {node.txns.map((t) => `${t.txnType} ${t.qty > 0 ? "+" : ""}${t.qty}（D+${t.txnDay}）`).join("、 ")}
+            {node.txns
+              .map(
+                (t) =>
+                  `${t.txnType} ${t.qty > 0 ? "+" : ""}${t.qty}（D+${t.txnDay}${t.lotNo ? `、${t.lotNo}` : ""}）`,
+              )
+              .join("、 ")}
           </span>
         )}
       </span>

@@ -61,6 +61,10 @@ production_system_sim/
     │   ├── pegging.ts        # ペギング追跡（v5-spec.md §7.4）
     │   ├── schedule.ts       # 日程整合チェック・未充足需要（v5-spec.md §7.5）
     │   ├── kpi.ts             # KPI算出（v5-spec.md §10）
+    │   ├── cost.ts             # 原価（標準原価積上げ・オーダ別原価差異、v5-spec.md §11.2 Phase 2-A）
+    │   ├── lot.ts              # ロット管理（FIFO消費・後方/前方追跡、v5-spec.md §11.3 Phase 2-B、design.md EXT-18）
+    │   ├── todayActions.ts     # 本日実行可能な操作の集計（design.md DEV-2の軽量代替案）
+    │   ├── exerciseGuide.ts    # 演習ガイド（TC-01〜18の自動判定、v5-spec.md §8.1 D3、design.md DEV-4/EXT-17）
     │   ├── gantt.ts           # 受注一覧ガントチャート用の表示データ計算
     │   ├── processFlow.ts     # プロセス連携図（BPMN風）用の表示データ計算
     │   ├── reducer.ts         # useReducer用reducer。actionを各モジュールへディスパッチ
@@ -68,16 +72,20 @@ production_system_sim/
     └── components/         # 画面領域ごとのコンポーネント（design.md §5）
         ├── ClockControls.tsx      # 時計操作（Day表示・次の日へ進む・リセット）
         ├── AlertBar.tsx           # 日程整合警告・未充足需要（常時再計算、専用ボタン無し）
+        ├── TodayActionsBar.tsx    # 本日実行可能な操作のハイライト（クリックでタブ遷移）
         ├── SalesOrderPanel.tsx    # 受注：登録・納期回答・取消
         ├── PlanningPanel.tsx      # 計画：MRP実行・計画オーダ一括確定・ペグ先/BOMレベル表示
         ├── ProcurementPanel.tsx   # 発注：仕入先納期回答・入荷計上・注文残
         ├── ProductionPanel.tsx    # 工程：リリース・着手/完了（良品数・不良数）
         ├── InventoryPanel.tsx     # 在庫：現在庫・引当済・出荷可能量の3列
         ├── ShipmentPanel.tsx      # 出荷：引当（出荷指示）・出荷実績登録
-        ├── MasterDataPage.tsx     # マスタ：品目・BOM・工順・取引先
+        ├── MasterDataPage.tsx     # マスタ：品目・BOM・工順・取引先・作業区
         ├── EditableField.tsx      # マスタ画面用の編集可能フィールド
         ├── KpiDashboard.tsx       # 分析：KPIダッシュボード（組織目線/現場目線）
+        ├── CostPanel.tsx          # 分析：原価（金額指標・品目別標準原価・オーダ別原価差異）
         ├── PeggingTracePanel.tsx  # 分析：ペギング追跡（受注→オーダ→実績）
+        ├── LotTracePanel.tsx      # 分析：ロット追跡（後方追跡・前方追跡）
+        ├── ExerciseGuidePanel.tsx # 分析：演習ガイド（TC-01〜18の進行状況と次の操作）
         ├── ProcessFlowDiagram.tsx # 受注〜出荷プロセス連携図（BPMN風。ペギング追跡とは別画面）
         └── EventLogPanel.tsx      # データ増分ログ（テーブル別行数差分＋業務メッセージ）
 ```
@@ -108,36 +116,35 @@ npm run preview   # build成果物をGitHub Pages相当のbaseパスで動作確
 ## 現在の実装状況
 
 **Phase 0〜5（プロジェクト初期化・型定義/初期マスタデータ・ドメインロジック本体・reducer・自動テスト拡充・
-画面実装）まで全て完了。予定していた10画面がすべて揃った。**
+画面実装）に加え、`docs/implementation-plan.md` §5「Phase 7（先送り事項）」の全項目
+（自動再生の軽量代替案・Phase 2-A原価・演習ガイドD3・Phase 2-Bトレーサビリティ）も完了。**
 
-- `src/types.ts`：design.md §4の対応表どおり、v5仕様書の13テーブルをTypeScript型に落とした（`SimulationState`を含む）
-- `src/data/masterData.ts`：v5-spec.md §1.1（木製イス）の品目5・BOM4行・工順3行。
+- `src/types.ts`：design.md §4の対応表どおり、v5仕様書の13テーブルをTypeScript型に落とした（`SimulationState`を含む）。
+  Phase 2-A/2-Bで`WorkCenter`・`Lot`・`LotGenealogy`と、`ItemMaster`/`StockTxn`への拡張フィールドを追加
+- `src/data/masterData.ts`：v5-spec.md §1.1（木製イス）の品目5・BOM4行・工順3行・作業区3件。
   顧客2件（design.md §6の複数受注演習用）・仕入先3件（BUY品目ごとに1件、`defaultSupplierId`で対応付け）
-- `src/domain/`：10モジュール（`pegging.ts`・`mrp.ts`・`procurement.ts`・`shipment.ts`・`production.ts`・
-  `salesOrder.ts`・`schedule.ts`・`inventory.ts`・`kpi.ts`・`processFlow.ts`）＋`reducer.ts`（design.md §7の
-  action一覧を実装。`createInitialState()`・`simulationReducer()`）を実装済み
-- `src/domain/*.test.ts`：58件のテストで、v5-spec.md §9のTC-01〜18・TC-E1〜E3の全シナリオと、
-  reducerの委譲・不変性・エラーハンドリング・RESET時のマスタ保持、`processFlow.ts`のフロー判定を検証済み。
-  design.md §6の複数受注演習もTC-M1として`multiOrderExercise.test.ts`で検証済み
-- `src/App.tsx`：`useReducer`でreducerを保持し、共通シェル（`ClockControls`・`AlertBar`・`EventLogPanel`）と、
-  10個のタブ（受注／計画／発注／工程／在庫／出荷／マスタ／KPI／ペギング追跡／プロセス連携図）を実装済み。
-  `SalesOrderPanel`（受注登録・納期回答・取消）・`PlanningPanel`（MRP実行・計画オーダ確定）・
-  `ProcurementPanel`（仕入先納期回答・入荷計上、EXT-4の日程ガードをボタンdisabledで先回り）・
-  `ProductionPanel`（リリース・工程着手/完了、良品数・不良数入力）・`InventoryPanel`（現在庫・引当済・
-  出荷可能量の3列、棚卸調整）・`ShipmentPanel`（引当と出荷実績登録を別テーブル・別操作として分離）・
-  `MasterDataPage`（品目/BOM/工順/取引先、`EditableField`によるmin制約付きインライン編集）・
-  `KpiDashboard`（12指標を組織目線/現場目線の2ブロックで表示、EXT-14）・`PeggingTracePanel`
-  （`traceFromOrder()`をツリー表示）・`ProcessFlowDiagram`（7ドメイン間のデータフローをBPMN風に可視化、
-  直前の操作で動いたフローをハイライト）が動作し、Playwrightでv5-spec.md TC-02〜19相当の操作を実際に
-  ブラウザで確認済み
+- `src/domain/`：14モジュール（`pegging.ts`・`mrp.ts`・`procurement.ts`・`shipment.ts`・`production.ts`・
+  `salesOrder.ts`・`schedule.ts`・`inventory.ts`・`kpi.ts`・`cost.ts`・`lot.ts`・`todayActions.ts`・
+  `exerciseGuide.ts`・`processFlow.ts`）＋`reducer.ts`（design.md §7の action一覧を実装。
+  `createInitialState()`・`simulationReducer()`）を実装済み
+- `src/domain/*.test.ts`：84件のテストで、v5-spec.md §9のTC-01〜18・TC-E1〜E3の全シナリオ、
+  reducerの委譲・不変性・エラーハンドリング・RESET時のマスタ保持、`processFlow.ts`のフロー判定、
+  §11.2の原価計算例・§11.3のロット系譜（後方/前方追跡）を検証済み。design.md §6の複数受注演習も
+  TC-M1として`multiOrderExercise.test.ts`で検証済み
+- `src/App.tsx`：`useReducer`でreducerを保持し、共通シェル（`ClockControls`・`AlertBar`・`TodayActionsBar`・
+  `EventLogPanel`）と、13個のタブ（受注／計画／発注／工程／在庫／出荷／マスタ／KPI／原価／ペギング追跡／
+  ロット追跡／演習ガイド／プロセス連携図）を実装済み。各画面はPlaywrightでv5-spec.md TC-02〜19相当の
+  操作・§11.2/§11.3相当の操作を実際にブラウザで確認済み（ライト/ダーク両テーマ）
 
 ## 次にやるべきこと（優先順）
 
-画面実装（Phase 5）が完了したため、`docs/implementation-plan.md` §5「Phase 7（先送り事項）」を参照。
+`docs/implementation-plan.md` §5「Phase 7（先送り事項）」は全項目完了した。次の一手は特に決まっていない
+ため、着手前にユーザーに優先順位を確認すること。候補：
 
-1. CI（Phase 0で追加済みのワークフローが全PRで正しく動作していることを継続的に確認）
-2. 演習ガイド（design.md DEV-4により先送り）・自動再生機能（DEV-2により先送り）・原価/トレーサビリティ
-   （Phase 2-A/2-B）など、`docs/implementation-plan.md` §5に記載の先送り事項の着手要否を検討する
+1. CI（既存ワークフローが全PRで正しく動作していることの継続的な確認）
+2. Phase 2-Bで簡略化した点（design.md EXT-18：STOCKの主キーは変更せずLOT/LOT_GENEALOGYを並行追加した）を
+   踏まえ、より厳密な実装（STOCKの主キー変更を含む）へ発展させる必要性の検討
+3. その他、`docs/v5-spec.md` §11に記載のロードマップ上の拡張項目の検討
 
 ## 実装時に確認すべき設計判断（design.mdの要点）
 
