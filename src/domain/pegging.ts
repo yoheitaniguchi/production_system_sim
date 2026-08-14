@@ -34,14 +34,22 @@ export function traceFromOrder(
   const mfgOrders: MfgOrder[] = [];
   const purchaseOrders: PurchaseOrder[] = [];
 
+  // 多階層BOMではpegTo鎖が長くなる。マスタが壊れていても停止することを保証するため、
+  // 訪問済みのペグキーを再度たどらない（design.md EXT-19）
+  const visited = new Set<string>();
   let frontier = new Set([pegKey(soNo, lineNo)]);
   while (frontier.size > 0) {
+    for (const key of frontier) visited.add(key);
     const hit = findDirectlyPegged(state, frontier);
     mfgOrders.push(...hit.mfgOrders);
     purchaseOrders.push(...hit.purchaseOrders);
     // 次の階層は「このオーダ自身の由来PLO番号（ploNo）」をpegToに持つオーダ（v5-spec.md §7.4）。
     // 自分の採番（moNo/poNo）ではない点に注意。
-    frontier = new Set([...hit.mfgOrders.map((mo) => mo.ploNo), ...hit.purchaseOrders.map((po) => po.ploNo)]);
+    frontier = new Set(
+      [...hit.mfgOrders.map((mo) => mo.ploNo), ...hit.purchaseOrders.map((po) => po.ploNo)].filter(
+        (key) => !visited.has(key),
+      ),
+    );
   }
 
   const orderNos = new Set([...mfgOrders.map((mo) => mo.moNo), ...purchaseOrders.map((po) => po.poNo)]);
@@ -55,13 +63,16 @@ export function traceFromOrder(
  * MFG_ORDER/PURCHASE_ORDER（確定後）のいずれの段階でも、各オーダが持つ「自身のploNo」を
  * 手がかりに1階層ずつ親へたどる（v5-spec.md §7.4）。
  */
-export function resolveRootPegKey(state: SimulationState, pegTo: string): string {
+export function resolveRootPegKey(state: SimulationState, pegTo: string, visited = new Set<string>()): string {
   if (pegTo.startsWith("SO-")) return pegTo;
+  // 多階層BOMでは鎖が長くなる。壊れたデータで自己参照しても止まるようにする（design.md EXT-19）
+  if (visited.has(pegTo)) return pegTo;
+  visited.add(pegTo);
   const plo = state.plannedOrders.find((p) => p.ploNo === pegTo);
-  if (plo) return resolveRootPegKey(state, plo.pegTo);
+  if (plo) return resolveRootPegKey(state, plo.pegTo, visited);
   const mo = state.mfgOrders.find((m) => m.ploNo === pegTo);
-  if (mo) return resolveRootPegKey(state, mo.pegTo);
+  if (mo) return resolveRootPegKey(state, mo.pegTo, visited);
   const po = state.purchaseOrders.find((p) => p.ploNo === pegTo);
-  if (po) return resolveRootPegKey(state, po.pegTo);
+  if (po) return resolveRootPegKey(state, po.pegTo, visited);
   return pegTo;
 }

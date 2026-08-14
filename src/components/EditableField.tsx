@@ -40,6 +40,36 @@ interface TextFieldProps {
   onCommit: (value: string) => void;
 }
 
+interface SelectFieldProps {
+  value: string;
+  options: Array<{ value: string; label: string }>;
+  onCommit: (value: string) => void;
+}
+
+/**
+ * 選択式の編集可能フィールド（区分・既定仕入先・作業区）。選択の確定は1操作で終わるため、
+ * 数値・テキストと違いドラフト状態を持たずchangeで即コミットする。
+ */
+export function EditableSelectField({ value, options, onCommit }: SelectFieldProps) {
+  return (
+    <select
+      value={value}
+      onChange={(e) => {
+        if (e.target.value !== value) onCommit(e.target.value);
+      }}
+      className="editable-field__select"
+    >
+      {/* 現在値が選択肢に無い場合（マスタ削除直後など）でも表示が空にならないようにする */}
+      {options.some((o) => o.value === value) ? null : <option value={value}>{value || "—"}</option>}
+      {options.map((option) => (
+        <option key={option.value} value={option.value}>
+          {option.label}
+        </option>
+      ))}
+    </select>
+  );
+}
+
 export function EditableTextField({ value, onCommit }: TextFieldProps) {
   const [draft, setDraft] = useState(value);
   useEffect(() => setDraft(value), [value]);

@@ -1,5 +1,6 @@
-// 原価計算（v5-spec.md §11.2 Phase 2-A：最小設計）
+// 原価計算（v5-spec.md §11.2 Phase 2-A：最小設計。design.md EXT-19）
 import type { SimulationState } from "../types";
+import { MAX_BOM_DEPTH } from "./masterIntegrity";
 
 export class CostError extends Error {}
 
@@ -9,36 +10,71 @@ export interface ItemCost {
   standardCost: number;
 }
 
+/** 1回の積上げ内で共有する作業領域。共有部品の再計算（多階層BOMでは指数的になる）を防ぐ */
+interface RollupCtx {
+  memo: Map<string, ItemCost>;
+  path: Set<string>;
+}
+
+function rollupInto(state: SimulationState, itemId: string, ctx: RollupCtx): ItemCost {
+  const cached = ctx.memo.get(itemId);
+  if (cached) return cached;
+
+  const item = state.items.find((i) => i.itemId === itemId);
+  if (!item) throw new CostError(`品目が見つかりません: ${itemId}`);
+
+  // マスタ登録時の循環チェックをすり抜けたデータへの保険（mrp.tsのexplodeと同じ方針）
+  if (ctx.path.has(itemId)) {
+    throw new CostError(`BOMが循環しているため原価を積み上げできません: ${[...ctx.path, itemId].join(" -> ")}`);
+  }
+  if (ctx.path.size >= MAX_BOM_DEPTH) {
+    throw new CostError(`BOMの階層が深すぎます（上限${MAX_BOM_DEPTH}階層）: ${itemId}`);
+  }
+
+  let result: ItemCost;
+  if (item.makeBuy === "BUY") {
+    const material = item.purchasePrice ?? 0;
+    result = { material, labor: 0, standardCost: material };
+  } else {
+    ctx.path.add(itemId);
+    const bomLines = state.bom.filter((b) => b.parentItemId === itemId);
+    const material = bomLines.reduce(
+      (sum, line) => sum + rollupInto(state, line.childItemId, ctx).standardCost * line.qtyPer,
+      0,
+    );
+    ctx.path.delete(itemId);
+
+    const steps = state.routingSteps.filter((s) => s.itemId === itemId);
+    const labor = steps.reduce((sum, step) => {
+      const wc = state.workCenters.find((w) => w.workCenter === step.workCenter);
+      const ratePerHour = wc?.ratePerHour ?? 0;
+      return sum + (step.stdTimeMin / 60) * ratePerHour;
+    }, 0);
+
+    result = { material, labor, standardCost: material + labor };
+  }
+
+  ctx.memo.set(itemId, result);
+  return result;
+}
+
+function newRollupCtx(): RollupCtx {
+  return { memo: new Map(), path: new Set() };
+}
+
 /**
  * 標準原価の積上げ（v5-spec.md §11.2 rollupCost疑似コードそのまま）。
  * BUY品目は購入単価を材料費として使い、加工費は0。MAKE品目はBOMの子品目の標準原価×員数を材料費、
  * 工順の標準時間×作業区の賃率を加工費として積み上げる。
  */
 export function rollupCost(state: SimulationState, itemId: string): ItemCost {
-  const item = state.items.find((i) => i.itemId === itemId);
-  if (!item) throw new CostError(`品目が見つかりません: ${itemId}`);
-
-  if (item.makeBuy === "BUY") {
-    const material = item.purchasePrice ?? 0;
-    return { material, labor: 0, standardCost: material };
-  }
-
-  const bomLines = state.bom.filter((b) => b.parentItemId === itemId);
-  const material = bomLines.reduce((sum, line) => sum + rollupCost(state, line.childItemId).standardCost * line.qtyPer, 0);
-
-  const steps = state.routingSteps.filter((s) => s.itemId === itemId);
-  const labor = steps.reduce((sum, step) => {
-    const wc = state.workCenters.find((w) => w.workCenter === step.workCenter);
-    const ratePerHour = wc?.ratePerHour ?? 0;
-    return sum + (step.stdTimeMin / 60) * ratePerHour;
-  }, 0);
-
-  return { material, labor, standardCost: material + labor };
+  return rollupInto(state, itemId, newRollupCtx());
 }
 
-/** 全品目の標準原価一覧（マスタ表示用） */
+/** 全品目の標準原価一覧（マスタ表示用）。品目間で積上げ結果を共有する */
 export function computeAllItemCosts(state: SimulationState): Array<{ itemId: string } & ItemCost> {
-  return state.items.map((item) => ({ itemId: item.itemId, ...rollupCost(state, item.itemId) }));
+  const ctx = newRollupCtx();
+  return state.items.map((item) => ({ itemId: item.itemId, ...rollupInto(state, item.itemId, ctx) }));
 }
 
 export interface MfgOrderCost {
@@ -86,7 +122,8 @@ export function computeMfgOrderCost(state: SimulationState, moNo: string): MfgOr
 
 /** 在庫金額（全品目の現在庫数量×標準原価の合計。v5-spec.md §11.2「在庫数量→在庫金額」） */
 export function inventoryValue(state: SimulationState): number {
-  return state.stocks.reduce((sum, stock) => sum + stock.onHand * rollupCost(state, stock.itemId).standardCost, 0);
+  const ctx = newRollupCtx();
+  return state.stocks.reduce((sum, stock) => sum + stock.onHand * rollupInto(state, stock.itemId, ctx).standardCost, 0);
 }
 
 /** 受注残高（金額）（未出荷の受注残数量×売価の合計。v5-spec.md §11.2「受注残→受注残高（金額）」） */
@@ -102,5 +139,6 @@ export function backlogValue(state: SimulationState): number {
 
 /** 不良損失額（全製造オーダの不良数量×標準原価の合計。v5-spec.md §11.2「不良数→不良損失額」） */
 export function scrapLossValue(state: SimulationState): number {
-  return state.mfgOrders.reduce((sum, mo) => sum + mo.scrapQty * rollupCost(state, mo.itemId).standardCost, 0);
+  const ctx = newRollupCtx();
+  return state.mfgOrders.reduce((sum, mo) => sum + mo.scrapQty * rollupInto(state, mo.itemId, ctx).standardCost, 0);
 }

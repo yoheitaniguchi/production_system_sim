@@ -1,5 +1,5 @@
 // 演習ガイド（v5-spec.md §8.1 D3、design.md DEV-4・EXT-17）
-import { computeGuideProgress, currentGuideStep } from "../domain/exerciseGuide";
+import { computeGuideProgress, currentGuideStep, isPresetMaster } from "../domain/exerciseGuide";
 import type { SimulationState } from "../types";
 
 interface ExerciseGuidePanelProps {
@@ -13,6 +13,14 @@ function ExerciseGuidePanel({ state }: ExerciseGuidePanelProps) {
   return (
     <div className="panel">
       <h2>演習ガイド</h2>
+
+      {/* 本ガイドはv5-spec.md §9の木製イスシナリオ専用の判定を持つ（design.md EXT-27） */}
+      {isPresetMaster(state) ? null : (
+        <div className="guide__current">
+          現在のマスタは演習用プリセット（木製イス）と異なるため、以下のステップ判定は成立しません。
+          マスタタブの「既定プリセットに戻す」で復元できます。
+        </div>
+      )}
 
       {current ? (
         <div className="guide__current">
