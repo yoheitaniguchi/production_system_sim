@@ -160,6 +160,29 @@ export interface StockTxn {
   txnDay: number;
   /** 起票元オーダ番号（MO/PO/SHIPMENT/棚卸操作） */
   refNo: string;
+  /**
+   * 消費・生成したロット番号（v5-spec.md §11.3 Phase 2-B）。ロット台帳（LOT）に基づかない在庫
+   * （テストコードが`stocks`へ直接注入した在庫等、design.md EXT-18参照）を消費した場合はundefined
+   */
+  lotNo?: string;
+}
+
+/** ロットの実体（v5-spec.md §11.3 Phase 2-B）。qtyはFIFO消費のたびに減る残数量 */
+export interface Lot {
+  lotNo: string;
+  itemId: string;
+  qty: number;
+  createdDay: number;
+  /** 入庫元PO番号／完成入庫元MO番号／棚卸調整なら"ADJ" */
+  sourceRef: string;
+}
+
+/** 消費ロットと生成ロットの親子関係（v5-spec.md §11.3 Phase 2-B） */
+export interface LotGenealogy {
+  parentLot: string;
+  childLot: string;
+  moNo: string;
+  consumedQty: number;
 }
 
 export type ShipmentStatus = "ALLOCATED" | "SHIPPED" | "CANCELED";
@@ -203,6 +226,8 @@ export interface SimulationState {
   stocks: Stock[];
   stockTxns: StockTxn[];
   shipments: Shipment[];
+  lots: Lot[];
+  lotGenealogy: LotGenealogy[];
 
   eventLog: EventLogEntry[];
 
@@ -213,4 +238,5 @@ export interface SimulationState {
   nextPoSeq: number;
   nextTxnSeq: number;
   nextShipSeq: number;
+  nextLotSeq: number;
 }

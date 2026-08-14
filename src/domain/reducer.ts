@@ -59,6 +59,8 @@ const TABLE_LABELS = {
   stocks: "STOCK",
   stockTxns: "STOCK_TXN",
   shipments: "SHIPMENT",
+  lots: "LOT",
+  lotGenealogy: "LOT_GENEALOGY",
 } as const satisfies Partial<Record<keyof SimulationState, string>>;
 
 type CountedTable = keyof typeof TABLE_LABELS;
@@ -123,12 +125,15 @@ function emptyStateWithMasters(
     stocks: [],
     stockTxns: [],
     shipments: [],
+    lots: [],
+    lotGenealogy: [],
     eventLog: [],
     nextSoSeq: 1,
     nextMoSeq: 1,
     nextPoSeq: 1,
     nextTxnSeq: 1,
     nextShipSeq: 1,
+    nextLotSeq: 1,
   };
 }
 

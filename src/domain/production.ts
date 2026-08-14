@@ -1,5 +1,6 @@
 // 工程着手・完了・バックフラッシュ（v5-spec.md §7.3・§6.3・§6.4、design.md EXT-10）
 import type { SimulationState } from "../types";
+import { consumeFifo, createLot } from "./lot";
 import { shippableQty } from "./shipment";
 
 export class ProductionError extends Error {}
@@ -127,15 +128,20 @@ export function completeStep(
       const required = line.qtyPer * wi.inputQty;
       const stock = state.stocks.find((s) => s.itemId === line.childItemId);
       if (stock) stock.onHand -= required;
-      state.stockTxns.push({
-        txnId: `TXN-${String(state.nextTxnSeq).padStart(4, "0")}`,
-        itemId: line.childItemId,
-        txnType: "ISS",
-        qty: -required,
-        txnDay: day,
-        refNo: moNo,
-      });
-      state.nextTxnSeq += 1;
+      // FIFO（作成日昇順）でロットを選択して消費する。複数ロットにまたがる場合は分割してTXNを
+      // 起票する（v5-spec.md §11.3 Phase 2-B）
+      for (const consumed of consumeFifo(state, line.childItemId, required)) {
+        state.stockTxns.push({
+          txnId: `TXN-${String(state.nextTxnSeq).padStart(4, "0")}`,
+          itemId: line.childItemId,
+          txnType: "ISS",
+          qty: -consumed.qty,
+          txnDay: day,
+          refNo: moNo,
+          lotNo: consumed.lotNo,
+        });
+        state.nextTxnSeq += 1;
+      }
     }
   }
 
@@ -151,6 +157,26 @@ export function completeStep(
     } else {
       state.stocks.push({ itemId: mo.itemId, onHand: goodQty, allocated: 0 });
     }
+
+    // 完成入庫のたびに1ロット採番し、第1工程で消費したロットとのLOT_GENEALOGYを記録する
+    // （v5-spec.md §11.3 Phase 2-B：「実際に何を使ったか」の系譜。ペギングとは別レイヤ）
+    let producedLotNo: string | undefined;
+    if (goodQty > 0) {
+      const producedLot = createLot(state, mo.itemId, goodQty, day, moNo);
+      producedLotNo = producedLot.lotNo;
+      const consumedLots = state.stockTxns.filter(
+        (t) => t.refNo === moNo && t.txnType === "ISS" && t.lotNo != null,
+      );
+      for (const consumed of consumedLots) {
+        state.lotGenealogy.push({
+          parentLot: consumed.lotNo!,
+          childLot: producedLot.lotNo,
+          moNo,
+          consumedQty: Math.abs(consumed.qty),
+        });
+      }
+    }
+
     state.stockTxns.push({
       txnId: `TXN-${String(state.nextTxnSeq).padStart(4, "0")}`,
       itemId: mo.itemId,
@@ -158,6 +184,7 @@ export function completeStep(
       qty: goodQty,
       txnDay: day,
       refNo: moNo,
+      lotNo: producedLotNo,
     });
     state.nextTxnSeq += 1;
 

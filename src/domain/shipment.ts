@@ -1,5 +1,6 @@
 // 引当・出荷可否判定・出荷実績（v5-spec.md §7.2、design.md EXT-5・DEV-3）
 import type { SimulationState } from "../types";
+import { consumeFifo } from "./lot";
 
 export class ShipmentError extends Error {}
 
@@ -62,15 +63,20 @@ export function shipOut(state: SimulationState, shipNo: string, day: number): vo
     stock.allocated -= shipment.qty;
   }
 
-  state.stockTxns.push({
-    txnId: `TXN-${String(state.nextTxnSeq).padStart(4, "0")}`,
-    itemId: line.itemId,
-    txnType: "SHP",
-    qty: -shipment.qty,
-    txnDay: day,
-    refNo: shipment.shipNo,
-  });
-  state.nextTxnSeq += 1;
+  // FIFOでロットを選択して消費する。複数ロットにまたがる場合は分割してTXNを起票する
+  // （v5-spec.md §11.3 Phase 2-B）
+  for (const consumed of consumeFifo(state, line.itemId, shipment.qty)) {
+    state.stockTxns.push({
+      txnId: `TXN-${String(state.nextTxnSeq).padStart(4, "0")}`,
+      itemId: line.itemId,
+      txnType: "SHP",
+      qty: -consumed.qty,
+      txnDay: day,
+      refNo: shipment.shipNo,
+      lotNo: consumed.lotNo,
+    });
+    state.nextTxnSeq += 1;
+  }
 
   line.shippedQty += shipment.qty;
   line.status = line.shippedQty === line.qty ? "CLOSED" : "PARTIAL";

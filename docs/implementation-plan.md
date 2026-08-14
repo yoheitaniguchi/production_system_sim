@@ -334,8 +334,10 @@ TC-04/TC-17の手検算）を実施し、以下の指摘に対応した。中核
   実装しない方針を維持する
 - ~~**Phase 2-A（原価）**：v5-spec.md §11.2の最小設計をそのまま踏襲し、実装着手時に本ファイルへ具体的なタスクを
   追記する。実装コストが「中」（非破壊的）である~~ → 5.2節のとおり実装済み
-- **Phase 2-B（トレーサビリティ）**：v5-spec.md §11.3の最小設計をそのまま踏襲し、実装着手時に本ファイルへ具体的な
-  タスクを追記する。在庫残高の主キー変更を伴う破壊的変更である点に注意（v5-spec.md §11.3）
+- ~~**Phase 2-B（トレーサビリティ）**：v5-spec.md §11.3の最小設計をそのまま踏襲し、実装着手時に本ファイルへ
+  具体的なタスクを追記する。在庫残高の主キー変更を伴う破壊的変更である点に注意（v5-spec.md §11.3）~~
+  → 5.4節のとおり実装済み（design.md EXT-18により、STOCKの主キーは変更せずLOT/LOT_GENEALOGYを並行追加する
+  方式を採用し、既存79件のテストを無改造のまま維持した）
 
 ### 5.1 自動再生の軽量代替案（DEV-2再検討分）実施結果
 
@@ -400,3 +402,32 @@ TC-04/TC-17の手検算）を実施し、以下の指摘に対応した。中核
 - Playwrightで、受注登録・納期回答の直後に演習ガイドタブでTC-01〜TC-03がチェック済みになり「次にやること」
   がTC-04に切り替わることを実際にブラウザ操作で確認した。ダークモード表示も確認済み
 - `npm run build`・`npm test`（79件、exerciseGuide.test.tsの2件を追加）がともに成功
+
+### 5.4 Phase 2-B（トレーサビリティ）実施結果
+
+- `src/types.ts`：`Lot`（ロットの実体）・`LotGenealogy`（消費ロットと生成ロットの親子関係）を新設。
+  `StockTxn`に`lotNo?: string`を追加（どのロットが動いたか）。design.md EXT-18のとおり、既存の
+  `Stock{itemId, onHand, allocated}`（品目単位のfungibleな残高）の主キーは変更せず維持し、`lots`・
+  `lotGenealogy`・`nextLotSeq`を並行して追加した
+- `src/domain/lot.ts`（新設）：`createLot()`（入庫のたびのロット採番）、`consumeFifo()`（作成日昇順・
+  同日はlotNo昇順のFIFO消費。複数ロットにまたがる場合は分割して返す）、`traceBackward()`／`traceForward()`
+  （後方・前方追跡、v5-spec.md §11.3）を実装。ロット台帳の残数量で不足する場合（ロット台帳に基づかない
+  在庫を消費する場合）はエラーにせず`lotNo`未設定として扱う（design.md EXT-18）
+- `src/domain/procurement.ts`・`production.ts`・`shipment.ts`・`inventory.ts`：入庫（RCV）・完成入庫（PRD）・
+  棚卸プラス調整（ADJ+）でロットを生成し、出庫（ISS／SHP）・棚卸マイナス調整（ADJ-）でFIFO消費して
+  STOCK_TXNに`lotNo`を付与する。`production.ts`の`completeStep()`は、最終工程完了時に完成品ロットを生成し、
+  その製造オーダのISSトランザクション（第1工程のバックフラッシュで記録済み）から`LOT_GENEALOGY`を記録する
+- `src/domain/reducer.ts`：`TABLE_LABELS`に`LOT`・`LOT_GENEALOGY`を追加し、データ増分ログ（EXT-8）にも
+  ロット関連の行数差分が表示されるようにした
+- `src/components/LotTracePanel.tsx`（新設、「ロット追跡」タブ）：ロットを選択すると後方追跡（このロットは
+  何を使ったか）・前方追跡（このロットはどの製品になったか）を表示する。`src/components/PeggingTracePanel.tsx`
+  のSTOCK_TXN表示にも`lotNo`を追記し、ペギング（計画上の意図）とロット系譜（実際の消費事実）の違いが
+  同一画面上で対比できるようにした
+- `src/domain/lot.test.ts`（新設、5件）：FIFO消費の順序・複数ロットへの分割・ロット台帳に基づかない在庫の
+  扱い・`adjustStock()`経由のロット生成/消費・入荷から製造までの一連の流れでの後方/前方追跡を検証。
+  既存79件は無改造のまま全てpassすることを確認した（design.md EXT-18の設計判断どおり）
+- Playwrightで、受注→MRP→計画オーダ確定→木板入荷→座面ASSY製造完了までを実際にブラウザ操作で通し、
+  データ増分ログに`LOT +1`・`LOT_GENEALOGY +1`が表示されること、ロット追跡タブで座面ASSYロットから
+  木板ロットへの後方追跡が正しく表示されること、ペギング追跡タブのSTOCK_TXN表示にロット番号が付記される
+  ことを確認した。ダークモード表示も確認済み
+- `npm run build`・`npm test`（84件、lot.test.tsの5件を追加）がともに成功
