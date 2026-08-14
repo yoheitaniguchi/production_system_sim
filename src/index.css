@@ -12,6 +12,8 @@
   --pf-node-fill: #fafafa;
   --pf-active-fill: #e6f4ea;
   --pf-text: #1a1a1a;
+  --floating-bg: #ffffff;
+  --floating-shadow: rgba(0, 0, 0, 0.18);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -28,6 +30,8 @@
     --pf-node-fill: #262626;
     --pf-active-fill: #143a1f;
     --pf-text: #eee;
+    --floating-bg: #262626;
+    --floating-shadow: rgba(0, 0, 0, 0.5);
   }
 }
 
@@ -39,7 +43,7 @@ body {
 .app {
   max-width: 960px;
   margin: 0 auto;
-  padding: 1rem 1.5rem 3rem;
+  padding: 1rem 1.5rem 5rem;
 }
 
 .app__header {
@@ -214,9 +218,19 @@ body {
 }
 
 .clock-controls {
+  position: fixed;
+  left: 50%;
+  bottom: 1.25rem;
+  transform: translateX(-50%);
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  background: var(--floating-bg);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  box-shadow: 0 0.25rem 1rem var(--floating-shadow);
+  z-index: 10;
 }
 
 .clock-controls__day {
