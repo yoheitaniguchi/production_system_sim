@@ -1,10 +1,11 @@
-// マスタ：品目・BOM・工順・取引先（design.md §5）
+// マスタ：品目・BOM・工順・取引先・作業区（design.md §5）
 //
 // 編集可否の線引き（design.md §5・mini-simulator CLAUDE.mdの踏襲）：
-// - 品目の標準リードタイムは編集可、区分（内製／購買）は編集不可（構造が変わるため）
+// - 品目の標準リードタイム・購入単価・売価は編集可、区分（内製／購買）は編集不可（構造が変わるため）
 // - BOMの員数は編集可、構造（品目の追加・削除）は編集不可
 // - 工順の標準時間は編集可、工程の追加・削除は不可
 // - 得意先・仕入先の名称は編集可、新規追加は編集不可
+// - 作業区の賃率は編集可（v5-spec.md §11.2 Phase 2-A）
 import type { SimulationAction } from "../domain/reducer";
 import type { SimulationState } from "../types";
 import { EditableNumberField, EditableTextField } from "./EditableField";
@@ -29,6 +30,8 @@ function MasterDataPage({ state, dispatch }: MasterDataPageProps) {
               <th>品目</th>
               <th>区分</th>
               <th>標準リードタイム（日）</th>
+              <th>購入単価（円）</th>
+              <th>売価（円）</th>
             </tr>
           </thead>
           <tbody>
@@ -44,6 +47,28 @@ function MasterDataPage({ state, dispatch }: MasterDataPageProps) {
                     min={1}
                     onCommit={(leadTimeDays) =>
                       dispatch({ type: "MASTER_UPDATE_ITEM_LEAD_TIME", payload: { itemId: item.itemId, leadTimeDays } })
+                    }
+                  />
+                </td>
+                <td>
+                  {item.makeBuy === "BUY" ? (
+                    <EditableNumberField
+                      value={item.purchasePrice ?? 0}
+                      min={0}
+                      onCommit={(purchasePrice) =>
+                        dispatch({ type: "MASTER_UPDATE_ITEM_PURCHASE_PRICE", payload: { itemId: item.itemId, purchasePrice } })
+                      }
+                    />
+                  ) : (
+                    "—"
+                  )}
+                </td>
+                <td>
+                  <EditableNumberField
+                    value={item.salesPrice ?? 0}
+                    min={0}
+                    onCommit={(salesPrice) =>
+                      dispatch({ type: "MASTER_UPDATE_ITEM_SALES_PRICE", payload: { itemId: item.itemId, salesPrice } })
                     }
                   />
                 </td>
@@ -108,6 +133,32 @@ function MasterDataPage({ state, dispatch }: MasterDataPageProps) {
                         type: "MASTER_UPDATE_ROUTING_STD_TIME",
                         payload: { itemId: step.itemId, stepNo: step.stepNo, stdTimeMin },
                       })
+                    }
+                  />
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+
+        <h3>作業区マスタ</h3>
+        <table className="panel__table">
+          <thead>
+            <tr>
+              <th>作業区</th>
+              <th>賃率（円/時）</th>
+            </tr>
+          </thead>
+          <tbody>
+            {state.workCenters.map((wc) => (
+              <tr key={wc.workCenter}>
+                <td>{wc.workCenter}</td>
+                <td>
+                  <EditableNumberField
+                    value={wc.ratePerHour}
+                    min={0}
+                    onCommit={(ratePerHour) =>
+                      dispatch({ type: "MASTER_UPDATE_WORK_CENTER_RATE", payload: { workCenter: wc.workCenter, ratePerHour } })
                     }
                   />
                 </td>

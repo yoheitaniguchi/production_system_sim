@@ -5,6 +5,7 @@ import {
   initialItems,
   initialRoutingSteps,
   initialSuppliers,
+  initialWorkCenters,
 } from "../data/masterData";
 import type {
   BomLine,
@@ -13,6 +14,7 @@ import type {
   RoutingStep,
   SimulationState,
   Supplier,
+  WorkCenter,
 } from "../types";
 import { adjustStock } from "./inventory";
 import { firmAllPlannedOrders, runMRP } from "./mrp";
@@ -41,7 +43,10 @@ export type SimulationAction =
   | { type: "MASTER_UPDATE_ITEM_LEAD_TIME"; payload: { itemId: string; leadTimeDays: number } }
   | { type: "MASTER_UPDATE_BOM_QTY_PER"; payload: { parentItemId: string; childItemId: string; qtyPer: number } }
   | { type: "MASTER_UPDATE_ROUTING_STD_TIME"; payload: { itemId: string; stepNo: number; stdTimeMin: number } }
-  | { type: "MASTER_UPDATE_PARTNER_NAME"; payload: { partnerType: "CUSTOMER" | "SUPPLIER"; partnerId: string; name: string } };
+  | { type: "MASTER_UPDATE_PARTNER_NAME"; payload: { partnerType: "CUSTOMER" | "SUPPLIER"; partnerId: string; name: string } }
+  | { type: "MASTER_UPDATE_ITEM_PURCHASE_PRICE"; payload: { itemId: string; purchasePrice: number } }
+  | { type: "MASTER_UPDATE_ITEM_SALES_PRICE"; payload: { itemId: string; salesPrice: number } }
+  | { type: "MASTER_UPDATE_WORK_CENTER_RATE"; payload: { workCenter: string; ratePerHour: number } };
 
 /** データ増分ログ（design.md EXT-8）の対象テーブル。行の追加・削除のみを見る（値の更新は対象外） */
 const TABLE_LABELS = {
@@ -99,6 +104,7 @@ function emptyStateWithMasters(
   routingSteps: RoutingStep[],
   customers: Customer[],
   suppliers: Supplier[],
+  workCenters: WorkCenter[],
 ): SimulationState {
   return {
     day: 0,
@@ -107,6 +113,7 @@ function emptyStateWithMasters(
     routingSteps,
     customers,
     suppliers,
+    workCenters,
     salesOrders: [],
     soLines: [],
     plannedOrders: [],
@@ -132,6 +139,7 @@ export function createInitialState(): SimulationState {
     structuredClone(initialRoutingSteps),
     structuredClone(initialCustomers),
     structuredClone(initialSuppliers),
+    structuredClone(initialWorkCenters),
   );
 }
 
@@ -145,6 +153,7 @@ export function simulationReducer(state: SimulationState, action: SimulationActi
         structuredClone(state.routingSteps),
         structuredClone(state.customers),
         structuredClone(state.suppliers),
+        structuredClone(state.workCenters),
       );
 
     case "ADVANCE_DAY": {
@@ -280,6 +289,30 @@ export function simulationReducer(state: SimulationState, action: SimulationActi
           supplier.name = action.payload.name;
         }
         return `${action.payload.partnerId} の名称を「${action.payload.name}」に変更した`;
+      });
+
+    case "MASTER_UPDATE_ITEM_PURCHASE_PRICE":
+      return applyAction(state, (next) => {
+        const item = next.items.find((i) => i.itemId === action.payload.itemId);
+        if (!item) throw new Error(`品目が見つかりません: ${action.payload.itemId}`);
+        item.purchasePrice = action.payload.purchasePrice;
+        return `${item.itemId} の購入単価を ${action.payload.purchasePrice} 円に変更した`;
+      });
+
+    case "MASTER_UPDATE_ITEM_SALES_PRICE":
+      return applyAction(state, (next) => {
+        const item = next.items.find((i) => i.itemId === action.payload.itemId);
+        if (!item) throw new Error(`品目が見つかりません: ${action.payload.itemId}`);
+        item.salesPrice = action.payload.salesPrice;
+        return `${item.itemId} の売価を ${action.payload.salesPrice} 円に変更した`;
+      });
+
+    case "MASTER_UPDATE_WORK_CENTER_RATE":
+      return applyAction(state, (next) => {
+        const wc = next.workCenters.find((w) => w.workCenter === action.payload.workCenter);
+        if (!wc) throw new Error(`作業区が見つかりません: ${action.payload.workCenter}`);
+        wc.ratePerHour = action.payload.ratePerHour;
+        return `${wc.workCenter} の賃率を ${action.payload.ratePerHour} 円/時に変更した`;
       });
 
     default:

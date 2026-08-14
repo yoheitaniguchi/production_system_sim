@@ -331,9 +331,10 @@ TC-04/TC-17の手検算）を実施し、以下の指摘に対応した。中核
   工程・出荷・調達の操作が出揃った段階で、「本日実行可能な操作のハイライト」等の軽量な代替案も含めて再検討する~~
   → 5.1節のとおり軽量な代替案（本日実行可能な操作のハイライト）を実装済み。自動連打機能自体は引き続き
   実装しない方針を維持する
-- **Phase 2-A（原価）・Phase 2-B（トレーサビリティ）**：v5-spec.md §11.2・§11.3の最小設計をそのまま踏襲し、
-  実装着手時に本ファイルへ具体的なタスクを追記する。原価はPhase 2-Aの実装コストが「中」（非破壊的）である一方、
-  トレーサビリティは在庫残高の主キー変更を伴う破壊的変更である点に注意（v5-spec.md §11.3）
+- ~~**Phase 2-A（原価）**：v5-spec.md §11.2の最小設計をそのまま踏襲し、実装着手時に本ファイルへ具体的なタスクを
+  追記する。実装コストが「中」（非破壊的）である~~ → 5.2節のとおり実装済み
+- **Phase 2-B（トレーサビリティ）**：v5-spec.md §11.3の最小設計をそのまま踏襲し、実装着手時に本ファイルへ具体的な
+  タスクを追記する。在庫残高の主キー変更を伴う破壊的変更である点に注意（v5-spec.md §11.3）
 
 ### 5.1 自動再生の軽量代替案（DEV-2再検討分）実施結果
 
@@ -354,3 +355,28 @@ TC-04/TC-17の手検算）を実施し、以下の指摘に対応した。中核
   Playwrightの`has-text`セレクタでは誤ってピル側をクリックしてしまう場合がある点に留意（実装上の問題ではなく
   テスト記述上の注意点）
 - `npm run build`・`npm test`（67件、todayActions.test.tsの8件を追加）がともに成功
+
+### 5.2 Phase 2-A（原価）実施結果
+
+- `src/types.ts`：`WorkCenter`（作業区マスタ、賃率）を新設し`SimulationState.workCenters`に追加。`ItemMaster`に
+  `purchasePrice`・`salesPrice`（design.md EXT-15）を追加
+- `src/data/masterData.ts`：3作業区とも賃率2,000円/時（v5-spec.md §11.2の計算例に合わせる）、
+  RM-300/PT-400/PT-500の`purchasePrice`（800/250/20）、FG-100の`salesPrice`（6,000円、design.md EXT-15の仮置き）
+- `src/domain/cost.ts`：`rollupCost()`（v5-spec.md §11.2疑似コードそのまま）・`computeAllItemCosts()`・
+  `computeMfgOrderCost()`（オーダ別の投入材料費/投入加工費/完成品振替額/原価差異）・`inventoryValue()`・
+  `backlogValue()`・`scrapLossValue()`を実装。`computeMfgOrderCost()`は「第1工程完了＝投入確定」「最終工程完了＝
+  完成品振替確定」というproduction.tsのバックフラッシュ/完成入庫のタイミングと同じ条件で判定する
+- `src/domain/cost.test.ts`（10件）：v5-spec.md §11.2の計算例（木製イス材料費2,560・加工費1,400・標準原価3,960）、
+  および「原価差異の可視化」の不良1個の例（原価差異3,960円）を実際にドメイン関数へ流し込んで再現・検証した
+- `src/components/CostPanel.tsx`（新設、「原価」タブ）：組織目線の金額指標（在庫金額・受注残高・不良損失額）、
+  品目別標準原価、製造オーダ別原価差異の3テーブルを表示。design.md EXT-16のとおり、既存の`KpiDashboard.tsx`
+  （数量ベース12指標、TC-17等でテスト済み）は変更せず独立した画面として追加した
+- `src/components/MasterDataPage.tsx`：品目マスタに購入単価・売価の編集列（`EditableNumberField`、min=0）、
+  新規「作業区マスタ」テーブル（賃率の編集）を追加
+- `src/domain/reducer.ts`：`MASTER_UPDATE_ITEM_PURCHASE_PRICE`・`MASTER_UPDATE_ITEM_SALES_PRICE`・
+  `MASTER_UPDATE_WORK_CENTER_RATE`を追加（既存のMASTER_UPDATE_*と同じパターン）。RESET（UC-23）でも
+  `workCenters`をマスタとして保持するよう対応
+- Playwrightで、原価タブの品目別標準原価がv5-spec.md §11.2の表と一致すること、マスタタブで購入単価・売価・
+  作業区賃率が編集可能であること、受注登録から計画オーダ確定までの流れで受注残高（金額）が60,000円
+  （10個×6,000円）になることを実際にブラウザ操作で確認した
+- `npm run build`・`npm test`（77件、cost.test.tsの10件を追加）がともに成功
