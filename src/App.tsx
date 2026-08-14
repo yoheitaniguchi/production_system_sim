@@ -1,5 +1,6 @@
-import { useReducer, useState } from "react";
+import { useLayoutEffect, useReducer, useState } from "react";
 import AlertBar from "./components/AlertBar";
+import BurgerMenu from "./components/BurgerMenu";
 import ClockControls from "./components/ClockControls";
 import EventLogPanel from "./components/EventLogPanel";
 import InventoryPanel from "./components/InventoryPanel";
@@ -13,6 +14,7 @@ import ProductionPanel from "./components/ProductionPanel";
 import SalesOrderPanel from "./components/SalesOrderPanel";
 import ShipmentPanel from "./components/ShipmentPanel";
 import { createInitialState, simulationReducer } from "./domain/reducer";
+import { loadStoredTheme, storeTheme } from "./theme";
 
 // ドメイン画面のタブ一覧。design.md §5の順序どおり実装済みのものから順に追加してきた（Phase 5a〜5g完了）。
 const TABS = [
@@ -31,11 +33,18 @@ const TABS = [
 function App() {
   const [state, dispatch] = useReducer(simulationReducer, undefined, createInitialState);
   const [activeTab, setActiveTab] = useState<(typeof TABS)[number]["id"]>(TABS[0].id);
+  const [themeId, setThemeId] = useState<string>(() => loadStoredTheme());
+
+  useLayoutEffect(() => {
+    document.documentElement.dataset.theme = themeId;
+    storeTheme(themeId);
+  }, [themeId]);
 
   const ActiveComponent = TABS.find((t) => t.id === activeTab)?.Component ?? TABS[0].Component;
 
   return (
     <div className="app">
+      <BurgerMenu themeId={themeId} onSelectTheme={setThemeId} />
       <header className="app__header">
         <h1>生産管理ミニマムシミュレーター</h1>
       </header>
