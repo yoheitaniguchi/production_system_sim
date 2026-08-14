@@ -4,6 +4,7 @@ import BurgerMenu from "./components/BurgerMenu";
 import ClockControls from "./components/ClockControls";
 import CostPanel from "./components/CostPanel";
 import EventLogPanel from "./components/EventLogPanel";
+import ExerciseGuidePanel from "./components/ExerciseGuidePanel";
 import InventoryPanel from "./components/InventoryPanel";
 import KpiDashboard from "./components/KpiDashboard";
 import MasterDataPage from "./components/MasterDataPage";
@@ -31,6 +32,7 @@ const TABS = [
   { id: "kpi", label: "KPI", Component: KpiDashboard },
   { id: "cost", label: "原価", Component: CostPanel },
   { id: "pegging", label: "ペギング追跡", Component: PeggingTracePanel },
+  { id: "exercise-guide", label: "演習ガイド", Component: ExerciseGuidePanel },
   { id: "process-flow", label: "プロセス連携図", Component: ProcessFlowDiagram },
 ] as const;
 
