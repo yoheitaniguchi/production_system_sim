@@ -79,7 +79,19 @@ function ItemMasterTable({ state, dispatch }: Props) {
                   onCommit={(makeBuy) =>
                     dispatch({
                       type: "MASTER_UPDATE_ITEM",
-                      payload: { itemId: item.itemId, patch: { makeBuy: makeBuy as MakeBuy } },
+                      payload: {
+                        itemId: item.itemId,
+                        // MAKE->BUYはdomain側が同一patch内の既定仕入先を要求する（区分だけ先に
+                        // 変えると「既定仕入先の無い購買品目」になるため）。品目は常にdefaultSupplierIdを
+                        // undefinedへクリアしてから区分を切り替えるので、この操作の中で新しい仕入先を
+                        // 選ばせる術がUI単独では無い。既存の仕入先の先頭を仮の既定値として一緒に送り、
+                        // 実際の仕入先は右隣のセルで選び直せるようにする（仕入先が1件も無ければ
+                        // domain側のエラーがそのままイベントログに出る）
+                        patch:
+                          makeBuy === "BUY"
+                            ? { makeBuy: makeBuy as MakeBuy, defaultSupplierId: state.suppliers[0]?.supplierId }
+                            : { makeBuy: makeBuy as MakeBuy },
+                      },
                     })
                   }
                 />
