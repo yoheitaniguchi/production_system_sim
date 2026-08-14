@@ -38,11 +38,6 @@ function App() {
     <div className="app">
       <header className="app__header">
         <h1>生産管理ミニマムシミュレーター</h1>
-        <ClockControls
-          day={state.day}
-          onAdvanceDay={() => dispatch({ type: "ADVANCE_DAY" })}
-          onReset={() => dispatch({ type: "RESET" })}
-        />
       </header>
       <AlertBar state={state} />
       <nav className="app__tabs">
@@ -61,6 +56,11 @@ function App() {
         <ActiveComponent state={state} dispatch={dispatch} />
       </main>
       <EventLogPanel entries={state.eventLog} />
+      <ClockControls
+        day={state.day}
+        onAdvanceDay={() => dispatch({ type: "ADVANCE_DAY" })}
+        onReset={() => dispatch({ type: "RESET" })}
+      />
     </div>
   );
 }
