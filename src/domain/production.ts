@@ -32,6 +32,26 @@ export function releaseMfgOrder(state: SimulationState, moNo: string): void {
   mo.status = "RELEASED";
 }
 
+/**
+ * 着手可能かどうかの判定（startStepと同じガード条件を副作用無しで再利用する。
+ * 工順の順序探索ロジックをUI側・todayActions.tsで重複させないための集約）
+ */
+export function canStartStep(state: SimulationState, moNo: string, stepNo: number): boolean {
+  const mo = state.mfgOrders.find((m) => m.moNo === moNo);
+  if (!mo) return false;
+  const wi = state.workInstructions.find((w) => w.moNo === moNo && w.stepNo === stepNo);
+  if (!wi || wi.status !== "WAIT") return false;
+
+  const steps = stepsOf(state, mo.itemId);
+  const stepIdx = steps.indexOf(stepNo);
+  if (stepIdx > 0) {
+    const prevStepNo = steps[stepIdx - 1];
+    const prevWi = state.workInstructions.find((w) => w.moNo === moNo && w.stepNo === prevStepNo);
+    return prevWi?.status === "DONE";
+  }
+  return mo.status === "RELEASED";
+}
+
 /** 工程着手（v5-spec.md §7.3 startStep） */
 export function startStep(state: SimulationState, moNo: string, stepNo: number, day: number): void {
   const mo = state.mfgOrders.find((m) => m.moNo === moNo);

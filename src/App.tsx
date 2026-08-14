@@ -13,6 +13,8 @@ import ProcurementPanel from "./components/ProcurementPanel";
 import ProductionPanel from "./components/ProductionPanel";
 import SalesOrderPanel from "./components/SalesOrderPanel";
 import ShipmentPanel from "./components/ShipmentPanel";
+import TodayActionsBar from "./components/TodayActionsBar";
+import { computeTodayActions } from "./domain/todayActions";
 import { createInitialState, simulationReducer } from "./domain/reducer";
 import { loadStoredTheme, storeTheme } from "./theme";
 
@@ -42,6 +44,11 @@ function App() {
 
   const ActiveComponent = TABS.find((t) => t.id === activeTab)?.Component ?? TABS[0].Component;
 
+  const countByTab = computeTodayActions(state).reduce<Record<string, number>>((acc, action) => {
+    acc[action.domain] = (acc[action.domain] ?? 0) + action.count;
+    return acc;
+  }, {});
+
   return (
     <div className="app">
       <BurgerMenu themeId={themeId} onSelectTheme={setThemeId} />
@@ -49,6 +56,7 @@ function App() {
         <h1>生産管理ミニマムシミュレーター</h1>
       </header>
       <AlertBar state={state} />
+      <TodayActionsBar state={state} onNavigate={(domain) => setActiveTab(domain)} />
       <nav className="app__tabs">
         {TABS.map((tab) => (
           <button
@@ -58,6 +66,7 @@ function App() {
             onClick={() => setActiveTab(tab.id)}
           >
             {tab.label}
+            {countByTab[tab.id] ? <span className="app__tab-badge">{countByTab[tab.id]}</span> : null}
           </button>
         ))}
       </nav>
