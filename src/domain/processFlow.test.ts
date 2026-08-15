@@ -106,6 +106,30 @@ describe("computeActiveFlows", () => {
     expect(result.flowIds.size).toBe(0);
   });
 
+  it("indexを指定すると、その時点の操作のフローを返す（戻る/進むボタン用）", () => {
+    let state = createInitialState();
+    state = dispatch(state, {
+      type: "SO_CREATE",
+      payload: { customerId: "CUST-A", itemId: ITEM_IDS.FG_CHAIR, qty: 10, requestDay: 15 },
+    });
+    state = dispatch(state, { type: "MRP_RUN" });
+
+    const first = computeActiveFlows(state, 0);
+    expect(first.activeDomains).toEqual(new Set(["salesOrder"]));
+    expect(first.flowIds.size).toBe(0);
+    expect(first.day).toBe(state.eventLog[0].day);
+
+    const latest = computeActiveFlows(state, 1);
+    expect(latest.flowIds).toEqual(
+      new Set(["salesOrder-planning", "inventory-planning", "procurement-planning", "production-planning"]),
+    );
+
+    // index省略時は末尾（最新）と同じ結果になる
+    const defaulted = computeActiveFlows(state);
+    expect(defaulted.flowIds).toEqual(latest.flowIds);
+    expect(defaulted.day).toBe(latest.day);
+  });
+
   it("エラーログはハイライトしない", () => {
     let state = createInitialState();
     state = dispatch(state, { type: "SO_CONFIRM_DELIVERY", payload: { soNo: "SO-999", confirmDay: 10 } });

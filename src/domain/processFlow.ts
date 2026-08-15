@@ -59,18 +59,23 @@ function isMasterMessage(message: string): boolean {
 }
 
 export interface ActiveFlows {
-  /** 直前の操作の業務メッセージ。まだ何も操作していなければnull */
+  /** 表示対象の操作の業務メッセージ。まだ何も操作していなければnull */
   lastMessage: string | null;
+  /** 表示対象の操作が実行されたシミュレーション日。lastMessageがnullならnull */
+  day: number | null;
   flowIds: Set<string>;
   activeDomains: Set<DomainId>;
 }
 
-/** 直前の操作（EventLogEntryの末尾）が、どのドメイン間フローを動かしたかを判定する */
-export function computeActiveFlows(state: SimulationState): ActiveFlows {
-  const last = state.eventLog[state.eventLog.length - 1];
+/**
+ * 指定した操作（index省略時はEventLogEntryの末尾＝直前の操作）が、どのドメイン間フローを動かしたかを判定する。
+ * indexはProcessFlowDiagram.tsxの戻る/進むボタンでイベントログ履歴を遡って表示するために使う。
+ */
+export function computeActiveFlows(state: SimulationState, index: number = state.eventLog.length - 1): ActiveFlows {
+  const last = state.eventLog[index];
   const flowIds = new Set<string>();
   const activeDomains = new Set<DomainId>();
-  if (!last) return { lastMessage: null, flowIds, activeDomains };
+  if (!last) return { lastMessage: null, day: null, flowIds, activeDomains };
 
   const addFlow = (id: string) => {
     const flow = FLOWS.find((f) => f.id === id);
@@ -121,5 +126,5 @@ export function computeActiveFlows(state: SimulationState): ActiveFlows {
     activeDomains.add("inventory");
   }
 
-  return { lastMessage: msg, flowIds, activeDomains };
+  return { lastMessage: msg, day: last.day, flowIds, activeDomains };
 }

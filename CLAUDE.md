@@ -154,7 +154,9 @@ npm run preview   # build成果物をGitHub Pages相当のbaseパスで動作確
   `ProcessFlowPopup.tsx`によるフローティングポップアップとして表示し、他タブを操作しながら常時参照できる
   （タブ切り替えでアンマウントされずApp直下に置く）。ヘッダー部分のドラッグで自由に移動でき（Pointer Events、
   範囲制限なし）、閉じるボタンとEscキーの両方で閉じられる。SVGは`viewBox`＋`width:100%`で追従させ、PC画面での
-  横スクロールを不要にした。各画面はPlaywrightでv5-spec.md TC-02〜19相当の
+  横スクロールを不要にした。イベントログ履歴を戻る/進むボタンで遡って表示できる（`domain/processFlow.ts`の
+  `computeActiveFlows()`にindex引数を追加し、末尾以外のEventLogEntryも指定できるようにした。最新まで
+  進むと自動追従状態に復帰する）。各画面はPlaywrightでv5-spec.md TC-02〜19相当の
   操作・§11.2/§11.3相当の操作を実際にブラウザで確認済み（ライト/ダーク両テーマ）。
   マスタ自由登録も、4階層マスタのJSONインポート→受注〜出荷の通し操作・循環BOMの登録拒否・
   参照中マスタの削除ブロックをブラウザで確認済み
