@@ -8,25 +8,56 @@
   :root {
     --color-bg: #f4f6f8;
     --color-surface: #ffffff;
-    --color-border: #e3e6ea;
-    --color-text: #1a1d21;
-    --color-text-muted: #6b7280;
+    --color-surface-subtle: #f8fafc;
+    --color-border: #e2e8f0;
+    --color-border-hover: #cbd5e1;
+    --color-text: #0f172a;
+    --color-text-muted: #64748b;
     --color-primary: #0f9b8e;
     --color-primary-hover: #0c7f74;
     --color-primary-soft: #e6f5f3;
-    --color-warning: #f5a623;
+    --color-primary-glow: rgba(15, 155, 142, 0.25);
+    --color-accent: #3b82f6;
+    --color-accent-soft: #eff6ff;
+    --color-warning: #f59e0b;
+    --color-warning-soft: #fef3c7;
+    --color-warning-border: #fde68a;
+    --color-warning-text: #92400e;
     --radius-sm: 6px;
     --radius-md: 10px;
     --radius-lg: 14px;
-    --shadow-sm: 0 1px 2px rgba(16, 24, 40, 0.06);
-    --shadow-md: 0 4px 16px rgba(16, 24, 40, 0.12);
+    --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.06);
+    --shadow-md: 0 4px 16px rgba(15, 23, 42, 0.1);
+    --shadow-lg: 0 10px 25px rgba(15, 23, 42, 0.12);
     --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", "Hiragino Kaku Gothic ProN",
       "Hiragino Sans", "Noto Sans JP", Meiryo, sans-serif;
-    color-scheme: light;
+    --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  }
+
+  [data-theme="dark"] {
+    --color-bg: #0b1120;
+    --color-surface: #1e293b;
+    --color-surface-subtle: #162032;
+    --color-border: #334155;
+    --color-border-hover: #475569;
+    --color-text: #f1f5f9;
+    --color-text-muted: #94a3b8;
+    --color-primary: #2dd4bf;
+    --color-primary-hover: #14b8a6;
+    --color-primary-soft: rgba(45, 212, 191, 0.15);
+    --color-primary-glow: rgba(45, 212, 191, 0.35);
+    --color-accent: #60a5fa;
+    --color-accent-soft: rgba(96, 165, 250, 0.15);
+    --color-warning: #fbbf24;
+    --color-warning-soft: rgba(251, 191, 36, 0.15);
+    --color-warning-border: rgba(251, 191, 36, 0.3);
+    --color-warning-text: #fde68a;
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
+    --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.4);
+    --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.5);
   }
 
   * { box-sizing: border-box; }
-
   html, body { margin: 0; padding: 0; }
 
   body {
@@ -35,36 +66,72 @@
     font-family: var(--font-sans);
     line-height: 1.6;
     -webkit-font-smoothing: antialiased;
+    transition: background-color 200ms ease, color 200ms ease;
   }
 
   .page {
-    max-width: 1180px;
+    max-width: 1240px;
     margin: 0 auto;
-    padding: clamp(16px, 4vw, 32px);
+    padding: clamp(16px, 3vw, 32px);
   }
 
-  h1 { font-size: 1.5rem; margin: 0 0 8px; }
-  h2 { font-size: 1.1rem; margin: 0 0 12px; }
-  h3 { font-size: 0.95rem; margin: 0 0 8px; }
+  /* Header */
+  .header-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+  }
 
-  p { color: var(--color-text-muted); }
+  .header-title-group h1 {
+    font-size: clamp(1.25rem, 2.5vw, 1.6rem);
+    margin: 0 0 4px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+  }
 
+  .header-title-group p {
+    margin: 0;
+    font-size: 0.88rem;
+    color: var(--color-text-muted);
+  }
+
+  .theme-toggle-btn {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: 999px;
+    color: var(--color-text);
+    cursor: pointer;
+    font-size: 1rem;
+    padding: 8px 14px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    box-shadow: var(--shadow-sm);
+    transition: all 150ms ease;
+  }
+  .theme-toggle-btn:hover {
+    border-color: var(--color-primary);
+  }
+
+  /* Intro Card */
   .intro {
     background: var(--color-surface);
     border: 1px solid var(--color-border);
     border-radius: var(--radius-lg);
     box-shadow: var(--shadow-sm);
-    padding: 20px 24px;
+    padding: 18px 24px;
     margin-bottom: 20px;
   }
-
-  .intro p { margin: 6px 0; font-size: 0.9rem; }
+  .intro p { margin: 6px 0; font-size: 0.88rem; color: var(--color-text-muted); }
   .intro code {
-    background: var(--color-bg);
+    background: var(--color-surface-subtle);
     border: 1px solid var(--color-border);
     border-radius: 4px;
-    padding: 1px 5px;
+    padding: 2px 6px;
+    font-family: var(--font-mono);
     font-size: 0.85em;
+    color: var(--color-text);
   }
   .intro .source {
     font-size: 0.8rem;
@@ -72,8 +139,10 @@
     padding-top: 10px;
     border-top: 1px dashed var(--color-border);
   }
-  .intro .source a { color: var(--color-primary-hover); }
+  .intro .source a { color: var(--color-primary); text-decoration: none; }
+  .intro .source a:hover { text-decoration: underline; }
 
+  /* Panels */
   .panel {
     background: var(--color-surface);
     border: 1px solid var(--color-border);
@@ -81,9 +150,73 @@
     box-shadow: var(--shadow-sm);
     padding: 20px 24px;
     margin-bottom: 20px;
+    transition: border-color 200ms ease;
   }
 
-  /* ---------- フロー選択 ---------- */
+  .panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .panel-header h2 {
+    font-size: 1.1rem;
+    margin: 0;
+    font-weight: 700;
+  }
+
+  /* Filter & Categories */
+  .category-filter {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 12px;
+  }
+
+  .cat-btn {
+    font: inherit;
+    font-size: 0.8rem;
+    padding: 5px 12px;
+    border-radius: 999px;
+    border: 1px solid var(--color-border);
+    background: var(--color-surface-subtle);
+    color: var(--color-text-muted);
+    cursor: pointer;
+    transition: all 120ms ease;
+  }
+  .cat-btn:hover { border-color: var(--color-primary); color: var(--color-text); }
+  .cat-btn.active {
+    background: var(--color-primary-soft);
+    border-color: var(--color-primary);
+    color: var(--color-primary);
+    font-weight: 600;
+  }
+
+  .search-box-wrap {
+    margin-bottom: 14px;
+  }
+
+  .search-input {
+    width: 100%;
+    max-width: 420px;
+    font: inherit;
+    font-size: 0.85rem;
+    padding: 8px 14px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--color-border);
+    background: var(--color-surface-subtle);
+    color: var(--color-text);
+    outline: none;
+    transition: border-color 150ms ease;
+  }
+  .search-input:focus {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px var(--color-primary-glow);
+  }
+
   .flow-picker {
     display: flex;
     flex-wrap: wrap;
@@ -94,41 +227,130 @@
     font: inherit;
     font-size: 0.85rem;
     padding: 8px 14px;
-    border-radius: 999px;
+    border-radius: var(--radius-md);
     border: 1px solid var(--color-border);
     background: var(--color-surface);
     color: var(--color-text);
     cursor: pointer;
     transition: all 120ms ease;
+    display: flex;
+    align-items: center;
+    gap: 6px;
   }
-  .flow-btn:hover { border-color: var(--color-primary); }
+  .flow-btn:hover { border-color: var(--color-primary); background: var(--color-surface-subtle); }
   .flow-btn.active {
     background: var(--color-primary);
     border-color: var(--color-primary);
-    color: #fff;
+    color: #ffffff;
     font-weight: 600;
+    box-shadow: var(--shadow-sm);
+  }
+  .flow-btn .flow-badge-count {
+    font-size: 0.7rem;
+    background: rgba(0, 0, 0, 0.15);
+    padding: 2px 6px;
+    border-radius: 999px;
+  }
+  .flow-btn.active .flow-badge-count {
+    background: rgba(255, 255, 255, 0.25);
   }
 
+  .flow-info-card {
+    margin-top: 14px;
+    padding: 12px 16px;
+    background: var(--color-surface-subtle);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--color-border);
+  }
   .flow-trigger {
-    margin-top: 10px;
-    font-size: 0.82rem;
+    margin: 0;
+    font-size: 0.85rem;
   }
   .flow-trigger strong { color: var(--color-text); }
-
   .flow-note {
-    margin-top: 6px;
-    font-size: 0.8rem;
-    background: #fff8ec;
-    border: 1px solid #f0dfb8;
+    margin: 8px 0 0;
+    font-size: 0.82rem;
+    background: var(--color-warning-soft);
+    border: 1px solid var(--color-warning-border);
     border-radius: var(--radius-sm);
     padding: 8px 12px;
-    color: #8a6416;
+    color: var(--color-warning-text);
   }
 
-  /* ---------- 図（レーン + ボックス + 矢印オーバーレイ） ---------- */
+  /* Stepper Controller */
+  .stepper-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    padding: 12px 16px;
+    background: var(--color-surface-subtle);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    margin-bottom: 16px;
+  }
+
+  .stepper-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .ctrl-btn {
+    font: inherit;
+    font-size: 0.82rem;
+    padding: 6px 12px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--color-border);
+    background: var(--color-surface);
+    color: var(--color-text);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    transition: all 120ms ease;
+  }
+  .ctrl-btn:hover:not(:disabled) {
+    border-color: var(--color-primary);
+    color: var(--color-primary);
+  }
+  .ctrl-btn:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+  .ctrl-btn.primary {
+    background: var(--color-primary);
+    border-color: var(--color-primary);
+    color: #ffffff;
+    font-weight: 600;
+  }
+  .ctrl-btn.primary:hover:not(:disabled) {
+    background: var(--color-primary-hover);
+    color: #ffffff;
+  }
+
+  .step-status-indicator {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--color-text);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .step-status-tag {
+    background: var(--color-primary-soft);
+    color: var(--color-primary);
+    padding: 3px 8px;
+    border-radius: var(--radius-sm);
+    font-size: 0.78rem;
+  }
+
+  /* Stage & Diagram */
   .stage {
     position: relative;
-    margin-top: 18px;
+    margin-top: 8px;
+    padding: 10px 0;
   }
 
   .lanes {
@@ -139,17 +361,17 @@
 
   .lane {
     display: flex;
-    align-items: center;
-    gap: 14px;
+    align-items: flex-start;
+    gap: 16px;
   }
 
   .lane-label {
-    flex: 0 0 150px;
+    flex: 0 0 160px;
     font-size: 0.78rem;
     font-weight: 700;
     color: var(--color-text-muted);
     text-align: right;
-    padding-right: 6px;
+    padding-top: 8px;
     line-height: 1.3;
   }
 
@@ -162,24 +384,42 @@
 
   .box {
     position: relative;
-    min-width: 108px;
+    min-width: 110px;
     text-align: center;
-    padding: 9px 12px;
-    font-size: 0.78rem;
+    padding: 8px 12px;
+    font-size: 0.76rem;
     border-radius: var(--radius-md);
     border: 1.5px solid var(--color-border);
-    background: var(--color-bg);
+    background: var(--color-surface-subtle);
     color: var(--color-text-muted);
-    transition: all 150ms ease;
+    transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1);
     z-index: 1;
+    user-select: none;
   }
 
-  .box.active {
+  .box.dimmed {
+    opacity: 0.25;
+    filter: grayscale(0.6);
+  }
+
+  .box.flow-active {
+    border-color: var(--color-primary);
+    background: var(--color-surface);
+    color: var(--color-text);
+    font-weight: 600;
+    opacity: 1;
+    filter: none;
+    box-shadow: var(--shadow-sm);
+  }
+
+  .box.step-current {
     border-color: var(--color-primary);
     background: var(--color-primary-soft);
     color: var(--color-text);
-    font-weight: 600;
-    box-shadow: 0 0 0 3px rgba(15, 155, 142, 0.14);
+    font-weight: 700;
+    transform: scale(1.05);
+    box-shadow: 0 0 0 4px var(--color-primary-glow), var(--shadow-md);
+    z-index: 5;
   }
 
   .box .badge {
@@ -187,16 +427,27 @@
     top: -9px;
     right: -9px;
     background: var(--color-primary);
-    color: #fff;
-    font-size: 0.65rem;
+    color: #ffffff;
+    font-size: 0.68rem;
     font-weight: 700;
     line-height: 1;
-    padding: 3px 5px;
+    padding: 3px 6px;
     border-radius: 999px;
-    min-width: 16px;
+    min-width: 18px;
     box-shadow: var(--shadow-sm);
+    transition: transform 150ms ease;
+  }
+  .box.step-current .badge {
+    transform: scale(1.25);
+    background: #0f172a;
+    color: #ffffff;
+  }
+  [data-theme="dark"] .box.step-current .badge {
+    background: #ffffff;
+    color: #0f172a;
   }
 
+  /* SVG Arrows */
   svg.arrows-overlay {
     position: absolute;
     top: 0;
@@ -205,15 +456,41 @@
     height: 100%;
     pointer-events: none;
     overflow: visible;
+    z-index: 2;
+  }
+
+  .arrow-path {
+    fill: none;
+    stroke: var(--color-primary);
+    stroke-width: 1.8;
+    transition: opacity 200ms ease, stroke-width 200ms ease;
+  }
+  .arrow-path.flow-inactive {
+    opacity: 0.15;
+  }
+  .arrow-path.step-active {
+    stroke-width: 2.8;
+    stroke-dasharray: 6 4;
+    animation: arrowFlow 0.8s linear infinite;
+    opacity: 1;
+  }
+
+  @keyframes arrowFlow {
+    to { stroke-dashoffset: -20; }
   }
 
   .arrow-label-bg {
     fill: var(--color-surface);
-    opacity: 0.92;
+    stroke: var(--color-border);
+    stroke-width: 1;
+    rx: 4;
+    opacity: 0.95;
   }
   .arrow-label-text {
     font-size: 9.5px;
-    fill: var(--color-primary-hover);
+    font-family: var(--font-mono);
+    fill: var(--color-primary);
+    font-weight: 600;
   }
 
   .stage-legend {
@@ -222,120 +499,228 @@
     color: var(--color-text-muted);
   }
 
-  /* ---------- ステップ一覧 ---------- */
-  ol.step-list {
+  /* Step Details List */
+  .step-cards {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
     margin: 0;
-    padding-left: 1.4em;
-    font-size: 0.86rem;
-  }
-  ol.step-list li { margin-bottom: 10px; }
-  ol.step-list .step-node {
-    display: inline-block;
-    font-weight: 600;
-    color: var(--color-primary-hover);
-    margin-right: 4px;
-  }
-  ol.step-list .step-passes {
-    display: block;
-    margin-top: 2px;
-    font-size: 0.78rem;
-    color: var(--color-text-muted);
-  }
-  ol.step-list .step-passes code {
-    background: var(--color-bg);
-    border: 1px solid var(--color-border);
-    border-radius: 4px;
-    padding: 0 4px;
-    margin-right: 3px;
-    display: inline-block;
-    margin-top: 2px;
+    padding: 0;
+    list-style: none;
   }
 
-  /* ---------- JSON表示 ---------- */
+  .step-card {
+    background: var(--color-surface-subtle);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    padding: 14px 18px;
+    cursor: pointer;
+    transition: all 150ms ease;
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+  }
+  .step-card:hover {
+    border-color: var(--color-primary);
+    background: var(--color-surface);
+  }
+  .step-card.active {
+    border-color: var(--color-primary);
+    background: var(--color-surface);
+    box-shadow: 0 0 0 2px var(--color-primary-glow), var(--shadow-sm);
+  }
+
+  .step-number {
+    flex: 0 0 28px;
+    height: 28px;
+    border-radius: 999px;
+    background: var(--color-primary-soft);
+    color: var(--color-primary);
+    font-size: 0.82rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .step-card.active .step-number {
+    background: var(--color-primary);
+    color: #ffffff;
+  }
+
+  .step-body {
+    flex: 1;
+  }
+
+  .step-header-line {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 4px;
+    flex-wrap: wrap;
+  }
+
+  .step-node-tag {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--color-primary);
+    background: var(--color-primary-soft);
+    padding: 2px 8px;
+    border-radius: var(--radius-sm);
+  }
+
+  .step-action-text {
+    font-size: 0.86rem;
+    color: var(--color-text);
+    line-height: 1.5;
+  }
+
+  .step-data-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 6px;
+  }
+
+  .data-chip {
+    font-family: var(--font-mono);
+    font-size: 0.74rem;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: 4px;
+    padding: 2px 6px;
+    color: var(--color-text-muted);
+  }
+  .step-card.active .data-chip {
+    border-color: var(--color-primary);
+    color: var(--color-primary);
+  }
+
+  /* JSON view */
   details.json-view summary {
     cursor: pointer;
     font-size: 0.88rem;
     font-weight: 600;
-    color: var(--color-primary-hover);
+    color: var(--color-primary);
     padding: 4px 0;
   }
   pre.json-block {
     margin-top: 10px;
-    background: #1a1d21;
-    color: #d7f7f2;
+    background: #0f172a;
+    color: #38bdf8;
     border-radius: var(--radius-md);
     padding: 16px;
     overflow-x: auto;
+    font-family: var(--font-mono);
     font-size: 0.76rem;
     line-height: 1.5;
   }
 
   footer {
-    font-size: 0.76rem;
+    font-size: 0.78rem;
     color: var(--color-text-muted);
     text-align: center;
-    margin-top: 28px;
+    margin: 32px 0 16px;
   }
 </style>
 </head>
 <body>
 <div class="page">
+  <header class="header-bar">
+    <div class="header-title-group">
+      <h1>production_system_sim アーキテクチャフロー可視化</h1>
+      <p>パッケージ・コンポーネント間のデータ伝播・操作シーケンスの対話型学習マップ</p>
+    </div>
+    <button type="button" class="theme-toggle-btn" id="theme-toggle-btn" aria-label="テーマ切替">
+      <span id="theme-icon">🌙</span> <span id="theme-text" style="font-size: 0.82rem;">ダーク</span>
+    </button>
+  </header>
+
   <div class="intro">
-    <h1>production_system_sim アーキテクチャフロー可視化</h1>
     <p>
-      アプリ内の <code>package</code>（ディレクトリ／モジュール単位）と <code>component</code>（ファイル・関数単位）の間を、
-      主要な操作（アクション）がどう伝播するかを可視化した単一ページHTMLです。
+      アプリ内の <code>package</code>（ディレクトリ・モジュール単位）と <code>component</code>（ファイル・関数単位）の間を、
+      主要なユースケース操作（アクション）がどう伝播するかを可視化した単一ページHTMLです。
     </p>
     <p>
-      下のボタンでアクションを選ぶと、そのアクションが完了するまでに通る package / component が
-      ハイライトされ、間で渡されるデータが注釈として表示されます。
-      この画面は、ページ下部に埋め込まれた <strong>JSON</strong>（<code>&lt;script type="application/json" id="flow-data"&gt;</code>）を元に描画されています。
-    </p>
-    <p>
-      本シミュレータは7ドメイン（受注・計画・発注・工程・在庫・出荷・マスタ）＋分析系タブ（進捗ガント・能力計画・
-      原価・KPI・ペギング追跡・ロット追跡・演習ガイド）およびフローティングのプロセス連携図ポップアップを持つため、
-      姉妹リポジトリ<code>mini-simulator</code>より扱う操作の種類が豊富です。
-      ここではMRP展開からペギング・バックフラッシュ・ロット系譜・CRP能力計画・進捗ガントまで、v5仕様書の中核である
-      受注〜出荷の一連の流れを代表的な操作として選んでいます（全操作の一覧は <code>docs/design.md</code> §7 参照）。
+      下のアクションボタンや「自動再生 / 次のステップ」コントローラーを操作すると、各ステップで呼び出される
+      コンポーネントがハイライトされ、渡されるデータ（引数・Payload・State差分）を段階的に追体験できます。
+      この画面は、ページ下部に埋め込まれた <strong>JSON</strong>（<code>#flow-data</code>）を元に動的に描画されています。
     </p>
     <p class="source">
       発想の元ネタ：
       <a href="https://qiita.com/TakanobuSano/items/924ff7366fd233e3c00d" target="_blank" rel="noopener noreferrer">
         「Claude Codeでアプリの処理フローをHTML＋JSONで可視化させる発想がかなり実務的だった」（Qiita）
       </a>
-      で紹介されていたプロンプトを、このリポジトリのソースコード（<code>src/App.tsx</code>・<code>src/domain/reducer.ts</code>・
-      <code>src/domain/*.ts</code> ほか）を実際に読んだ上で再現したものです。推測で埋めた箇所はありません。
-      姉妹リポジトリ<code>mini-simulator</code>の <code>docs/architecture-flow.html</code>（同じ発想で先に作成済み）と
-      同じ構成のページを、本リポジトリの最新ドメイン・アクション体系に合わせて整備しています。
+      ／ ソースコード（<code>src/App.tsx</code>・<code>src/domain/*.ts</code>）の実装と完全一致させています。
     </p>
   </div>
 
+  <!-- Flow Picker Panel -->
   <section class="panel">
-    <h2>アクションを選ぶ</h2>
+    <div class="panel-header">
+      <h2>アクションを選ぶ</h2>
+      <div class="search-box-wrap">
+        <input type="text" id="flow-search" class="search-input" placeholder="フローやコンポーネントを検索（例: MRP, BOM, ガント, ロット）..." />
+      </div>
+    </div>
+
+    <!-- Category Filter Tabs -->
+    <div class="category-filter" id="category-filter"></div>
+
+    <!-- Flow Buttons -->
     <div class="flow-picker" id="flow-picker"></div>
-    <p class="flow-trigger" id="flow-trigger"></p>
-    <p class="flow-note" id="flow-note" hidden></p>
+
+    <!-- Trigger & Note -->
+    <div class="flow-info-card" id="flow-info-card">
+      <p class="flow-trigger" id="flow-trigger"></p>
+      <p class="flow-note" id="flow-note" hidden></p>
+    </div>
   </section>
 
+  <!-- Flow Diagram Stage Panel -->
   <section class="panel">
-    <h2>処理フロー図</h2>
+    <div class="panel-header">
+      <h2>処理フロー図</h2>
+      <!-- Stepper Controls -->
+      <div class="stepper-controls">
+        <button type="button" class="ctrl-btn" id="btn-prev" title="前のステップへ">◀ 前へ</button>
+        <button type="button" class="ctrl-btn primary" id="btn-play-pause" title="自動再生・一時停止">▶ 再生</button>
+        <button type="button" class="ctrl-btn" id="btn-next" title="次のステップへ">次へ ▶</button>
+        <button type="button" class="ctrl-btn" id="btn-show-all" title="全ステップを一括表示">全表示</button>
+      </div>
+    </div>
+
+    <!-- Step Status Banner -->
+    <div class="stepper-bar">
+      <div class="step-status-indicator" id="step-indicator">
+        <span class="step-status-tag" id="step-tag">Step 1 / 4</span>
+        <span id="step-title-summary">コンポーネント操作</span>
+      </div>
+      <div style="font-size: 0.78rem; color: var(--color-text-muted);" id="step-passes-preview"></div>
+    </div>
+
     <div class="stage" id="stage">
       <div class="lanes" id="lanes"></div>
       <svg class="arrows-overlay" id="arrows"></svg>
     </div>
+
     <p class="stage-legend">
-      枠内の数字：そのアクション内でのステップ番号／ティール色：選択中のアクションが通過するpackage・component／矢印：処理の受け渡し方向（ホバーで受け渡しデータの全量を表示）
+      💡 <strong>ヒント：</strong> 各ボックスの数字は処理順序です。矢印やステップカードをクリックすると、そのステップで渡されるデータ（Payload/State）にフォーカスします。
     </p>
   </section>
 
+  <!-- Step Details Panel -->
   <section class="panel">
-    <h2>ステップ詳細</h2>
-    <ol class="step-list" id="step-list"></ol>
+    <div class="panel-header">
+      <h2>ステップ詳細</h2>
+      <span style="font-size: 0.8rem; color: var(--color-text-muted);">カードをクリックすると対象ステップへジャンプ</span>
+    </div>
+    <ul class="step-cards" id="step-cards"></ul>
   </section>
 
+  <!-- JSON View Panel -->
   <section class="panel">
     <details class="json-view">
-      <summary>このページを駆動しているJSONを表示（AIに渡す場合はこのブロックをコピー）</summary>
+      <summary>このページを駆動している JSON を表示（AIや他ツールに渡す場合はこのブロックをコピー）</summary>
       <pre class="json-block" id="json-block"></pre>
     </details>
   </section>
@@ -346,6 +731,14 @@
 <script type="application/json" id="flow-data">
 {
   "app": "production_system_sim",
+  "categories": [
+    { "id": "all", "name": "すべて" },
+    { "id": "sales-planning", "name": "受注・計画" },
+    { "id": "procurement-production", "name": "購買・製造" },
+    { "id": "inventory-shipment", "name": "在庫・出荷" },
+    { "id": "analytics", "name": "分析・可視化" },
+    { "id": "master-system", "name": "マスタ・システム" }
+  ],
   "packages": [
     {
       "id": "components",
@@ -383,6 +776,7 @@
   "flows": [
     {
       "id": "so-create",
+      "category": "sales-planning",
       "name": "受注登録",
       "trigger": "受注タブのフォーム「受注登録」ボタン",
       "note": "登録直後にはMRPは走らない。この受注明細（状態：RECEIVED）が計画オーダに反映されるのは、次に計画タブで「MRPを実行」を明示的に押したとき（操作粒度はv5仕様書のユースケース単位。design.md §7）。",
@@ -415,6 +809,7 @@
     },
     {
       "id": "mrp-run",
+      "category": "sales-planning",
       "name": "MRP実行",
       "trigger": "計画タブ「MRPを実行」ボタン",
       "note": "runMRP()はPLANNED_ORDERを全削除してから再生成する（差分更新ではない）。需要の展開順序は必要日（confirmDay ?? requestDay）昇順・同着はSO番号昇順（design.md EXT-1）。BOM循環は展開経路の集合（path）で検出し、無限再帰を防ぐために例外を投げる（design.md EXT-19）。",
@@ -453,6 +848,7 @@
     },
     {
       "id": "planned-orders-firm",
+      "category": "sales-planning",
       "name": "計画オーダ一括確定",
       "trigger": "計画タブ「計画オーダを確定」ボタン",
       "note": "確定してしまうと復旧できない不整合（工順ゼロの内製品目／既定仕入先未設定の購買品目）を事前に全件検査し、1件でも該当すれば何も確定しない（design.md EXT-22。部分適用を避ける）。",
@@ -485,6 +881,7 @@
     },
     {
       "id": "procurement-receive",
+      "category": "procurement-production",
       "name": "仕入先納期回答〜入荷計上",
       "trigger": "発注タブの「納期回答」ボタン→（D+回答納期に到達後）「入荷計上」ボタン",
       "note": "design.md DEV-3により分割入荷は扱わず、注文残を一括で入荷させる。design.md EXT-4：現在日が入荷予定日（回答納期 ?? 希望納期）に達していなければ入荷計上ボタン自体が非活性になる。",
@@ -535,6 +932,7 @@
     },
     {
       "id": "production-release-complete",
+      "category": "procurement-production",
       "name": "製造オーダのリリース〜工程着手〜完了（バックフラッシュ）",
       "trigger": "工程タブの「リリース」ボタン→各工程の「着手」ボタン→「完了」ボタン（良品数・不良数を入力、工程の数だけ繰り返し）",
       "note": "第1工程の完了時に「BOM員数×投入数」を一括消費する（バックフラッシュ、投入数ベース。v5-spec.md §7.3）。部品が不足していればMfgOrderをHOLDにして例外を投げ、同じ操作をもう一度呼べば復帰を試みる（design.md EXT-10）。最終工程の完了時に完成品在庫へ計上し、消費ロットと生成ロットの親子関係（LOT_GENEALOGY）を記録する（v5-spec.md §11.3）。",
@@ -585,6 +983,7 @@
     },
     {
       "id": "shipment-allocate-ship",
+      "category": "inventory-shipment",
       "name": "出荷引当〜出荷実績登録",
       "trigger": "出荷タブ「引当」ボタン→「出荷実績登録」ボタン",
       "note": "design.md DEV-3により、引当数量は自動計算する（受注残と出荷可能量の少ない方）。数量入力欄は無く、不良等で受注残に満たない場合はその時点の出荷可能量までの部分出荷になる（v5-spec.md TC-15）。",
@@ -623,6 +1022,7 @@
     },
     {
       "id": "so-cancel",
+      "category": "sales-planning",
       "name": "受注取消（ペギング連鎖キャンセル）",
       "trigger": "受注タブの「取消」ボタン（出荷実績が無い受注のみ表示）",
       "note": "着手実績・入荷実績が1件でもあるオーダに紐づく受注は取消不可（design.md EXT-3）。取消が成立する場合、pegging.traceFromOrder()でpegTo鎖を辿って見つけた未実績のMFG_ORDER／PURCHASE_ORDERを連鎖的にCANCELEDにする（design.md EXT-2）。",
@@ -660,7 +1060,89 @@
       ]
     },
     {
+      "id": "capacity-planning",
+      "category": "analytics",
+      "name": "能力計画（CRP・山積み計算と負荷超過警告）",
+      "trigger": "製造オーダ確定時／「能力」タブを開いた時（AlertBar常時再計算）",
+      "note": "v5-spec.md §11.1 Phase 3 / design.md §9。確定済（FIRM/RELEASED/WIP/DONE）の製造オーダの工順負荷を標準時間×計画数量で算出し、作業区×日ごとに集計して能力（capacityMinPerDay、既定240分）と比較。負荷超過日はAlertBarおよびCapacityPanelでハイライト表示する。",
+      "steps": [
+        {
+          "package": "components",
+          "component": "CapacityPanel",
+          "action": "能力タブ表示時（またはAlertBar）で domain/capacity.ts の computeCapacityLoad(state) を呼び出し",
+          "passes": ["state.mfgOrders", "state.workInstructions", "state.workCenters", "state.routingSteps"]
+        },
+        {
+          "package": "domain",
+          "component": "capacity.ts",
+          "action": "computeCapacityLoad(): 作業区×日ごとに計画負荷（未着手＋仕掛中）・実績負荷を集計し、能力上限（capacityMinPerDay）との超過判定（overloadDays）を算出",
+          "passes": ["wcLoads", "dayLoads", "overloadDays"]
+        },
+        {
+          "package": "components",
+          "component": ["CapacityPanel", "AlertBar"],
+          "action": "再描画：能力タブの山積み表（負荷／能力比率・超過セル）と画面上部AlertBarの超過警告（例: WC-ASM D+13 300/240分）が表示される",
+          "passes": ["overloadDays", "wcLoads"]
+        }
+      ]
+    },
+    {
+      "id": "gantt-chart-view",
+      "category": "analytics",
+      "name": "進捗ガントチャート（計画・実績タイムライン可視化）",
+      "trigger": "「進捗ガント」タブをクリック、および受注行の「展開」ボタン",
+      "note": "design.md EXT-29。受注（SO）の要求納期・回答納期と、紐づく購買・製造・出荷オーダ（pegging.traceFromOrder()で収集）の計画日程（枠線バー）と実績日程（塗り潰しバー）を同一行で重ねて可視化。遅延発生時は遅延色で強調表示する。",
+      "steps": [
+        {
+          "package": "app",
+          "component": "App",
+          "action": "「進捗ガント」タブを選択 → activeTab \"gantt\" → GanttChartPanel をレンダリング",
+          "passes": ["state"]
+        },
+        {
+          "package": "domain",
+          "component": ["gantt.ts", "pegging.ts"],
+          "action": "computeGanttData(): traceFromOrder()で受注配下の全オーダを収集し、計画期間・実績期間・遅延ステータス（ON_SCHEDULE/DELAYED/COMPLETED）を計算",
+          "passes": ["state.salesOrders", "state.soLines", "state.mfgOrders", "state.purchaseOrders", "state.shipments"]
+        },
+        {
+          "package": "components",
+          "component": "GanttChartPanel",
+          "action": "再描画：受注一覧ガントチャートを描画。展開ボタンで購買・製造・出荷オーダの内訳階層が子行として表示される",
+          "passes": ["ganttOrders", "minDay", "maxDay"]
+        }
+      ]
+    },
+    {
+      "id": "process-flow-view",
+      "category": "analytics",
+      "name": "プロセス連携図ポップアップ表示（ドメイン間フローのリアルタイム可視化）",
+      "trigger": "ヘッダーの「プロセス連携図」ボタン（またはバーガーメニュー内ボタン）をクリック",
+      "note": "業務7ドメイン間のデータ伝播を可視化するフローティングポップアップ（ProcessFlowPopup）。他タブを操作しながら常時閲覧可能で、ドラッグ移動やイベントログ履歴のコマ送り（進む／戻る）に対応。",
+      "steps": [
+        {
+          "package": "app",
+          "component": "App",
+          "action": "プロセス連携図ボタントグル → showProcessFlow(true) → ProcessFlowPopup をモーダル外・App直下にレンダリング",
+          "passes": ["state", "eventLog"]
+        },
+        {
+          "package": "domain",
+          "component": "processFlow.ts",
+          "action": "computeActiveFlows(): state.eventLog（指定インデックス）のmessage／tableDeltasを照合し、動いたドメイン間フロー（FLOWS）と両端ドメインを特定",
+          "passes": ["state.eventLog", "historyIndex"]
+        },
+        {
+          "package": "components",
+          "component": ["ProcessFlowPopup", "ProcessFlowDiagram"],
+          "action": "ドラッグ可能なフローティング枠として描画。7ドメイン（受注・計画・発注・工程・在庫・出荷・マスタ）をプールとしてSVG描画し、アクティブな流れをハイライト",
+          "passes": ["activeDomains", "activeFlowDefs"]
+        }
+      ]
+    },
+    {
       "id": "master-add-item",
+      "category": "master-system",
       "name": "マスタ編集（品目マスタへの新規追加）",
       "trigger": "マスタタブ「品目マスタ」表の追加行「＋追加」ボタン",
       "note": "同じ構成（reducer.ts → domain/masterData.ts への検証つき更新）で、BOM・工順（BOP）・作業区・取引先の追加／編集／削除も実装されている。禁止と警告の線引きはdesign.md EXT-20。品目コードは作成後不変で、改名は削除→再登録で行う（EXT-24）。マスタの変更は、仕掛開始の瞬間にその時点の値が確定値として受注に焼き付けられるため、既に仕掛開始済みの受注には影響しない。",
@@ -692,85 +1174,8 @@
       ]
     },
     {
-      "id": "capacity-planning",
-      "name": "能力計画（CRP・山積み計算と負荷超過警告）",
-      "trigger": "製造オーダ確定時／「能力」タブを開いた時（AlertBar常時再計算）",
-      "note": "v5-spec.md §11.1 Phase 3 / design.md §9。確定済（FIRM/RELEASED/WIP/DONE）の製造オーダの工順負荷を標準時間×計画数量で算出し、作業区×日ごとに集計して能力（capacityMinPerDay、既定240分）と比較。負荷超過日はAlertBarおよびCapacityPanelでハイライト表示する。",
-      "steps": [
-        {
-          "package": "components",
-          "component": "CapacityPanel",
-          "action": "能力タブ表示時（またはAlertBar）で domain/capacity.ts の computeCapacityLoad(state) を呼び出し",
-          "passes": ["state.mfgOrders", "state.workInstructions", "state.workCenters", "state.routingSteps"]
-        },
-        {
-          "package": "domain",
-          "component": "capacity.ts",
-          "action": "computeCapacityLoad(): 作業区×日ごとに計画負荷（未着手＋仕掛中）・実績負荷を集計し、能力上限（capacityMinPerDay）との超過判定（overloadDays）を算出",
-          "passes": ["wcLoads", "dayLoads", "overloadDays"]
-        },
-        {
-          "package": "components",
-          "component": ["CapacityPanel", "AlertBar"],
-          "action": "再描画：能力タブの山積み表（負荷／能力比率・超過セル）と画面上部AlertBarの超過警告（例: WC-ASM D+13 300/240分）が表示される",
-          "passes": ["overloadDays", "wcLoads"]
-        }
-      ]
-    },
-    {
-      "id": "gantt-chart-view",
-      "name": "進捗ガントチャート（計画・実績タイムライン可視化）",
-      "trigger": "「進捗ガント」タブをクリック、および受注行の「展開」ボタン",
-      "note": "design.md EXT-29。受注（SO）の要求納期・回答納期と、紐づく購買・製造・出荷オーダ（pegging.traceFromOrder()で収集）の計画日程（枠線バー）と実績日程（塗り潰しバー）を同一行で重ねて可視化。遅延発生時は遅延色で強調表示する。",
-      "steps": [
-        {
-          "package": "app",
-          "component": "App",
-          "action": "「進捗ガント」タブを選択 → activeTab \"gantt\" → GanttChartPanel をレンダリング",
-          "passes": ["state"]
-        },
-        {
-          "package": "domain",
-          "component": ["gantt.ts", "pegging.ts"],
-          "action": "computeGanttData(): traceFromOrder()で受注配下の全オーダを収集し、計画期間・実績期間・遅延ステータス（ON_SCHEDULE/DELAYED/COMPLETED）を計算",
-          "passes": ["state.salesOrders", "state.soLines", "state.mfgOrders", "state.purchaseOrders", "state.shipments"]
-        },
-        {
-          "package": "components",
-          "component": "GanttChartPanel",
-          "action": "再描画：受注一覧ガントチャートを描画。展開ボタンで購買・製造・出荷オーダの内訳階層が子行として表示される",
-          "passes": ["ganttOrders", "minDay", "maxDay"]
-        }
-      ]
-    },
-    {
-      "id": "process-flow-view",
-      "name": "プロセス連携図ポップアップ表示（ドメイン間フローのリアルタイム可視化）",
-      "trigger": "ヘッダーの「プロセス連携図」ボタン（またはバーガーメニュー内ボタン）をクリック",
-      "note": "業務7ドメイン間のデータ伝播を可視化するフローティングポップアップ（ProcessFlowPopup）。他タブを操作しながら常時閲覧可能で、ドラッグ移動やイベントログ履歴のコマ送り（進む／戻る）に対応。",
-      "steps": [
-        {
-          "package": "app",
-          "component": "App",
-          "action": "プロセス連携図ボタントグル → showProcessFlow(true) → ProcessFlowPopup をモーダル外・App直下にレンダリング",
-          "passes": ["state", "eventLog"]
-        },
-        {
-          "package": "domain",
-          "component": "processFlow.ts",
-          "action": "computeActiveFlows(): state.eventLog（指定インデックス）のmessage／tableDeltasを照合し、動いたドメイン間フロー（FLOWS）と両端ドメインを特定",
-          "passes": ["state.eventLog", "historyIndex"]
-        },
-        {
-          "package": "components",
-          "component": ["ProcessFlowPopup", "ProcessFlowDiagram"],
-          "action": "ドラッグ可能なフローティング枠として描画。7ドメイン（受注・計画・発注・工程・在庫・出荷・マスタ）をプールとしてSVG描画し、アクティブな流れをハイライト",
-          "passes": ["activeDomains", "activeFlowDefs"]
-        }
-      ]
-    },
-    {
       "id": "advance-day",
+      "category": "master-system",
       "name": "次の日へ進む",
       "trigger": "「次の日へ進む」ボタン（ClockControls。全タブ共通のフッター）",
       "note": "姉妹リポジトリmini-simulatorのadvanceDay()とは異なり、本シミュレータは「日を進める」ボタンに業務処理を一切紐付けない（CLAUDE.md「操作粒度」参照）。MRP実行・入荷計上・工程着手/完了・出荷引当/実績は、すべて対応するタブの個別ボタンで明示的に実行するユーザー操作である。",
@@ -797,6 +1202,7 @@
     },
     {
       "id": "app-startup",
+      "category": "master-system",
       "name": "初回起動（初期マスタの読み込み）",
       "trigger": "ページの初回読み込み（useReducerの初期化関数）",
       "note": "本シミュレータのRESET（v5-spec.md UC-23）はmini-simulatorと異なり、既存マスタ（編集済みの値を含む）を保持したまま全トランザクションだけを初期化する（reducer.tsのRESET caseはdata/masterData.tsを読み直さず、state.items等をそのまま使う）。data/masterData.tsのCHAIR_PRESETが読まれるのは、この初回起動時と、マスタタブ「既定プリセットに戻す」操作（MASTER_RESET_TO_PRESET）の時だけ。",
@@ -829,6 +1235,7 @@
     },
     {
       "id": "reset",
+      "category": "master-system",
       "name": "リセット",
       "trigger": "「リセット」ボタン（window.confirm()の確認ダイアログ経由）",
       "note": "v5-spec.md UC-23。全トランザクション（受注・オーダ・在庫・出荷・ロット・イベントログ）を初期化するが、マスタ（品目・BOM・工順・作業区・取引先。編集済みの値を含む）はそのまま保持する。",
@@ -861,6 +1268,31 @@
 (function () {
   var data = JSON.parse(document.getElementById("flow-data").textContent);
 
+  // ---------- テーマ切替 ----------
+  var currentTheme = localStorage.getItem("arch_flow_theme") ||
+    (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+
+  function applyTheme(theme) {
+    document.documentElement.setAttribute("data-theme", theme);
+    var icon = document.getElementById("theme-icon");
+    var text = document.getElementById("theme-text");
+    if (theme === "dark") {
+      icon.textContent = "☀️";
+      text.textContent = "ライト";
+    } else {
+      icon.textContent = "🌙";
+      text.textContent = "ダーク";
+    }
+    localStorage.setItem("arch_flow_theme", theme);
+  }
+  applyTheme(currentTheme);
+
+  document.getElementById("theme-toggle-btn").addEventListener("click", function () {
+    var next = document.documentElement.getAttribute("data-theme") === "dark" ? "light" : "dark";
+    applyTheme(next);
+    if (currentFlowId) redrawStage();
+  });
+
   function sanitize(s) {
     return String(s).replace(/[^a-zA-Z0-9_]/g, "-");
   }
@@ -887,13 +1319,15 @@
       box.className = "box";
       box.id = boxKey(pkg.id, component);
       box.textContent = component;
+      box.addEventListener("click", function () {
+        handleBoxClick(pkg.id, component);
+      });
       boxes.appendChild(box);
     });
     lane.appendChild(boxes);
     lanesEl.appendChild(lane);
   });
 
-  // ---------- ステップの正規化：component が配列（並行ターゲット）の場合も扱えるようにする ----------
   function stepTargets(step) {
     var components = Array.isArray(step.component) ? step.component : [step.component];
     return components.map(function (c) {
@@ -901,45 +1335,196 @@
     });
   }
 
-  // ---------- フロー選択UI ----------
-  var pickerEl = document.getElementById("flow-picker");
-  var triggerEl = document.getElementById("flow-trigger");
-  var noteEl = document.getElementById("flow-note");
-  var stepListEl = document.getElementById("step-list");
-  var svg = document.getElementById("arrows");
-  var stageEl = document.getElementById("stage");
+  // ---------- カテゴリフィルター & 検索 ----------
+  var activeCategory = "all";
+  var searchQuery = "";
+  var categoryFilterEl = document.getElementById("category-filter");
+  var flowPickerEl = document.getElementById("flow-picker");
+  var searchInput = document.getElementById("flow-search");
 
-  var buttons = {};
-  data.flows.forEach(function (flow) {
+  data.categories.forEach(function (cat) {
     var btn = document.createElement("button");
     btn.type = "button";
-    btn.className = "flow-btn";
-    btn.textContent = flow.name;
+    btn.className = "cat-btn" + (cat.id === "all" ? " active" : "");
+    btn.textContent = cat.name;
     btn.addEventListener("click", function () {
-      selectFlow(flow.id);
+      document.querySelectorAll(".cat-btn").forEach(function (b) { b.classList.remove("active"); });
+      btn.classList.add("active");
+      activeCategory = cat.id;
+      renderFlowButtons();
     });
-    buttons[flow.id] = btn;
-    pickerEl.appendChild(btn);
+    categoryFilterEl.appendChild(btn);
   });
 
-  var currentFlowId = null;
+  searchInput.addEventListener("input", function (e) {
+    searchQuery = e.target.value.toLowerCase().trim();
+    renderFlowButtons();
+  });
 
-  function clearStage() {
-    document.querySelectorAll(".box").forEach(function (box) {
-      box.classList.remove("active");
-      var badge = box.querySelector(".badge");
-      if (badge) badge.remove();
+  function renderFlowButtons() {
+    flowPickerEl.innerHTML = "";
+    var filtered = data.flows.filter(function (flow) {
+      var matchCat = activeCategory === "all" || flow.category === activeCategory;
+      if (!matchCat) return false;
+      if (!searchQuery) return true;
+      var text = (flow.name + " " + flow.trigger + " " + (flow.note || "") + " " + flow.id + " " +
+        flow.steps.map(function(s){ return s.component + " " + s.action + " " + (s.passes||[]).join(" "); }).join(" ")
+      ).toLowerCase();
+      return text.indexOf(searchQuery) !== -1;
     });
-    svg.innerHTML = "";
+
+    if (filtered.length === 0) {
+      var emptyMsg = document.createElement("div");
+      emptyMsg.style.fontSize = "0.84rem";
+      emptyMsg.style.color = "var(--color-text-muted)";
+      emptyMsg.style.padding = "10px 0";
+      emptyMsg.textContent = "該当するアクションが見つかりませんでした。";
+      flowPickerEl.appendChild(emptyMsg);
+      return;
+    }
+
+    filtered.forEach(function (flow) {
+      var btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "flow-btn" + (flow.id === currentFlowId ? " active" : "");
+      btn.innerHTML = '<span>' + flow.name + '</span> <span class="flow-badge-count">' + flow.steps.length + 'ステップ</span>';
+      btn.addEventListener("click", function () {
+        selectFlow(flow.id);
+      });
+      flowPickerEl.appendChild(btn);
+    });
   }
 
-  function clipToBox(cx, cy, w, h, dirX, dirY) {
-    var hw = w / 2, hh = h / 2;
-    if (dirX === 0 && dirY === 0) return { x: cx, y: cy };
-    var scaleX = dirX !== 0 ? hw / Math.abs(dirX) : Infinity;
-    var scaleY = dirY !== 0 ? hh / Math.abs(dirY) : Infinity;
-    var scale = Math.min(scaleX, scaleY);
-    return { x: cx + dirX * scale, y: cy + dirY * scale };
+  // ---------- ステッパー & 再生状態 ----------
+  var currentFlowId = null;
+  var currentStepIndex = -1; // -1 means "Show All"
+  var isPlaying = false;
+  var playTimer = null;
+
+  var btnPrev = document.getElementById("btn-prev");
+  var btnNext = document.getElementById("btn-next");
+  var btnPlayPause = document.getElementById("btn-play-pause");
+  var btnShowAll = document.getElementById("btn-show-all");
+  var stepTagEl = document.getElementById("step-tag");
+  var stepTitleEl = document.getElementById("step-title-summary");
+  var stepPassesEl = document.getElementById("step-passes-preview");
+
+  btnPrev.addEventListener("click", function () {
+    pauseAutoPlay();
+    var flow = getCurrentFlow();
+    if (!flow) return;
+    if (currentStepIndex <= 0) {
+      currentStepIndex = flow.steps.length - 1;
+    } else {
+      currentStepIndex--;
+    }
+    updateStepView();
+  });
+
+  btnNext.addEventListener("click", function () {
+    pauseAutoPlay();
+    var flow = getCurrentFlow();
+    if (!flow) return;
+    if (currentStepIndex === -1 || currentStepIndex >= flow.steps.length - 1) {
+      currentStepIndex = 0;
+    } else {
+      currentStepIndex++;
+    }
+    updateStepView();
+  });
+
+  btnPlayPause.addEventListener("click", function () {
+    if (isPlaying) {
+      pauseAutoPlay();
+    } else {
+      startAutoPlay();
+    }
+  });
+
+  btnShowAll.addEventListener("click", function () {
+    pauseAutoPlay();
+    currentStepIndex = -1;
+    updateStepView();
+  });
+
+  function startAutoPlay() {
+    isPlaying = true;
+    btnPlayPause.textContent = "⏸ 一時停止";
+    btnPlayPause.classList.add("primary");
+    var flow = getCurrentFlow();
+    if (!flow) return;
+
+    if (currentStepIndex === -1 || currentStepIndex >= flow.steps.length - 1) {
+      currentStepIndex = 0;
+      updateStepView();
+    }
+
+    playTimer = setInterval(function () {
+      var f = getCurrentFlow();
+      if (!f) return pauseAutoPlay();
+      if (currentStepIndex >= f.steps.length - 1) {
+        currentStepIndex = 0;
+      } else {
+        currentStepIndex++;
+      }
+      updateStepView();
+    }, 1800);
+  }
+
+  function pauseAutoPlay() {
+    isPlaying = false;
+    if (playTimer) {
+      clearInterval(playTimer);
+      playTimer = null;
+    }
+    btnPlayPause.textContent = "▶ 再生";
+  }
+
+  function getCurrentFlow() {
+    return data.flows.find(function (f) { return f.id === currentFlowId; });
+  }
+
+  function handleBoxClick(pkg, component) {
+    var flow = getCurrentFlow();
+    if (!flow) return;
+    for (var i = 0; i < flow.steps.length; i++) {
+      var targets = stepTargets(flow.steps[i]);
+      var hit = targets.some(function (t) { return t.package === pkg && t.component === component; });
+      if (hit) {
+        pauseAutoPlay();
+        currentStepIndex = i;
+        updateStepView();
+        return;
+      }
+    }
+  }
+
+  // ---------- SVG描画 & レンダリング ----------
+  var svg = document.getElementById("arrows");
+  var stageEl = document.getElementById("stage");
+  var stepCardsEl = document.getElementById("step-cards");
+  var triggerEl = document.getElementById("flow-trigger");
+  var noteEl = document.getElementById("flow-note");
+
+  function ensureMarker() {
+    var ns = "http://www.w3.org/2000/svg";
+    svg.innerHTML = "";
+    var defs = document.createElementNS(ns, "defs");
+
+    var marker = document.createElementNS(ns, "marker");
+    marker.setAttribute("id", "arrow-head");
+    marker.setAttribute("markerWidth", "9");
+    marker.setAttribute("markerHeight", "9");
+    marker.setAttribute("refX", "7");
+    marker.setAttribute("refY", "4.5");
+    marker.setAttribute("orient", "auto-start-reverse");
+    var path = document.createElementNS(ns, "path");
+    path.setAttribute("d", "M1,1 L7,4.5 L1,8 Z");
+    path.setAttribute("fill", "var(--color-primary)");
+    marker.appendChild(path);
+    defs.appendChild(marker);
+
+    svg.appendChild(defs);
   }
 
   function boxGeometry(el) {
@@ -953,7 +1538,16 @@
     };
   }
 
-  function drawArrow(fromEl, toEl, labelParts, showText) {
+  function clipToBox(cx, cy, w, h, dirX, dirY) {
+    var hw = w / 2, hh = h / 2;
+    if (dirX === 0 && dirY === 0) return { x: cx, y: cy };
+    var scaleX = dirX !== 0 ? hw / Math.abs(dirX) : Infinity;
+    var scaleY = dirY !== 0 ? hh / Math.abs(dirY) : Infinity;
+    var scale = Math.min(scaleX, scaleY);
+    return { x: cx + dirX * scale, y: cy + dirY * scale };
+  }
+
+  function drawSmoothCurve(fromEl, toEl, labelParts, isCurrentStep, isAnyStepActive) {
     var a = boxGeometry(fromEl);
     var b = boxGeometry(toEl);
     var dirX = b.cx - a.cx, dirY = b.cy - a.cy;
@@ -962,10 +1556,24 @@
 
     var ns = "http://www.w3.org/2000/svg";
     var path = document.createElementNS(ns, "path");
-    path.setAttribute("d", "M " + start.x + " " + start.y + " L " + end.x + " " + end.y);
-    path.setAttribute("stroke", "#0f9b8e");
-    path.setAttribute("stroke-width", "1.8");
-    path.setAttribute("fill", "none");
+
+    // Smooth Bezier curve control points
+    var dx = end.x - start.x;
+    var dy = end.y - start.y;
+    var cx1 = start.x + dx * 0.25;
+    var cy1 = start.y + dy * 0.1;
+    var cx2 = start.x + dx * 0.75;
+    var cy2 = start.y + dy * 0.9;
+    var d = "M " + start.x + " " + start.y + " C " + cx1 + " " + cy1 + ", " + cx2 + " " + cy2 + ", " + end.x + " " + end.y;
+
+    path.setAttribute("d", d);
+    var cls = "arrow-path";
+    if (isCurrentStep) {
+      cls += " step-active";
+    } else if (isAnyStepActive) {
+      cls += " flow-inactive";
+    }
+    path.setAttribute("class", cls);
     path.setAttribute("marker-end", "url(#arrow-head)");
 
     if (labelParts && labelParts.length) {
@@ -975,85 +1583,191 @@
     }
     svg.appendChild(path);
 
-    if (showText && labelParts && labelParts.length) {
+    // Label on curve
+    if ((isCurrentStep || !isAnyStepActive) && labelParts && labelParts.length) {
       var short = labelParts.slice(0, 2).join(", ") + (labelParts.length > 2 ? " …" : "");
-      var mx = (start.x + end.x) / 2;
-      var my = (start.y + end.y) / 2;
+      var midX = (start.x + end.x) / 2;
+      var midY = (start.y + end.y) / 2;
+
       var textEl = document.createElementNS(ns, "text");
-      textEl.setAttribute("x", mx);
-      textEl.setAttribute("y", my - 4);
+      textEl.setAttribute("x", midX);
+      textEl.setAttribute("y", midY - 6);
       textEl.setAttribute("text-anchor", "middle");
       textEl.setAttribute("class", "arrow-label-text");
       textEl.textContent = short;
       svg.appendChild(textEl);
-      // 背景（既存ボックスとの重なりを避けるため一旦テキストを描いてからサイズを測る）
+
       var bbox = textEl.getBBox();
       var bg = document.createElementNS(ns, "rect");
-      bg.setAttribute("x", bbox.x - 3);
-      bg.setAttribute("y", bbox.y - 1);
-      bg.setAttribute("width", bbox.width + 6);
-      bg.setAttribute("height", bbox.height + 2);
+      bg.setAttribute("x", bbox.x - 4);
+      bg.setAttribute("y", bbox.y - 2);
+      bg.setAttribute("width", bbox.width + 8);
+      bg.setAttribute("height", bbox.height + 4);
       bg.setAttribute("class", "arrow-label-bg");
       svg.insertBefore(bg, textEl);
     }
   }
 
-  function ensureMarker() {
-    var ns = "http://www.w3.org/2000/svg";
-    var defs = document.createElementNS(ns, "defs");
-    var marker = document.createElementNS(ns, "marker");
-    marker.setAttribute("id", "arrow-head");
-    marker.setAttribute("markerWidth", "10");
-    marker.setAttribute("markerHeight", "10");
-    marker.setAttribute("refX", "8");
-    marker.setAttribute("refY", "5");
-    marker.setAttribute("orient", "auto-start-reverse");
-    var arrowPath = document.createElementNS(ns, "path");
-    arrowPath.setAttribute("d", "M1,1 L9,5 L1,9");
-    arrowPath.setAttribute("fill", "none");
-    arrowPath.setAttribute("stroke", "#0f9b8e");
-    arrowPath.setAttribute("stroke-width", "1.6");
-    marker.appendChild(arrowPath);
-    defs.appendChild(marker);
-    svg.appendChild(defs);
-  }
-
-  function renderStepList(flow) {
-    stepListEl.innerHTML = "";
+  function renderStepCards(flow) {
+    stepCardsEl.innerHTML = "";
     flow.steps.forEach(function (step, i) {
-      var li = document.createElement("li");
+      var card = document.createElement("li");
+      card.className = "step-card" + (currentStepIndex === i ? " active" : "");
+      card.addEventListener("click", function () {
+        pauseAutoPlay();
+        currentStepIndex = i;
+        updateStepView();
+      });
+
+      var numEl = document.createElement("div");
+      numEl.className = "step-number";
+      numEl.textContent = i + 1;
+      card.appendChild(numEl);
+
+      var bodyEl = document.createElement("div");
+      bodyEl.className = "step-body";
+
       var targets = stepTargets(step);
       var nodeLabel = targets.map(function (t) { return t.package + " / " + t.component; }).join("、");
 
-      var nodeSpan = document.createElement("span");
-      nodeSpan.className = "step-node";
-      nodeSpan.textContent = "[" + nodeLabel + "]";
-      li.appendChild(nodeSpan);
-      li.appendChild(document.createTextNode(" " + step.action));
+      var headLine = document.createElement("div");
+      headLine.className = "step-header-line";
+      var nodeTag = document.createElement("span");
+      nodeTag.className = "step-node-tag";
+      nodeTag.textContent = nodeLabel;
+      headLine.appendChild(nodeTag);
+      bodyEl.appendChild(headLine);
+
+      var actEl = document.createElement("div");
+      actEl.className = "step-action-text";
+      actEl.textContent = step.action;
+      bodyEl.appendChild(actEl);
 
       if (step.passes && step.passes.length) {
-        var passesEl = document.createElement("span");
-        passesEl.className = "step-passes";
-        passesEl.appendChild(document.createTextNode("渡されるデータ: "));
+        var tagsEl = document.createElement("div");
+        tagsEl.className = "step-data-tags";
         step.passes.forEach(function (p) {
-          var code = document.createElement("code");
-          code.textContent = p;
-          passesEl.appendChild(code);
+          var chip = document.createElement("span");
+          chip.className = "data-chip";
+          chip.textContent = p;
+          tagsEl.appendChild(chip);
         });
-        li.appendChild(passesEl);
+        bodyEl.appendChild(tagsEl);
       }
-      stepListEl.appendChild(li);
+
+      card.appendChild(bodyEl);
+      stepCardsEl.appendChild(card);
     });
+  }
+
+  function updateStepView() {
+    var flow = getCurrentFlow();
+    if (!flow) return;
+
+    // Update buttons in flow picker
+    document.querySelectorAll(".flow-btn").forEach(function (b) {
+      b.classList.toggle("active", b.textContent.indexOf(flow.name) !== -1);
+    });
+
+    // Update Banner Indicator
+    if (currentStepIndex === -1) {
+      stepTagEl.textContent = "全 " + flow.steps.length + " ステップ表示";
+      stepTitleEl.textContent = flow.name + " の全体フロー";
+      stepPassesEl.textContent = "全体概要を表示中";
+      btnShowAll.classList.add("primary");
+    } else {
+      var currStep = flow.steps[currentStepIndex];
+      var targets = stepTargets(currStep);
+      stepTagEl.textContent = "Step " + (currentStepIndex + 1) + " / " + flow.steps.length;
+      stepTitleEl.textContent = targets.map(function(t){ return t.component; }).join(", ");
+      stepPassesEl.textContent = (currStep.passes && currStep.passes.length) ? "渡すデータ: " + currStep.passes.join(", ") : "データ受け渡しなし";
+      btnShowAll.classList.remove("primary");
+    }
+
+    renderStepCards(flow);
+    redrawStage();
+  }
+
+  function redrawStage() {
+    var flow = getCurrentFlow();
+    if (!flow) return;
+
+    ensureMarker();
+
+    // Reset all boxes to dimmed
+    document.querySelectorAll(".box").forEach(function (box) {
+      box.className = "box dimmed";
+      var badge = box.querySelector(".badge");
+      if (badge) badge.remove();
+    });
+
+    // Collect flow participants
+    var stepIndexToTargets = flow.steps.map(function (s) { return stepTargets(s); });
+    var badgeMap = {};
+
+    flow.steps.forEach(function (step, i) {
+      stepTargets(step).forEach(function (t) {
+        if (!badgeMap[t.key]) badgeMap[t.key] = [];
+        badgeMap[t.key].push(i + 1);
+      });
+    });
+
+    // Highlight active boxes
+    Object.keys(badgeMap).forEach(function (key) {
+      var box = document.getElementById(key);
+      if (!box) return;
+      box.classList.remove("dimmed");
+      box.classList.add("flow-active");
+
+      var badge = document.createElement("span");
+      badge.className = "badge";
+      badge.textContent = badgeMap[key].join(",");
+      box.appendChild(badge);
+    });
+
+    // Highlight current step box
+    if (currentStepIndex >= 0 && currentStepIndex < flow.steps.length) {
+      var currTargets = stepTargets(flow.steps[currentStepIndex]);
+      currTargets.forEach(function (t) {
+        var box = document.getElementById(t.key);
+        if (box) {
+          box.classList.add("step-current");
+        }
+      });
+    }
+
+    // Draw connecting arrows
+    for (var i = 1; i < flow.steps.length; i++) {
+      var prevTargets = stepTargets(flow.steps[i - 1]);
+      var currTargets = stepTargets(flow.steps[i]);
+      var isThisStepActive = (currentStepIndex === i);
+      var isAnyStepActive = (currentStepIndex !== -1);
+
+      var seen = {};
+      prevTargets.forEach(function (from) {
+        currTargets.forEach(function (to) {
+          if (from.key === to.key) return;
+          var pairKey = from.key + "->" + to.key;
+          if (seen[pairKey]) return;
+          seen[pairKey] = true;
+
+          var fromEl = document.getElementById(from.key);
+          var toEl = document.getElementById(to.key);
+          if (fromEl && toEl) {
+            drawSmoothCurve(fromEl, toEl, flow.steps[i].passes, isThisStepActive, isAnyStepActive);
+          }
+        });
+      });
+    }
   }
 
   function selectFlow(flowId) {
     var flow = data.flows.find(function (f) { return f.id === flowId; });
     if (!flow) return;
     currentFlowId = flowId;
+    pauseAutoPlay();
+    currentStepIndex = -1; // Default to full view
 
-    Object.keys(buttons).forEach(function (id) {
-      buttons[id].classList.toggle("active", id === flowId);
-    });
     triggerEl.innerHTML = "<strong>トリガー：</strong>" + flow.trigger;
     if (flow.note) {
       noteEl.textContent = flow.note;
@@ -1062,61 +1776,19 @@
       noteEl.hidden = true;
     }
 
-    renderStepList(flow);
-
-    clearStage();
-    ensureMarker();
-
-    // バッジ（ステップ番号）を各ボックスに付与
-    var badgeMap = {};
-    flow.steps.forEach(function (step, i) {
-      stepTargets(step).forEach(function (t) {
-        if (!badgeMap[t.key]) badgeMap[t.key] = [];
-        badgeMap[t.key].push(i + 1);
-      });
-    });
-    Object.keys(badgeMap).forEach(function (key) {
-      var box = document.getElementById(key);
-      if (!box) return;
-      box.classList.add("active");
-      var badge = document.createElement("span");
-      badge.className = "badge";
-      badge.textContent = badgeMap[key].join(",");
-      box.appendChild(badge);
-    });
-
-    // 矢印：連続するステップ間で、ターゲットが異なる組み合わせをすべて結ぶ
-    for (var i = 1; i < flow.steps.length; i++) {
-      var prevTargets = stepTargets(flow.steps[i - 1]);
-      var currTargets = stepTargets(flow.steps[i]);
-      // 分岐（fan-out/fan-in）の場合、同じラベルが矢印の数だけ重なって読めなくなるため、
-      // ラベルは1対1の単純な矢印のときだけ表示する（データの詳細はステップ一覧に必ず出るので情報は失われない）
-      var showLabel = prevTargets.length === 1 && currTargets.length === 1;
-      var seen = {};
-      prevTargets.forEach(function (from) {
-        currTargets.forEach(function (to) {
-          if (from.key === to.key) return;
-          var pairKey = from.key + "->" + to.key;
-          if (seen[pairKey]) return;
-          seen[pairKey] = true;
-          var fromEl = document.getElementById(from.key);
-          var toEl = document.getElementById(to.key);
-          if (fromEl && toEl) {
-            drawArrow(fromEl, toEl, flow.steps[i].passes, showLabel);
-          }
-        });
-      });
-    }
+    renderFlowButtons();
+    updateStepView();
   }
 
   window.addEventListener("resize", function () {
-    if (currentFlowId) selectFlow(currentFlowId);
+    if (currentFlowId) redrawStage();
   });
 
-  // ---------- JSON全文表示 ----------
+  // ---------- JSON 表示 ----------
   document.getElementById("json-block").textContent = JSON.stringify(data, null, 2);
 
-  // 初期表示：最初のフローを選択
+  // 初期ロード
+  renderFlowButtons();
   if (data.flows.length) selectFlow(data.flows[0].id);
 })();
 </script>
