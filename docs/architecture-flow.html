@@ -1,0 +1,1067 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>production_system_sim アーキテクチャフロー可視化</title>
+<style>
+  :root {
+    --color-bg: #f4f6f8;
+    --color-surface: #ffffff;
+    --color-border: #e3e6ea;
+    --color-text: #1a1d21;
+    --color-text-muted: #6b7280;
+    --color-primary: #0f9b8e;
+    --color-primary-hover: #0c7f74;
+    --color-primary-soft: #e6f5f3;
+    --color-warning: #f5a623;
+    --radius-sm: 6px;
+    --radius-md: 10px;
+    --radius-lg: 14px;
+    --shadow-sm: 0 1px 2px rgba(16, 24, 40, 0.06);
+    --shadow-md: 0 4px 16px rgba(16, 24, 40, 0.12);
+    --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", "Hiragino Kaku Gothic ProN",
+      "Hiragino Sans", "Noto Sans JP", Meiryo, sans-serif;
+    color-scheme: light;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body { margin: 0; padding: 0; }
+
+  body {
+    background: var(--color-bg);
+    color: var(--color-text);
+    font-family: var(--font-sans);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .page {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: clamp(16px, 4vw, 32px);
+  }
+
+  h1 { font-size: 1.5rem; margin: 0 0 8px; }
+  h2 { font-size: 1.1rem; margin: 0 0 12px; }
+  h3 { font-size: 0.95rem; margin: 0 0 8px; }
+
+  p { color: var(--color-text-muted); }
+
+  .intro {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+    padding: 20px 24px;
+    margin-bottom: 20px;
+  }
+
+  .intro p { margin: 6px 0; font-size: 0.9rem; }
+  .intro code {
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: 4px;
+    padding: 1px 5px;
+    font-size: 0.85em;
+  }
+  .intro .source {
+    font-size: 0.8rem;
+    margin-top: 12px;
+    padding-top: 10px;
+    border-top: 1px dashed var(--color-border);
+  }
+  .intro .source a { color: var(--color-primary-hover); }
+
+  .panel {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+    padding: 20px 24px;
+    margin-bottom: 20px;
+  }
+
+  /* ---------- フロー選択 ---------- */
+  .flow-picker {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .flow-btn {
+    font: inherit;
+    font-size: 0.85rem;
+    padding: 8px 14px;
+    border-radius: 999px;
+    border: 1px solid var(--color-border);
+    background: var(--color-surface);
+    color: var(--color-text);
+    cursor: pointer;
+    transition: all 120ms ease;
+  }
+  .flow-btn:hover { border-color: var(--color-primary); }
+  .flow-btn.active {
+    background: var(--color-primary);
+    border-color: var(--color-primary);
+    color: #fff;
+    font-weight: 600;
+  }
+
+  .flow-trigger {
+    margin-top: 10px;
+    font-size: 0.82rem;
+  }
+  .flow-trigger strong { color: var(--color-text); }
+
+  .flow-note {
+    margin-top: 6px;
+    font-size: 0.8rem;
+    background: #fff8ec;
+    border: 1px solid #f0dfb8;
+    border-radius: var(--radius-sm);
+    padding: 8px 12px;
+    color: #8a6416;
+  }
+
+  /* ---------- 図（レーン + ボックス + 矢印オーバーレイ） ---------- */
+  .stage {
+    position: relative;
+    margin-top: 18px;
+  }
+
+  .lanes {
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+  }
+
+  .lane {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .lane-label {
+    flex: 0 0 150px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--color-text-muted);
+    text-align: right;
+    padding-right: 6px;
+    line-height: 1.3;
+  }
+
+  .lane-boxes {
+    flex: 1;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .box {
+    position: relative;
+    min-width: 108px;
+    text-align: center;
+    padding: 9px 12px;
+    font-size: 0.78rem;
+    border-radius: var(--radius-md);
+    border: 1.5px solid var(--color-border);
+    background: var(--color-bg);
+    color: var(--color-text-muted);
+    transition: all 150ms ease;
+    z-index: 1;
+  }
+
+  .box.active {
+    border-color: var(--color-primary);
+    background: var(--color-primary-soft);
+    color: var(--color-text);
+    font-weight: 600;
+    box-shadow: 0 0 0 3px rgba(15, 155, 142, 0.14);
+  }
+
+  .box .badge {
+    position: absolute;
+    top: -9px;
+    right: -9px;
+    background: var(--color-primary);
+    color: #fff;
+    font-size: 0.65rem;
+    font-weight: 700;
+    line-height: 1;
+    padding: 3px 5px;
+    border-radius: 999px;
+    min-width: 16px;
+    box-shadow: var(--shadow-sm);
+  }
+
+  svg.arrows-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    overflow: visible;
+  }
+
+  .arrow-label-bg {
+    fill: var(--color-surface);
+    opacity: 0.92;
+  }
+  .arrow-label-text {
+    font-size: 9.5px;
+    fill: var(--color-primary-hover);
+  }
+
+  .stage-legend {
+    margin-top: 14px;
+    font-size: 0.76rem;
+    color: var(--color-text-muted);
+  }
+
+  /* ---------- ステップ一覧 ---------- */
+  ol.step-list {
+    margin: 0;
+    padding-left: 1.4em;
+    font-size: 0.86rem;
+  }
+  ol.step-list li { margin-bottom: 10px; }
+  ol.step-list .step-node {
+    display: inline-block;
+    font-weight: 600;
+    color: var(--color-primary-hover);
+    margin-right: 4px;
+  }
+  ol.step-list .step-passes {
+    display: block;
+    margin-top: 2px;
+    font-size: 0.78rem;
+    color: var(--color-text-muted);
+  }
+  ol.step-list .step-passes code {
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: 4px;
+    padding: 0 4px;
+    margin-right: 3px;
+    display: inline-block;
+    margin-top: 2px;
+  }
+
+  /* ---------- JSON表示 ---------- */
+  details.json-view summary {
+    cursor: pointer;
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--color-primary-hover);
+    padding: 4px 0;
+  }
+  pre.json-block {
+    margin-top: 10px;
+    background: #1a1d21;
+    color: #d7f7f2;
+    border-radius: var(--radius-md);
+    padding: 16px;
+    overflow-x: auto;
+    font-size: 0.76rem;
+    line-height: 1.5;
+  }
+
+  footer {
+    font-size: 0.76rem;
+    color: var(--color-text-muted);
+    text-align: center;
+    margin-top: 28px;
+  }
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="intro">
+    <h1>production_system_sim アーキテクチャフロー可視化</h1>
+    <p>
+      アプリ内の <code>package</code>（ディレクトリ／モジュール単位）と <code>component</code>（ファイル・関数単位）の間を、
+      主要な操作（アクション）がどう伝播するかを可視化した単一ページHTMLです。
+    </p>
+    <p>
+      下のボタンでアクションを選ぶと、そのアクションが完了するまでに通る package / component が
+      ハイライトされ、間で渡されるデータが注釈として表示されます。
+      この画面は、ページ下部に埋め込まれた <strong>JSON</strong>（<code>&lt;script type="application/json" id="flow-data"&gt;</code>）を元に描画されています。
+    </p>
+    <p>
+      本シミュレータは7ドメイン（受注・計画・発注・工程・在庫・出荷・マスタ）＋分析系タブ（KPI・原価・ペギング追跡・
+      ロット追跡・演習ガイド・プロセス連携図）を持つため、姉妹リポジトリ<code>mini-simulator</code>より扱う操作の種類が多い。
+      ここでは全操作を網羅せず、MRP展開からペギング・バックフラッシュ・ロット系譜まで、v5仕様書の中核である
+      受注〜出荷の一連の流れを代表的な操作として選んでいる（全操作の一覧は <code>docs/design.md</code> §7 参照）。
+    </p>
+    <p class="source">
+      発想の元ネタ：
+      <a href="https://qiita.com/TakanobuSano/items/924ff7366fd233e3c00d" target="_blank" rel="noopener noreferrer">
+        「Claude Codeでアプリの処理フローをHTML＋JSONで可視化させる発想がかなり実務的だった」（Qiita）
+      </a>
+      で紹介されていたプロンプトを、このリポジトリのソースコード（<code>src/App.tsx</code>・<code>src/domain/reducer.ts</code>・
+      <code>src/domain/*.ts</code> ほか）を実際に読んだ上で再現したものです。推測で埋めた箇所はありません。
+      姉妹リポジトリ<code>mini-simulator</code>の <code>docs/architecture-flow.html</code>（同じ発想で先に作成済み）と
+      同じ構成のページを、本リポジトリのドメイン・アクション体系に合わせて作り直しています。
+    </p>
+  </div>
+
+  <section class="panel">
+    <h2>アクションを選ぶ</h2>
+    <div class="flow-picker" id="flow-picker"></div>
+    <p class="flow-trigger" id="flow-trigger"></p>
+    <p class="flow-note" id="flow-note" hidden></p>
+  </section>
+
+  <section class="panel">
+    <h2>処理フロー図</h2>
+    <div class="stage" id="stage">
+      <div class="lanes" id="lanes"></div>
+      <svg class="arrows-overlay" id="arrows"></svg>
+    </div>
+    <p class="stage-legend">
+      枠内の数字：そのアクション内でのステップ番号／ティール色：選択中のアクションが通過するpackage・component／矢印：処理の受け渡し方向（ホバーで受け渡しデータの全量を表示）
+    </p>
+  </section>
+
+  <section class="panel">
+    <h2>ステップ詳細</h2>
+    <ol class="step-list" id="step-list"></ol>
+  </section>
+
+  <section class="panel">
+    <details class="json-view">
+      <summary>このページを駆動しているJSONを表示（AIに渡す場合はこのブロックをコピー）</summary>
+      <pre class="json-block" id="json-block"></pre>
+    </details>
+  </section>
+
+  <footer>production_system_sim — 生産管理（受注〜出荷）ドメイン連携シミュレーター（教材）／このページは docs/architecture-flow.html 単体で完結し、ビルドやサーバーを必要としません。</footer>
+</div>
+
+<script type="application/json" id="flow-data">
+{
+  "app": "production_system_sim",
+  "packages": [
+    {
+      "id": "components",
+      "label": "components（UI）",
+      "components": [
+        "SalesOrderPanel", "PlanningPanel", "ProcurementPanel", "ProductionPanel",
+        "InventoryPanel", "ShipmentPanel", "MasterDataPage", "master/ItemMasterTable",
+        "ClockControls", "AlertBar", "TodayActionsBar", "KpiDashboard", "LotTracePanel",
+        "PeggingTracePanel", "ProcessFlowDiagram", "EventLogPanel"
+      ]
+    },
+    {
+      "id": "app",
+      "label": "App（画面状態・useReducer）",
+      "components": ["App"]
+    },
+    {
+      "id": "domain",
+      "label": "domain（ドメインロジック）",
+      "components": [
+        "reducer.ts", "salesOrder.ts", "mrp.ts", "procurement.ts", "production.ts",
+        "shipment.ts", "pegging.ts", "lot.ts", "masterData.ts", "processFlow.ts"
+      ]
+    },
+    {
+      "id": "data",
+      "label": "data（初期マスタ）",
+      "components": ["masterData.ts"]
+    }
+  ],
+  "flows": [
+    {
+      "id": "so-create",
+      "name": "受注登録",
+      "trigger": "受注タブのフォーム「受注登録」ボタン",
+      "note": "登録直後にはMRPは走らない。この受注明細（状態：RECEIVED）が計画オーダに反映されるのは、次に計画タブで「MRPを実行」を明示的に押したとき（操作粒度はv5仕様書のユースケース単位。design.md §7）。",
+      "steps": [
+        {
+          "package": "components",
+          "component": "SalesOrderPanel",
+          "action": "フォーム送信（handleCreate）→ e.preventDefault() → dispatch({ type: \"SO_CREATE\", payload })",
+          "passes": ["customerId", "itemId", "qty", "requestDay"]
+        },
+        {
+          "package": "domain",
+          "component": "reducer.ts",
+          "action": "case \"SO_CREATE\": applyAction()内で structuredClone(state) → salesOrder.createSalesOrder(next, payload, next.day)",
+          "passes": ["payload（CreateSalesOrderInput）", "state.day"]
+        },
+        {
+          "package": "domain",
+          "component": "salesOrder.ts",
+          "action": "createSalesOrder(): 得意先・品目の存在チェック → SalesOrder（soNo: \"SO-{nextSoSeq++}\"）と SoLine（status: \"RECEIVED\"）を1組同時に生成しpush",
+          "passes": ["soNo", "salesOrders行", "soLines行（status RECEIVED）"]
+        },
+        {
+          "package": "components",
+          "component": "SalesOrderPanel",
+          "action": "再描画：受注一覧テーブルに新しい行（受付／RECEIVED）が追加される",
+          "passes": ["state.salesOrders", "state.soLines"]
+        }
+      ]
+    },
+    {
+      "id": "mrp-run",
+      "name": "MRP実行",
+      "trigger": "計画タブ「MRPを実行」ボタン",
+      "note": "runMRP()はPLANNED_ORDERを全削除してから再生成する（差分更新ではない）。需要の展開順序は必要日（confirmDay ?? requestDay）昇順・同着はSO番号昇順（design.md EXT-1）。BOM循環は展開経路の集合（path）で検出し、無限再帰を防ぐために例外を投げる（design.md EXT-19）。",
+      "steps": [
+        {
+          "package": "components",
+          "component": "PlanningPanel",
+          "action": "「MRPを実行」クリック → dispatch({ type: \"MRP_RUN\" })",
+          "passes": []
+        },
+        {
+          "package": "domain",
+          "component": "reducer.ts",
+          "action": "case \"MRP_RUN\": structuredClone(state) → mrp.runMRP(next)",
+          "passes": []
+        },
+        {
+          "package": "domain",
+          "component": "mrp.ts",
+          "action": "runMRP(): computeSupply()で品目別供給量（現在庫＋注文残＋仕掛残）を算出 → 未出荷の受注明細を必要日昇順に並べ、1件ずつexplode()を呼ぶ",
+          "passes": ["state.soLines", "state.items", "state.bom", "state.stocks", "state.purchaseOrders", "state.mfgOrders"]
+        },
+        {
+          "package": "domain",
+          "component": "mrp.ts",
+          "action": "explode(): BOMを再帰的に辿り、供給量で賄えない不足分だけPLANNED_ORDERを生成（MAKEは子品目へさらに再帰し引当元＝親のploNoを記録、BUYで止まる）",
+          "passes": ["plannedOrders[]（ploNo・pegTo・bomLevel）"]
+        },
+        {
+          "package": "components",
+          "component": "PlanningPanel",
+          "action": "再描画：計画オーダ一覧に新しい行（区分・必要日・引当元・BOMレベル）が表示される",
+          "passes": ["state.plannedOrders"]
+        }
+      ]
+    },
+    {
+      "id": "planned-orders-firm",
+      "name": "計画オーダ一括確定",
+      "trigger": "計画タブ「計画オーダを確定」ボタン",
+      "note": "確定してしまうと復旧できない不整合（工順ゼロの内製品目／既定仕入先未設定の購買品目）を事前に全件検査し、1件でも該当すれば何も確定しない（design.md EXT-22。部分適用を避ける）。",
+      "steps": [
+        {
+          "package": "components",
+          "component": "PlanningPanel",
+          "action": "「計画オーダを確定（N件）」クリック → dispatch({ type: \"PLANNED_ORDERS_FIRM\" })",
+          "passes": []
+        },
+        {
+          "package": "domain",
+          "component": "reducer.ts",
+          "action": "case \"PLANNED_ORDERS_FIRM\": structuredClone(state) → mrp.firmAllPlannedOrders(next, next.day)",
+          "passes": ["state.day"]
+        },
+        {
+          "package": "domain",
+          "component": "mrp.ts",
+          "action": "firmAllPlannedOrders(): 全PLANNED_ORDERを事前検査した上で、MAKEはMfgOrder（status: \"FIRM\"）＋工順分のWorkInstructionへ、BUYはPurchaseOrder（status: \"ORDERED\"）へ転記し、PLANNED_ORDERを全削除",
+          "passes": ["state.plannedOrders", "state.routingSteps", "state.suppliers"]
+        },
+        {
+          "package": "components",
+          "component": ["ProductionPanel", "ProcurementPanel"],
+          "action": "新しい state を元に、工程タブ・発注タブが互いに依存せず並行して再描画される",
+          "passes": ["state.mfgOrders", "state.workInstructions", "state.purchaseOrders"]
+        }
+      ]
+    },
+    {
+      "id": "procurement-receive",
+      "name": "仕入先納期回答〜入荷計上",
+      "trigger": "発注タブの「納期回答」ボタン→（D+回答納期に到達後）「入荷計上」ボタン",
+      "note": "design.md DEV-3により分割入荷は扱わず、注文残を一括で入荷させる。design.md EXT-4：現在日が入荷予定日（回答納期 ?? 希望納期）に達していなければ入荷計上ボタン自体が非活性になる。",
+      "steps": [
+        {
+          "package": "components",
+          "component": "ProcurementPanel",
+          "action": "「納期回答」クリック → dispatch({ type: \"PO_ACK\", payload: { poNo, confirmDay } })",
+          "passes": ["poNo", "confirmDay"]
+        },
+        {
+          "package": "domain",
+          "component": "reducer.ts",
+          "action": "case \"PO_ACK\": structuredClone(state) → procurement.ackPurchaseOrder(next, poNo, confirmDay)",
+          "passes": ["poNo", "confirmDay"]
+        },
+        {
+          "package": "domain",
+          "component": "procurement.ts",
+          "action": "ackPurchaseOrder(): 発注済（ORDERED）のみ許可し、status → \"ACKED\"、confirmDayを設定",
+          "passes": ["po.status", "po.confirmDay"]
+        },
+        {
+          "package": "components",
+          "component": "ProcurementPanel",
+          "action": "D+confirmDay以降になると「入荷計上」ボタンが活性化 → クリック → dispatch({ type: \"PO_RECEIVE\", payload: { poNo } })",
+          "passes": ["poNo"]
+        },
+        {
+          "package": "domain",
+          "component": "reducer.ts",
+          "action": "case \"PO_RECEIVE\": structuredClone(state) → procurement.receivePurchaseOrder(next, poNo, next.day)",
+          "passes": ["poNo", "state.day"]
+        },
+        {
+          "package": "domain",
+          "component": ["procurement.ts", "lot.ts"],
+          "action": "receivePurchaseOrder(): 注文残を一括入荷しstocks.onHandへ加算、status → \"CLOSED\" → lot.createLot()で入庫ロットを採番 → StockTxn（txnType: \"RCV\"）を記録",
+          "passes": ["stock.onHand", "lot（lotNo）", "stockTxn（RCV）"]
+        },
+        {
+          "package": "components",
+          "component": "InventoryPanel",
+          "action": "再描画：品目の現在庫（現在庫・引当済・出荷可能量の3列）が入荷分だけ増える",
+          "passes": ["state.stocks"]
+        }
+      ]
+    },
+    {
+      "id": "production-release-complete",
+      "name": "製造オーダのリリース〜工程着手〜完了（バックフラッシュ）",
+      "trigger": "工程タブの「リリース」ボタン→各工程の「着手」ボタン→「完了」ボタン（良品数・不良数を入力、工程の数だけ繰り返し）",
+      "note": "第1工程の完了時に「BOM員数×投入数」を一括消費する（バックフラッシュ、投入数ベース。v5-spec.md §7.3）。部品が不足していればMfgOrderをHOLDにして例外を投げ、同じ操作をもう一度呼べば復帰を試みる（design.md EXT-10）。最終工程の完了時に完成品在庫へ計上し、消費ロットと生成ロットの親子関係（LOT_GENEALOGY）を記録する（v5-spec.md §11.3）。",
+      "steps": [
+        {
+          "package": "components",
+          "component": "ProductionPanel",
+          "action": "「リリース」クリック → dispatch({ type: \"MFG_RELEASE\", payload: { moNo } })",
+          "passes": ["moNo"]
+        },
+        {
+          "package": "domain",
+          "component": ["reducer.ts", "production.ts"],
+          "action": "case \"MFG_RELEASE\" → releaseMfgOrder(): 確定済（FIRM）のみ許可し、status → \"RELEASED\"",
+          "passes": ["mo.status"]
+        },
+        {
+          "package": "components",
+          "component": "ProductionPanel",
+          "action": "第1工程の「着手」クリック（前工程が無い、またはDONEの場合のみ活性）→ dispatch({ type: \"WI_START\", payload: { moNo, stepNo } })",
+          "passes": ["moNo", "stepNo"]
+        },
+        {
+          "package": "domain",
+          "component": "production.ts",
+          "action": "startStep(): 前工程の完了を確認しWorkInstruction.status → \"WIP\"、第1工程ならMfgOrder.status \"RELEASED\" → \"WIP\"",
+          "passes": ["wi.status", "wi.actualStartDay", "mo.status"]
+        },
+        {
+          "package": "components",
+          "component": "ProductionPanel",
+          "action": "良品数・不良数を入力し「完了」クリック（良品＋不良＝投入数のときのみ活性）→ dispatch({ type: \"WI_COMPLETE\", payload: { moNo, stepNo, goodQty, scrapQty } })",
+          "passes": ["moNo", "stepNo", "goodQty", "scrapQty"]
+        },
+        {
+          "package": "domain",
+          "component": ["production.ts", "lot.ts"],
+          "action": "completeStep(): 第1工程なら shippableQty() で部品の充足を確認 → 不足時はHOLDで例外／充足時は consumeFifo() でロットをFIFO消費しStockTxn（ISS）を記録。最終工程なら完成品在庫へ加算し、createLot()で完成ロットを採番、消費ロットとの LotGenealogy を記録してStockTxn（PRD）",
+          "passes": ["state.bom", "state.stocks", "consumedLots", "producedLot", "stockTxn（ISS／PRD）", "lotGenealogy"]
+        },
+        {
+          "package": "components",
+          "component": ["InventoryPanel", "LotTracePanel"],
+          "action": "新しい state を元に、在庫タブ（部品が減り完成品が増える）とロット追跡タブ（親子関係）が並行して再描画される",
+          "passes": ["state.stocks", "state.lots", "state.lotGenealogy"]
+        }
+      ]
+    },
+    {
+      "id": "shipment-allocate-ship",
+      "name": "出荷引当〜出荷実績登録",
+      "trigger": "出荷タブ「引当」ボタン→「出荷実績登録」ボタン",
+      "note": "design.md DEV-3により、引当数量は自動計算する（受注残と出荷可能量の少ない方）。数量入力欄は無く、不良等で受注残に満たない場合はその時点の出荷可能量までの部分出荷になる（v5-spec.md TC-15）。",
+      "steps": [
+        {
+          "package": "components",
+          "component": "ShipmentPanel",
+          "action": "「引当」クリック → dispatch({ type: \"SHIPMENT_ALLOCATE\", payload: { soNo, lineNo } })",
+          "passes": ["soNo", "lineNo"]
+        },
+        {
+          "package": "domain",
+          "component": ["reducer.ts", "shipment.ts"],
+          "action": "case \"SHIPMENT_ALLOCATE\" → allocateShipment(): shippableQty()（現在庫－引当済）と受注残の少ない方をqtyとし、stock.allocatedへ加算、Shipment（status: \"ALLOCATED\"）をpush",
+          "passes": ["qty", "stock.allocated", "shipment（shipNo）"]
+        },
+        {
+          "package": "components",
+          "component": "ShipmentPanel",
+          "action": "出荷指示一覧の「出荷実績登録」クリック → dispatch({ type: \"SHIPMENT_SHIP\", payload: { shipNo } })",
+          "passes": ["shipNo"]
+        },
+        {
+          "package": "domain",
+          "component": ["shipment.ts", "lot.ts"],
+          "action": "shipOut(): stock.onHand／allocatedを出荷数だけ減算 → consumeFifo() でロットをFIFO消費しStockTxn（SHP）を記録 → SoLine.shippedQtyを加算しstatus \"CLOSED\"／\"PARTIAL\"、Shipment.status → \"SHIPPED\"",
+          "passes": ["stock.onHand／allocated", "stockTxn（SHP）", "line.shippedQty", "line.status"]
+        },
+        {
+          "package": "components",
+          "component": ["SalesOrderPanel", "KpiDashboard"],
+          "action": "新しい state を元に、受注タブ（状態・出荷済数）とKPIダッシュボード（出荷実績系の指標）が並行して再描画される",
+          "passes": ["state.soLines", "state.shipments"]
+        }
+      ]
+    },
+    {
+      "id": "so-cancel",
+      "name": "受注取消（ペギング連鎖キャンセル）",
+      "trigger": "受注タブの「取消」ボタン（出荷実績が無い受注のみ表示）",
+      "note": "着手実績・入荷実績が1件でもあるオーダに紐づく受注は取消不可（design.md EXT-3）。取消が成立する場合、pegging.traceFromOrder()でpegTo鎖を辿って見つけた未実績のMFG_ORDER／PURCHASE_ORDERを連鎖的にCANCELEDにする（design.md EXT-2）。",
+      "steps": [
+        {
+          "package": "components",
+          "component": "SalesOrderPanel",
+          "action": "「取消」クリック → dispatch({ type: \"SO_CANCEL\", payload: { soNo } })",
+          "passes": ["soNo"]
+        },
+        {
+          "package": "domain",
+          "component": "reducer.ts",
+          "action": "case \"SO_CANCEL\": structuredClone(state) → salesOrder.cancelSalesOrder(next, soNo)",
+          "passes": ["soNo"]
+        },
+        {
+          "package": "domain",
+          "component": "pegging.ts",
+          "action": "traceFromOrder(): pegKey(soNo, 1)を起点にpegTo鎖を1階層ずつ辿り、直接・間接にペグされた全MFG_ORDER／PURCHASE_ORDERと関連StockTxnを収集（訪問済みキーは再訪しない＝BOM循環対策）",
+          "passes": ["pegged.mfgOrders", "pegged.purchaseOrders", "pegged.stockTxns"]
+        },
+        {
+          "package": "domain",
+          "component": "salesOrder.ts",
+          "action": "cancelSalesOrder(): 実績（着手実績・入荷実績）の有無を確認 → 無ければpegged内の未完了オーダをすべてCANCELEDにし、SoLine.status → \"CANCELED\"",
+          "passes": ["mo.status", "po.status", "line.status"]
+        },
+        {
+          "package": "components",
+          "component": ["SalesOrderPanel", "ProductionPanel", "ProcurementPanel"],
+          "action": "新しい state を元に、受注タブ・工程タブ・発注タブが互いに依存せず並行して再描画される（関連オーダがすべて取消済表示になる）",
+          "passes": ["state.soLines", "state.mfgOrders", "state.purchaseOrders"]
+        }
+      ]
+    },
+    {
+      "id": "master-add-item",
+      "name": "マスタ編集（品目マスタへの新規追加）",
+      "trigger": "マスタタブ「品目マスタ」表の追加行「＋追加」ボタン",
+      "note": "同じ構成（reducer.ts → domain/masterData.ts への検証つき更新）で、BOM・工順（BOP）・作業区・取引先の追加／編集／削除も実装されている。禁止と警告の線引きはdesign.md EXT-20。品目コードは作成後不変で、改名は削除→再登録で行う（EXT-24）。マスタの変更は、仕掛開始の瞬間にその時点の値が確定値として受注に焼き付けられるため、既に仕掛開始済みの受注には影響しない。",
+      "steps": [
+        {
+          "package": "components",
+          "component": "master/ItemMasterTable",
+          "action": "「＋追加」クリック（handleAdd）→ dispatch({ type: \"MASTER_ADD_ITEM\", payload: { item } })",
+          "passes": ["item（itemId・name・makeBuy・leadTimeDays・defaultSupplierId・purchasePrice・salesPrice）"]
+        },
+        {
+          "package": "domain",
+          "component": "reducer.ts",
+          "action": "case \"MASTER_ADD_ITEM\": structuredClone(state) → masterData.addItem(next, item)",
+          "passes": ["item"]
+        },
+        {
+          "package": "domain",
+          "component": "masterData.ts",
+          "action": "addItem(): 品目コードの重複・必須項目（購買品目なら既定仕入先の実在）を検証 → state.itemsにpush",
+          "passes": ["state.items"]
+        },
+        {
+          "package": "components",
+          "component": "master/ItemMasterTable",
+          "action": "再描画：品目マスタ表に新しい行が追加される。受注タブ等の品目セレクトにも即座に反映される",
+          "passes": ["state.items"]
+        }
+      ]
+    },
+    {
+      "id": "process-flow-view",
+      "name": "プロセス連携図タブ表示（直前の操作で動いたドメイン間フローの可視化）",
+      "trigger": "「プロセス連携図」タブをクリック",
+      "note": "業務ドメイン（受注・計画・発注・工程・在庫・出荷・マスタ）単位の可視化であり、このページ（コードのpackage/component単位の可視化）とは粒度が異なる別の可視化。判定はeventLogの末尾1件のmessageの文言を手がかりにする固定対応表であり、reducer.ts側のメッセージ文言を変更する際は processFlow.ts の判定ロジックも見直す必要がある（隠れた依存）。",
+      "steps": [
+        {
+          "package": "app",
+          "component": "App",
+          "action": "「プロセス連携図」タブをクリック → activeTab状態を \"process-flow\" に変更 → ProcessFlowDiagram をレンダリング",
+          "passes": ["state"]
+        },
+        {
+          "package": "domain",
+          "component": "processFlow.ts",
+          "action": "computeActiveFlows(): state.eventLogの末尾1件のmessage／tableDeltasを固定の対応表と照合し、動いたドメイン間フロー（FLOWS）のIDと両端ドメインを特定",
+          "passes": ["state.eventLog（末尾1件）"]
+        },
+        {
+          "package": "components",
+          "component": "ProcessFlowDiagram",
+          "action": "7ドメイン（受注・計画・発注・工程・在庫・出荷・マスタ）をプールとして描画し、アクティブな流れをアクセント色の実線でハイライト（マスタからの前提関係は常時点線で表示）",
+          "passes": ["activeDomains", "activeFlowDefs"]
+        }
+      ]
+    },
+    {
+      "id": "advance-day",
+      "name": "次の日へ進む",
+      "trigger": "「次の日へ進む」ボタン（ClockControls。全タブ共通のフッター）",
+      "note": "姉妹リポジトリmini-simulatorのadvanceDay()とは異なり、本シミュレータは「日を進める」ボタンに業務処理を一切紐付けない（CLAUDE.md「操作粒度」参照）。MRP実行・入荷計上・工程着手/完了・出荷引当/実績は、すべて対応するタブの個別ボタンで明示的に実行するユーザー操作である。",
+      "steps": [
+        {
+          "package": "components",
+          "component": "ClockControls",
+          "action": "「次の日へ進む」クリック → dispatch({ type: \"ADVANCE_DAY\" })",
+          "passes": []
+        },
+        {
+          "package": "domain",
+          "component": "reducer.ts",
+          "action": "case \"ADVANCE_DAY\": structuredClone(state) → next.day += 1（他のテーブルは一切変更しない）",
+          "passes": ["state.day"]
+        },
+        {
+          "package": "app",
+          "component": "App",
+          "action": "新しい state.day を元に全タブが再描画される（例：発注タブの「入荷計上」ボタンが活性化するタイミングが変わる）",
+          "passes": ["state.day"]
+        }
+      ]
+    },
+    {
+      "id": "app-startup",
+      "name": "初回起動（初期マスタの読み込み）",
+      "trigger": "ページの初回読み込み（useReducerの初期化関数）",
+      "note": "本シミュレータのRESET（v5-spec.md UC-23）はmini-simulatorと異なり、既存マスタ（編集済みの値を含む）を保持したまま全トランザクションだけを初期化する（reducer.tsのRESET caseはdata/masterData.tsを読み直さず、state.items等をそのまま使う）。data/masterData.tsのCHAIR_PRESETが読まれるのは、この初回起動時と、マスタタブ「既定プリセットに戻す」操作（MASTER_RESET_TO_PRESET）の時だけ。",
+      "steps": [
+        {
+          "package": "app",
+          "component": "App",
+          "action": "useReducer(simulationReducer, undefined, createInitialState) — 第3引数の初期化関数としてcreateInitialStateを渡す",
+          "passes": []
+        },
+        {
+          "package": "domain",
+          "component": "reducer.ts",
+          "action": "createInitialState(): emptyStateWithMasters() に initialItems／initialBom／initialRoutingSteps／initialCustomers／initialSuppliers／initialWorkCenters を structuredClone して渡す",
+          "passes": []
+        },
+        {
+          "package": "data",
+          "component": "masterData.ts",
+          "action": "モジュール先頭でCHAIR_PRESET（v5-spec.md §1.1：木製イス。品目5・BOM4行・工順3行・作業区3件・得意先2件・仕入先3件）から initialItems 等をexport",
+          "passes": ["initialItems", "initialBom", "initialRoutingSteps", "initialCustomers", "initialSuppliers", "initialWorkCenters"]
+        },
+        {
+          "package": "app",
+          "component": "App",
+          "action": "state が初期値（Day 0・トランザクションゼロ）で最初にレンダリングされる",
+          "passes": ["state"]
+        }
+      ]
+    },
+    {
+      "id": "reset",
+      "name": "リセット",
+      "trigger": "「リセット」ボタン（window.confirm()の確認ダイアログ経由）",
+      "note": "v5-spec.md UC-23。全トランザクション（受注・オーダ・在庫・出荷・ロット・イベントログ）を初期化するが、マスタ（品目・BOM・工順・作業区・取引先。編集済みの値を含む）はそのまま保持する。",
+      "steps": [
+        {
+          "package": "components",
+          "component": "ClockControls",
+          "action": "「リセット」クリック → window.confirm() で確認後、dispatch({ type: \"RESET\" })",
+          "passes": []
+        },
+        {
+          "package": "domain",
+          "component": "reducer.ts",
+          "action": "case \"RESET\": emptyStateWithMasters() に、現在の state.items／bom／routingSteps／customers／suppliers／workCenters を structuredClone してそのまま渡す（data/masterData.tsは読み直さない）。salesOrders等のトランザクション配列はすべて空配列になる",
+          "passes": ["state.items", "state.bom", "state.routingSteps", "state.customers", "state.suppliers", "state.workCenters"]
+        },
+        {
+          "package": "app",
+          "component": "App",
+          "action": "state が Day 0・トランザクションゼロ（マスタは保持）に戻り、全タブが再描画される",
+          "passes": ["state"]
+        }
+      ]
+    }
+  ]
+}
+</script>
+
+<script>
+(function () {
+  var data = JSON.parse(document.getElementById("flow-data").textContent);
+
+  function sanitize(s) {
+    return String(s).replace(/[^a-zA-Z0-9_]/g, "-");
+  }
+
+  function boxKey(pkg, component) {
+    return "box-" + sanitize(pkg) + "-" + sanitize(component);
+  }
+
+  // ---------- レーン（package）とボックス（component）を描画 ----------
+  var lanesEl = document.getElementById("lanes");
+  data.packages.forEach(function (pkg) {
+    var lane = document.createElement("div");
+    lane.className = "lane";
+
+    var label = document.createElement("div");
+    label.className = "lane-label";
+    label.textContent = pkg.label;
+    lane.appendChild(label);
+
+    var boxes = document.createElement("div");
+    boxes.className = "lane-boxes";
+    pkg.components.forEach(function (component) {
+      var box = document.createElement("div");
+      box.className = "box";
+      box.id = boxKey(pkg.id, component);
+      box.textContent = component;
+      boxes.appendChild(box);
+    });
+    lane.appendChild(boxes);
+    lanesEl.appendChild(lane);
+  });
+
+  // ---------- ステップの正規化：component が配列（並行ターゲット）の場合も扱えるようにする ----------
+  function stepTargets(step) {
+    var components = Array.isArray(step.component) ? step.component : [step.component];
+    return components.map(function (c) {
+      return { key: boxKey(step.package, c), package: step.package, component: c };
+    });
+  }
+
+  // ---------- フロー選択UI ----------
+  var pickerEl = document.getElementById("flow-picker");
+  var triggerEl = document.getElementById("flow-trigger");
+  var noteEl = document.getElementById("flow-note");
+  var stepListEl = document.getElementById("step-list");
+  var svg = document.getElementById("arrows");
+  var stageEl = document.getElementById("stage");
+
+  var buttons = {};
+  data.flows.forEach(function (flow) {
+    var btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "flow-btn";
+    btn.textContent = flow.name;
+    btn.addEventListener("click", function () {
+      selectFlow(flow.id);
+    });
+    buttons[flow.id] = btn;
+    pickerEl.appendChild(btn);
+  });
+
+  var currentFlowId = null;
+
+  function clearStage() {
+    document.querySelectorAll(".box").forEach(function (box) {
+      box.classList.remove("active");
+      var badge = box.querySelector(".badge");
+      if (badge) badge.remove();
+    });
+    svg.innerHTML = "";
+  }
+
+  function clipToBox(cx, cy, w, h, dirX, dirY) {
+    var hw = w / 2, hh = h / 2;
+    if (dirX === 0 && dirY === 0) return { x: cx, y: cy };
+    var scaleX = dirX !== 0 ? hw / Math.abs(dirX) : Infinity;
+    var scaleY = dirY !== 0 ? hh / Math.abs(dirY) : Infinity;
+    var scale = Math.min(scaleX, scaleY);
+    return { x: cx + dirX * scale, y: cy + dirY * scale };
+  }
+
+  function boxGeometry(el) {
+    var stageRect = stageEl.getBoundingClientRect();
+    var r = el.getBoundingClientRect();
+    return {
+      cx: r.left - stageRect.left + r.width / 2,
+      cy: r.top - stageRect.top + r.height / 2,
+      w: r.width,
+      h: r.height,
+    };
+  }
+
+  function drawArrow(fromEl, toEl, labelParts, showText) {
+    var a = boxGeometry(fromEl);
+    var b = boxGeometry(toEl);
+    var dirX = b.cx - a.cx, dirY = b.cy - a.cy;
+    var start = clipToBox(a.cx, a.cy, a.w, a.h, dirX, dirY);
+    var end = clipToBox(b.cx, b.cy, b.w, b.h, -dirX, -dirY);
+
+    var ns = "http://www.w3.org/2000/svg";
+    var path = document.createElementNS(ns, "path");
+    path.setAttribute("d", "M " + start.x + " " + start.y + " L " + end.x + " " + end.y);
+    path.setAttribute("stroke", "#0f9b8e");
+    path.setAttribute("stroke-width", "1.8");
+    path.setAttribute("fill", "none");
+    path.setAttribute("marker-end", "url(#arrow-head)");
+
+    if (labelParts && labelParts.length) {
+      var titleEl = document.createElementNS(ns, "title");
+      titleEl.textContent = "渡されるデータ: " + labelParts.join(", ");
+      path.appendChild(titleEl);
+    }
+    svg.appendChild(path);
+
+    if (showText && labelParts && labelParts.length) {
+      var short = labelParts.slice(0, 2).join(", ") + (labelParts.length > 2 ? " …" : "");
+      var mx = (start.x + end.x) / 2;
+      var my = (start.y + end.y) / 2;
+      var textEl = document.createElementNS(ns, "text");
+      textEl.setAttribute("x", mx);
+      textEl.setAttribute("y", my - 4);
+      textEl.setAttribute("text-anchor", "middle");
+      textEl.setAttribute("class", "arrow-label-text");
+      textEl.textContent = short;
+      svg.appendChild(textEl);
+      // 背景（既存ボックスとの重なりを避けるため一旦テキストを描いてからサイズを測る）
+      var bbox = textEl.getBBox();
+      var bg = document.createElementNS(ns, "rect");
+      bg.setAttribute("x", bbox.x - 3);
+      bg.setAttribute("y", bbox.y - 1);
+      bg.setAttribute("width", bbox.width + 6);
+      bg.setAttribute("height", bbox.height + 2);
+      bg.setAttribute("class", "arrow-label-bg");
+      svg.insertBefore(bg, textEl);
+    }
+  }
+
+  function ensureMarker() {
+    var ns = "http://www.w3.org/2000/svg";
+    var defs = document.createElementNS(ns, "defs");
+    var marker = document.createElementNS(ns, "marker");
+    marker.setAttribute("id", "arrow-head");
+    marker.setAttribute("markerWidth", "10");
+    marker.setAttribute("markerHeight", "10");
+    marker.setAttribute("refX", "8");
+    marker.setAttribute("refY", "5");
+    marker.setAttribute("orient", "auto-start-reverse");
+    var arrowPath = document.createElementNS(ns, "path");
+    arrowPath.setAttribute("d", "M1,1 L9,5 L1,9");
+    arrowPath.setAttribute("fill", "none");
+    arrowPath.setAttribute("stroke", "#0f9b8e");
+    arrowPath.setAttribute("stroke-width", "1.6");
+    marker.appendChild(arrowPath);
+    defs.appendChild(marker);
+    svg.appendChild(defs);
+  }
+
+  function renderStepList(flow) {
+    stepListEl.innerHTML = "";
+    flow.steps.forEach(function (step, i) {
+      var li = document.createElement("li");
+      var targets = stepTargets(step);
+      var nodeLabel = targets.map(function (t) { return t.package + " / " + t.component; }).join("、");
+
+      var nodeSpan = document.createElement("span");
+      nodeSpan.className = "step-node";
+      nodeSpan.textContent = "[" + nodeLabel + "]";
+      li.appendChild(nodeSpan);
+      li.appendChild(document.createTextNode(" " + step.action));
+
+      if (step.passes && step.passes.length) {
+        var passesEl = document.createElement("span");
+        passesEl.className = "step-passes";
+        passesEl.appendChild(document.createTextNode("渡されるデータ: "));
+        step.passes.forEach(function (p) {
+          var code = document.createElement("code");
+          code.textContent = p;
+          passesEl.appendChild(code);
+        });
+        li.appendChild(passesEl);
+      }
+      stepListEl.appendChild(li);
+    });
+  }
+
+  function selectFlow(flowId) {
+    var flow = data.flows.find(function (f) { return f.id === flowId; });
+    if (!flow) return;
+    currentFlowId = flowId;
+
+    Object.keys(buttons).forEach(function (id) {
+      buttons[id].classList.toggle("active", id === flowId);
+    });
+    triggerEl.innerHTML = "<strong>トリガー：</strong>" + flow.trigger;
+    if (flow.note) {
+      noteEl.textContent = flow.note;
+      noteEl.hidden = false;
+    } else {
+      noteEl.hidden = true;
+    }
+
+    renderStepList(flow);
+
+    clearStage();
+    ensureMarker();
+
+    // バッジ（ステップ番号）を各ボックスに付与
+    var badgeMap = {};
+    flow.steps.forEach(function (step, i) {
+      stepTargets(step).forEach(function (t) {
+        if (!badgeMap[t.key]) badgeMap[t.key] = [];
+        badgeMap[t.key].push(i + 1);
+      });
+    });
+    Object.keys(badgeMap).forEach(function (key) {
+      var box = document.getElementById(key);
+      if (!box) return;
+      box.classList.add("active");
+      var badge = document.createElement("span");
+      badge.className = "badge";
+      badge.textContent = badgeMap[key].join(",");
+      box.appendChild(badge);
+    });
+
+    // 矢印：連続するステップ間で、ターゲットが異なる組み合わせをすべて結ぶ
+    for (var i = 1; i < flow.steps.length; i++) {
+      var prevTargets = stepTargets(flow.steps[i - 1]);
+      var currTargets = stepTargets(flow.steps[i]);
+      // 分岐（fan-out/fan-in）の場合、同じラベルが矢印の数だけ重なって読めなくなるため、
+      // ラベルは1対1の単純な矢印のときだけ表示する（データの詳細はステップ一覧に必ず出るので情報は失われない）
+      var showLabel = prevTargets.length === 1 && currTargets.length === 1;
+      var seen = {};
+      prevTargets.forEach(function (from) {
+        currTargets.forEach(function (to) {
+          if (from.key === to.key) return;
+          var pairKey = from.key + "->" + to.key;
+          if (seen[pairKey]) return;
+          seen[pairKey] = true;
+          var fromEl = document.getElementById(from.key);
+          var toEl = document.getElementById(to.key);
+          if (fromEl && toEl) {
+            drawArrow(fromEl, toEl, flow.steps[i].passes, showLabel);
+          }
+        });
+      });
+    }
+  }
+
+  window.addEventListener("resize", function () {
+    if (currentFlowId) selectFlow(currentFlowId);
+  });
+
+  // ---------- JSON全文表示 ----------
+  document.getElementById("json-block").textContent = JSON.stringify(data, null, 2);
+
+  // 初期表示：最初のフローを選択
+  if (data.flows.length) selectFlow(data.flows[0].id);
+})();
+</script>
+</body>
+</html>
