@@ -116,7 +116,6 @@ function ProcessFlowDiagram({ state }: ProcessFlowDiagramProps) {
 
   return (
     <div className="panel">
-      <h2>プロセス連携図</h2>
       <p className="panel__hint">
         受注・計画・発注・工程・在庫・出荷・マスタの7ドメインをプールとして表し、ドメイン間を結ぶ矢印が
         「どちらからどちらへモノ・データが流れるか」を表す。マスタから他ドメインへの点線は常時表示の前提関係。
