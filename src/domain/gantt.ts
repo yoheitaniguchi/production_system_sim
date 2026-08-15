@@ -153,7 +153,10 @@ function shipmentTask(shipment: SimulationState["shipments"][number], today: num
 /**
  * 受注明細1件分のガント行を計算する。予定はSO_LINEの希望/回答納期、実績は出荷実績日（全量出荷でCLOSEDの
  * ときのみ確定）とする。design.md EXT-2・EXT-3により取消（CANCELED）は実績が一切無い状態でのみ成立するため、
- * 取消済み行は常にCANCELED表示で良い（実績分岐を考慮する必要がない）
+ * 受注行（summary）は常にCANCELED表示で良い（実績分岐を考慮する必要がない）。
+ * ただし計画オーダ確定後に取消した場合はcancelSalesOrder()がMFG_ORDER/PURCHASE_ORDERを配列から削除せず
+ * CANCELEDへカスケードするだけなので（salesOrder.ts）、子タスク（children）自体はtraceFromOrder()経由で
+ * 引き続き返り、それぞれpurchaseOrderTask()/mfgOrderTask()のcanceled判定によりCANCELED表示になる
  */
 function orderRow(
   state: SimulationState,

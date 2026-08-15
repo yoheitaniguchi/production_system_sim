@@ -46,7 +46,7 @@ describe("computeGanttRows（受注ごとの進捗ガントチャート）", () 
     expect(row.summary.barState).toBe("DELAYED");
   });
 
-  it("design.md EXT-2/3：取消済みの受注はCANCELED表示になり、子タスクも生成されない", () => {
+  it("design.md EXT-2/3：MRP未実行のまま取消した受注はCANCELED表示になり、子タスクも無い（計画オーダが1件も無いため）", () => {
     const state = createTestState(0);
     const soNo = createSalesOrder(state, { customerId: "CUST-A", itemId: ITEM_IDS.FG_CHAIR, qty: 10, requestDay: 15 }, 0);
     cancelSalesOrder(state, soNo);
@@ -54,6 +54,20 @@ describe("computeGanttRows（受注ごとの進捗ガントチャート）", () 
     const [row] = computeGanttRows(state);
     expect(row.summary.barState).toBe("CANCELED");
     expect(row.children).toHaveLength(0);
+  });
+
+  it("design.md EXT-2：計画オーダ確定後に取消した受注は、カスケードでCANCELEDになった購買/製造オーダが子タスクとして残る", () => {
+    const state = createTestState(0);
+    const soNo = createSalesOrder(state, { customerId: "CUST-A", itemId: ITEM_IDS.FG_CHAIR, qty: 10, requestDay: 15 }, 0);
+    confirmDelivery(state, soNo, 15);
+    runMRP(state);
+    firmAllPlannedOrders(state, 0); // ここまでは実績が一切無いのでEXT-3のガードを満たし取消可能
+    cancelSalesOrder(state, soNo);
+
+    const [row] = computeGanttRows(state);
+    expect(row.summary.barState).toBe("CANCELED");
+    expect(row.children.length).toBeGreaterThan(0); // salesOrder.tsはMO/POを配列から削除せずCANCELEDへカスケードするのみ
+    expect(row.children.every((c) => c.barState === "CANCELED")).toBe(true);
   });
 
   it("v5-spec.md §9.3 TC-01〜16を通しで進めると、購買/製造/出荷の子タスクが計画・実績どおりになる", () => {
@@ -115,7 +129,9 @@ describe("computeGanttRows（受注ごとの進捗ガントチャート）", () 
 
     const ptLegPo = state.purchaseOrders.find((p) => p.itemId === ITEM_IDS.PT_LEG)!;
     const ptScrewPo = state.purchaseOrders.find((p) => p.itemId === ITEM_IDS.PT_SCREW)!;
-    receivePurchaseOrder(state, ptLegPo.poNo, ptLegPo.dueDay); // TC-10
+    // TC-10相当（v5-spec.mdの本文は「D+14まで進め」だが、TC-04表のPT-400/PT-500必要日はD+13のため
+    // 希望どおりの回答＝D+13受入となる。kpi.test.tsの同シナリオと同じ扱い）
+    receivePurchaseOrder(state, ptLegPo.poNo, ptLegPo.dueDay);
     receivePurchaseOrder(state, ptScrewPo.poNo, ptScrewPo.dueDay);
 
     const fgOrder = state.mfgOrders.find((mo) => mo.itemId === ITEM_IDS.FG_CHAIR)!;

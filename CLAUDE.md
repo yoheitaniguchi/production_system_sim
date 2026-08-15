@@ -142,7 +142,7 @@ npm run preview   # build成果物をGitHub Pages相当のbaseパスで動作確
   `salesOrder.ts`・`schedule.ts`・`inventory.ts`・`kpi.ts`・`cost.ts`・`lot.ts`・`todayActions.ts`・
   `exerciseGuide.ts`・`processFlow.ts`・`gantt.ts`・`masterData.ts`・`masterIntegrity.ts`・`masterIO.ts`）＋
   `reducer.ts`（design.md §7の action一覧を実装。`createInitialState()`・`simulationReducer()`）を実装済み
-- `src/domain/*.test.ts`：154件のテストで、v5-spec.md §9のTC-01〜18・TC-E1〜E3の全シナリオ、
+- `src/domain/*.test.ts`：155件のテストで、v5-spec.md §9のTC-01〜18・TC-E1〜E3の全シナリオ、
   reducerの委譲・不変性・エラーハンドリング・RESET時のマスタ保持、`processFlow.ts`のフロー判定、
   §11.2の原価計算例・§11.3のロット系譜（後方/前方追跡）を検証済み。design.md §6の複数受注演習も
   TC-M1として`multiOrderExercise.test.ts`で検証済み。マスタ自由登録は`masterData.test.ts`・
