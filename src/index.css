@@ -475,6 +475,22 @@ textarea {
   max-width: 60rem;
 }
 
+.process-flow-nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  margin: 0.75rem 0;
+}
+
+.process-flow-nav__position {
+  min-width: 12rem;
+  text-align: center;
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
 .process-flow-canvas {
   width: 100%;
   max-width: 1300px;

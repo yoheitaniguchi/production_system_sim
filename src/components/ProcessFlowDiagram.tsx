@@ -1,4 +1,5 @@
 // 受注〜出荷プロセス連携図（BPMN風。design.md §5「（付加価値）プロセス連携図」）
+import { useState } from "react";
 import {
   computeActiveFlows,
   DOMAIN_LABELS,
@@ -110,7 +111,25 @@ function computeFlowGeometry(flow: FlowDef): FlowGeometry {
 }
 
 function ProcessFlowDiagram({ state }: ProcessFlowDiagramProps) {
-  const { lastMessage, flowIds, activeDomains } = computeActiveFlows(state);
+  // viewIndex===nullは「常に最新の操作を追従表示する」状態。戻るボタンで具体的な過去のインデックスへ固定し、
+  // 進むボタンで最新まで戻ると再びnull（追従）に復帰する（他タブでの新しい操作を自動的に拾えるようにするため）。
+  const [viewIndex, setViewIndex] = useState<number | null>(null);
+  const lastIndex = state.eventLog.length - 1;
+  const effectiveIndex = viewIndex === null ? lastIndex : Math.min(viewIndex, lastIndex);
+  const canGoBack = effectiveIndex > 0;
+  const canGoForward = effectiveIndex < lastIndex;
+  const isLatest = viewIndex === null;
+
+  const handleBack = () => {
+    if (canGoBack) setViewIndex(effectiveIndex - 1);
+  };
+  const handleForward = () => {
+    if (!canGoForward) return;
+    const next = effectiveIndex + 1;
+    setViewIndex(next >= lastIndex ? null : next);
+  };
+
+  const { lastMessage, day, flowIds, activeDomains } = computeActiveFlows(state, effectiveIndex);
   const geometries = FLOWS.map(computeFlowGeometry);
   const activeFlowDefs = FLOWS.filter((f) => flowIds.has(f.id));
 
@@ -119,8 +138,20 @@ function ProcessFlowDiagram({ state }: ProcessFlowDiagramProps) {
       <p className="panel__hint">
         受注・計画・発注・工程・在庫・出荷・マスタの7ドメインをプールとして表し、ドメイン間を結ぶ矢印が
         「どちらからどちらへモノ・データが流れるか」を表す。マスタから他ドメインへの点線は常時表示の前提関係。
-        アクセント色の実線は、直前の操作で実際に動いた流れ。
+        アクセント色の実線は、選択した操作で実際に動いた流れ。
       </p>
+
+      <div className="process-flow-nav">
+        <button type="button" onClick={handleBack} disabled={!canGoBack}>
+          ← 戻る
+        </button>
+        <span className="process-flow-nav__position">
+          {lastIndex < 0 ? "まだ操作していません" : `${effectiveIndex + 1} / ${lastIndex + 1}件目（D+${day}）`}
+        </span>
+        <button type="button" onClick={handleForward} disabled={!canGoForward}>
+          進む →
+        </button>
+      </div>
 
       <div className="process-flow-canvas">
         <svg
@@ -203,11 +234,11 @@ function ProcessFlowDiagram({ state }: ProcessFlowDiagramProps) {
       </div>
 
       <p className="process-flow-legend">
-        実線＋アクセント色：直前の操作で動いた流れ／点線：現在動きのない流れ／マスタからの点線：常時表示の前提関係
+        実線＋アクセント色：選択した操作で動いた流れ／点線：現在動きのない流れ／マスタからの点線：常時表示の前提関係
       </p>
 
       <div className="process-flow-today">
-        <h3>直前の操作で動いたモノ・データ</h3>
+        <h3>{isLatest ? "直前の操作で動いたモノ・データ" : "選択した操作で動いたモノ・データ"}</h3>
         {lastMessage === null ? (
           <p className="panel__empty">まだ操作していません。</p>
         ) : activeFlowDefs.length === 0 ? (
