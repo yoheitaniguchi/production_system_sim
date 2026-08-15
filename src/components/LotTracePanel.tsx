@@ -36,6 +36,10 @@ function LotTracePanel({ state }: LotTracePanelProps) {
   return (
     <div className="panel">
       <h2>ロット追跡</h2>
+      <p className="panel__hint">
+        ロットを選ぶと、実際に何を消費して作られたか（後方追跡）と、そのロットが何に使われたか（前方追跡）を
+        実績のトランザクションから辿って表示する。ペギング追跡（計画上のつながり）とは別に、実際の消費・生成の事実を確認できる。
+      </p>
 
       <form className="panel__form" onSubmit={(e) => e.preventDefault()}>
         <label>

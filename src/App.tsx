@@ -61,7 +61,15 @@ function App() {
       <header className="app__header">
         <h1>生産管理ミニマムシミュレーター</h1>
       </header>
-      <AlertBar state={state} />
+      <AlertBar state={state} onNavigate={(tabId) => setActiveTab(tabId)} />
+      {state.eventLog.length === 0 && activeTab !== "exercise-guide" && (
+        <div className="onboarding-hint">
+          はじめての方は「演習ガイド」タブで手順を確認しながら進められます。
+          <button type="button" className="alert-bar__link" onClick={() => setActiveTab("exercise-guide")}>
+            演習ガイドを開く
+          </button>
+        </div>
+      )}
       <TodayActionsBar state={state} onNavigate={(domain) => setActiveTab(domain)} />
       <nav className="app__tabs">
         {TABS.map((tab) => (

@@ -1,6 +1,7 @@
 // 発注：仕入先納期回答・入荷計上・注文残（design.md §5、v5-spec.md §6.5・UC-10/11）
 import { useState } from "react";
 import type { SimulationAction } from "../domain/reducer";
+import { PURCHASE_ORDER_STATUS_LABELS } from "../statusLabels";
 import type { SimulationState } from "../types";
 
 interface ProcurementPanelProps {
@@ -57,13 +58,15 @@ function ProcurementPanel({ state, dispatch }: ProcurementPanelProps) {
                     <td>D+{po.dueDay}</td>
                     <td>{po.confirmDay != null ? `D+${po.confirmDay}` : "—"}</td>
                     <td>{po.receivedQty}</td>
-                    <td>{po.status}</td>
+                    <td>{PURCHASE_ORDER_STATUS_LABELS[po.status]}</td>
                     <td className="panel__actions">
                       {po.status === "ORDERED" && (
                         <>
                           <input
                             type="number"
                             className="panel__inline-input"
+                            aria-label="回答納期（D+）"
+                            title="回答納期（D+）"
                             value={confirmDayDrafts[po.poNo] ?? po.dueDay}
                             onChange={(e) =>
                               setConfirmDayDrafts((prev) => ({ ...prev, [po.poNo]: Number(e.target.value) }))
@@ -71,6 +74,7 @@ function ProcurementPanel({ state, dispatch }: ProcurementPanelProps) {
                           />
                           <button
                             type="button"
+                            className="panel__btn--primary"
                             onClick={() =>
                               dispatch({
                                 type: "PO_ACK",
@@ -83,15 +87,19 @@ function ProcurementPanel({ state, dispatch }: ProcurementPanelProps) {
                         </>
                       )}
                       {canReceive && (
-                        <button
-                          type="button"
-                          className={state.day >= promisedDay ? "panel__btn--primary" : undefined}
-                          disabled={state.day < promisedDay}
-                          title={state.day < promisedDay ? `入荷予定日 D+${promisedDay} 以降に計上できます` : undefined}
-                          onClick={() => dispatch({ type: "PO_RECEIVE", payload: { poNo: po.poNo } })}
-                        >
-                          入荷計上
-                        </button>
+                        <>
+                          <button
+                            type="button"
+                            className={state.day >= promisedDay ? "panel__btn--primary" : undefined}
+                            disabled={state.day < promisedDay}
+                            onClick={() => dispatch({ type: "PO_RECEIVE", payload: { poNo: po.poNo } })}
+                          >
+                            入荷計上
+                          </button>
+                          {state.day < promisedDay && (
+                            <span className="panel__hint-inline">D+{promisedDay} 以降に計上可能</span>
+                          )}
+                        </>
                       )}
                     </td>
                   </tr>

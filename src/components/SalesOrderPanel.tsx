@@ -1,6 +1,7 @@
 // 受注：登録・納期回答・取消（design.md §5、v5-spec.md §6.1・UC-04/05）
 import { useState } from "react";
 import type { SimulationAction } from "../domain/reducer";
+import { SO_LINE_STATUS_LABELS } from "../statusLabels";
 import type { SimulationState } from "../types";
 
 interface SalesOrderPanelProps {
@@ -71,9 +72,12 @@ function SalesOrderPanel({ state, dispatch }: SalesOrderPanelProps) {
             onChange={(e) => setRequestDay(Number(e.target.value))}
           />
         </label>
-        <button type="submit">受注登録</button>
+        <button type="submit" className="panel__btn--primary">
+          受注登録
+        </button>
       </form>
 
+      <div className="panel__table-scroll">
       <table className="panel__table">
         <thead>
           <tr>
@@ -101,13 +105,15 @@ function SalesOrderPanel({ state, dispatch }: SalesOrderPanelProps) {
                 <td>D+{line.requestDay}</td>
                 <td>{line.confirmDay != null ? `D+${line.confirmDay}` : "—"}</td>
                 <td>{line.shippedQty}</td>
-                <td>{line.status}</td>
+                <td>{SO_LINE_STATUS_LABELS[line.status]}</td>
                 <td className="panel__actions">
                   {line.status === "RECEIVED" && (
                     <>
                       <input
                         type="number"
                         className="panel__inline-input"
+                        aria-label="回答納期（D+）"
+                        title="回答納期（D+）"
                         value={confirmDayDrafts[line.soNo] ?? line.requestDay}
                         onChange={(e) =>
                           setConfirmDayDrafts((prev) => ({ ...prev, [line.soNo]: Number(e.target.value) }))
@@ -115,6 +121,7 @@ function SalesOrderPanel({ state, dispatch }: SalesOrderPanelProps) {
                       />
                       <button
                         type="button"
+                        className="panel__btn--primary"
                         onClick={() =>
                           dispatch({
                             type: "SO_CONFIRM_DELIVERY",
@@ -137,6 +144,7 @@ function SalesOrderPanel({ state, dispatch }: SalesOrderPanelProps) {
           })}
         </tbody>
       </table>
+      </div>
     </div>
   );
 }

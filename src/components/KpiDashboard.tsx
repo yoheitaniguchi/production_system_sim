@@ -74,6 +74,10 @@ function KpiDashboard({ state }: KpiDashboardProps) {
   return (
     <div className="panel">
       <h2>KPIダッシュボード</h2>
+      <p className="panel__hint">
+        現在の状態から算出した指標を、組織目線（経営・受注管理向け）と現場目線（工程・品質向け）に分けて表示する。
+        「両方」の指標は両ブロックに重複して表示している。
+      </p>
 
       <h3>組織目線</h3>
       {renderTable(orgMetrics)}
