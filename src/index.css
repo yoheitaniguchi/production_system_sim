@@ -969,3 +969,250 @@ textarea {
   color: var(--color-accent-contrast);
   font-weight: bold;
 }
+
+/* 進捗ガント（GanttChartPanel.tsx）。既存の状態表現トークン（--color-accent, --pf-active,
+   --warn-bg, --warn-border, --color-text-muted）をそのまま流用し、6テーマ全てで配色が破綻しないようにする */
+.gantt__toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 0.5rem;
+  font-size: 0.85rem;
+}
+
+.gantt__filter {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  cursor: pointer;
+}
+
+.gantt__legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.9rem;
+  margin-bottom: 0.75rem;
+  font-size: 0.78rem;
+  color: var(--color-text-muted);
+}
+
+.gantt__legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.gantt__swatch {
+  display: inline-block;
+  width: 0.85rem;
+  height: 0.85rem;
+  border-radius: 3px;
+  box-sizing: border-box;
+}
+
+.gantt__swatch--plan {
+  background: var(--bg-subtle);
+  border: 1.5px dashed var(--color-text-muted);
+}
+
+.gantt__swatch--in_progress {
+  background: var(--color-accent);
+}
+
+.gantt__swatch--done {
+  background: var(--pf-active);
+}
+
+.gantt__swatch--delayed {
+  background: var(--warn-border);
+}
+
+.gantt__swatch--canceled {
+  background: var(--color-text-muted);
+  opacity: 0.5;
+}
+
+.gantt__legend-today {
+  display: inline-block;
+  width: 0.85rem;
+  height: 0;
+  border-top: 2px dashed var(--color-accent);
+}
+
+.gantt__body {
+  display: flex;
+  align-items: flex-start;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.gantt__labels {
+  flex: 0 0 260px;
+  max-width: 260px;
+  border-right: 1px solid var(--border);
+  box-sizing: border-box;
+}
+
+.gantt__label-row {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0 0.4rem;
+  font-size: 0.8rem;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.gantt__label-row--child {
+  padding-left: 1.4rem;
+  color: var(--color-text-muted);
+}
+
+.gantt__expand-btn {
+  flex: 0 0 auto;
+  width: 1.1rem;
+  height: 1.1rem;
+  padding: 0;
+  border: none;
+  background: none;
+  font-size: 0.75rem;
+  line-height: 1;
+  color: var(--color-text-muted);
+}
+
+.gantt__expand-btn:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.gantt__label-indent {
+  flex: 0 0 1.1rem;
+}
+
+.gantt__label-text {
+  flex: 1 1 auto;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gantt__status-badge {
+  flex: 0 0 auto;
+  padding: 0 0.35rem;
+  border-radius: 999px;
+  font-size: 0.68rem;
+  border: 1px solid var(--border);
+  white-space: nowrap;
+}
+
+.gantt__status-badge--planned {
+  color: var(--color-text-muted);
+}
+
+.gantt__status-badge--in_progress {
+  color: var(--color-accent);
+  border-color: var(--color-accent);
+}
+
+.gantt__status-badge--done {
+  color: var(--pf-active);
+  border-color: var(--pf-active);
+}
+
+.gantt__status-badge--delayed {
+  color: var(--warn-border);
+  border-color: var(--warn-border);
+  background: var(--warn-bg);
+}
+
+.gantt__status-badge--canceled {
+  color: var(--color-text-muted);
+  text-decoration: line-through;
+}
+
+.gantt__chart-scroll {
+  flex: 1 1 auto;
+  overflow-x: auto;
+  max-width: 100%;
+}
+
+.gantt__chart-scroll svg {
+  display: block;
+}
+
+.gantt__row-bg {
+  fill: var(--bg-subtle);
+  opacity: 0.5;
+}
+
+.gantt__grid-line {
+  stroke: var(--border);
+  stroke-width: 1;
+}
+
+.gantt__grid-label {
+  font-size: 0.65rem;
+  fill: var(--color-text-muted);
+  text-anchor: middle;
+}
+
+.gantt__today-line {
+  stroke: var(--color-accent);
+  stroke-width: 1.5;
+  stroke-dasharray: 4 3;
+}
+
+.gantt__bar--plan {
+  fill: var(--bg-subtle);
+  stroke: var(--color-text-muted);
+  stroke-width: 1.25;
+  stroke-dasharray: 3 2;
+}
+
+.gantt__bar--in_progress {
+  fill: var(--color-accent);
+}
+
+.gantt__bar--done {
+  fill: var(--pf-active);
+}
+
+.gantt__bar--delayed {
+  fill: var(--warn-border);
+}
+
+.gantt__bar--canceled {
+  fill: var(--color-text-muted);
+  opacity: 0.45;
+}
+
+.gantt__bar--ongoing {
+  opacity: 0.85;
+}
+
+.gantt__milestone--planned {
+  fill: var(--bg-subtle);
+  stroke: var(--color-text-muted);
+  stroke-width: 1.25;
+}
+
+.gantt__milestone--in_progress {
+  fill: var(--color-accent);
+  stroke: var(--color-accent);
+}
+
+.gantt__milestone--done {
+  fill: var(--pf-active);
+  stroke: var(--pf-active);
+}
+
+.gantt__milestone--delayed {
+  fill: var(--warn-border);
+  stroke: var(--warn-border);
+}
+
+.gantt__milestone--canceled {
+  fill: var(--color-text-muted);
+  opacity: 0.45;
+}

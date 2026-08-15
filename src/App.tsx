@@ -5,6 +5,7 @@ import ClockControls from "./components/ClockControls";
 import CostPanel from "./components/CostPanel";
 import EventLogPanel from "./components/EventLogPanel";
 import ExerciseGuidePanel from "./components/ExerciseGuidePanel";
+import GanttChartPanel from "./components/GanttChartPanel";
 import InventoryPanel from "./components/InventoryPanel";
 import KpiDashboard from "./components/KpiDashboard";
 import LotTracePanel from "./components/LotTracePanel";
@@ -36,6 +37,7 @@ const TABS = [
   { id: "cost", label: "原価", Component: CostPanel },
   { id: "pegging", label: "引当元追跡", Component: PeggingTracePanel },
   { id: "lot-trace", label: "ロット追跡", Component: LotTracePanel },
+  { id: "gantt", label: "進捗ガント", Component: GanttChartPanel },
   { id: "exercise-guide", label: "演習ガイド", Component: ExerciseGuidePanel },
 ] as const;
 

@@ -138,26 +138,30 @@ npm run preview   # build成果物をGitHub Pages相当のbaseパスで動作確
 - `src/data/masterData.ts`：v5-spec.md §1.1（木製イス）の品目5・BOM4行・工順3行・作業区3件。
   顧客2件（design.md §6の複数受注演習用）・仕入先3件（BUY品目ごとに1件、`defaultSupplierId`で対応付け）。
   これらは`CHAIR_PRESET`として既定プリセットにまとめてあり、`createInitialState()`の戻り値は従来どおり
-- `src/domain/`：17モジュール（`pegging.ts`・`mrp.ts`・`procurement.ts`・`shipment.ts`・`production.ts`・
+- `src/domain/`：18モジュール（`pegging.ts`・`mrp.ts`・`procurement.ts`・`shipment.ts`・`production.ts`・
   `salesOrder.ts`・`schedule.ts`・`inventory.ts`・`kpi.ts`・`cost.ts`・`lot.ts`・`todayActions.ts`・
-  `exerciseGuide.ts`・`processFlow.ts`・`masterData.ts`・`masterIntegrity.ts`・`masterIO.ts`）＋
+  `exerciseGuide.ts`・`processFlow.ts`・`gantt.ts`・`masterData.ts`・`masterIntegrity.ts`・`masterIO.ts`）＋
   `reducer.ts`（design.md §7の action一覧を実装。`createInitialState()`・`simulationReducer()`）を実装済み
-- `src/domain/*.test.ts`：137件のテストで、v5-spec.md §9のTC-01〜18・TC-E1〜E3の全シナリオ、
+- `src/domain/*.test.ts`：154件のテストで、v5-spec.md §9のTC-01〜18・TC-E1〜E3の全シナリオ、
   reducerの委譲・不変性・エラーハンドリング・RESET時のマスタ保持、`processFlow.ts`のフロー判定、
   §11.2の原価計算例・§11.3のロット系譜（後方/前方追跡）を検証済み。design.md §6の複数受注演習も
   TC-M1として`multiOrderExercise.test.ts`で検証済み。マスタ自由登録は`masterData.test.ts`・
   `masterIntegrity.test.ts`・`masterIO.test.ts`でガードを個別に、`multiLevelBom.test.ts`で
-  **4階層BOMをマスタ操作だけで組み立てて受注〜出荷まで通す**通し演習として検証済み
+  **4階層BOMをマスタ操作だけで組み立てて受注〜出荷まで通す**通し演習として検証済み。`gantt.ts`は
+  `gantt.test.ts`でTC-01〜16の通し進行に沿って計画バー・実績バー・遅延（DELAYED）判定を検証済み（design.md EXT-29）
 - `src/App.tsx`：`useReducer`でreducerを保持し、共通シェル（`ClockControls`・`AlertBar`・`TodayActionsBar`・
-  `EventLogPanel`）と、12個のタブ（受注／計画／発注／工程／在庫／出荷／マスタ／KPI／原価／ペギング追跡／
-  ロット追跡／演習ガイド）を実装済み。プロセス連携図（`ProcessFlowDiagram.tsx`）はタブではなく
+  `EventLogPanel`）と、13個のタブ（受注／計画／発注／工程／在庫／出荷／マスタ／KPI／原価／ペギング追跡／
+  ロット追跡／進捗ガント／演習ガイド）を実装済み。プロセス連携図（`ProcessFlowDiagram.tsx`）はタブではなく
   `ProcessFlowPopup.tsx`によるフローティングポップアップとして表示し、他タブを操作しながら常時参照できる
   （タブ切り替えでアンマウントされずApp直下に置く）。ヘッダー部分のドラッグで自由に移動でき（Pointer Events、
   範囲制限なし）、閉じるボタンとEscキーの両方で閉じられる。SVGは`viewBox`＋`width:100%`で追従させ、PC画面での
   横スクロールを不要にした。イベントログ履歴を戻る/進むボタンで遡って表示できる（`domain/processFlow.ts`の
   `computeActiveFlows()`にindex引数を追加し、末尾以外のEventLogEntryも指定できるようにした。最新まで
-  進むと自動追従状態に復帰する）。各画面はPlaywrightでv5-spec.md TC-02〜19相当の
-  操作・§11.2/§11.3相当の操作を実際にブラウザで確認済み（ライト/ダーク両テーマ）。
+  進むと自動追従状態に復帰する）。進捗ガント（`GanttChartPanel.tsx`）は受注1行の要約バーを既定表示とし、
+  行頭の展開ボタンで購買・製造・出荷オーダの内訳（`traceFromOrder()`と同じ集合）を子行に展開する。
+  計画（破線の枠バー）と実績（塗りバー）を同じ行に重ね、実績が計画終了日を超えると遅延色に変わる
+  （既存の`--color-accent`/`--pf-active`/`--warn-*`トークンを再利用し6テーマ全てに対応）。各画面はPlaywrightで
+  v5-spec.md TC-02〜19相当の操作・§11.2/§11.3相当の操作を実際にブラウザで確認済み（ライト/ダーク両テーマ）。
   マスタ自由登録も、4階層マスタのJSONインポート→受注〜出荷の通し操作・循環BOMの登録拒否・
   参照中マスタの削除ブロックをブラウザで確認済み
 
