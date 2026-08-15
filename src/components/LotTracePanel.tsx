@@ -1,6 +1,6 @@
 // ロット追跡（v5-spec.md §11.3 Phase 2-B：後方追跡・前方追跡）
 //
-// ペギング追跡（PeggingTracePanel、計画上の意図）とは別レイヤの、実際の消費・生成の事実を辿る画面。
+// 引当元追跡（PeggingTracePanel、計画上の意図）とは別レイヤの、実際の消費・生成の事実を辿る画面。
 import { useState } from "react";
 import { traceBackward, traceForward } from "../domain/lot";
 import type { SimulationState } from "../types";
@@ -38,7 +38,7 @@ function LotTracePanel({ state }: LotTracePanelProps) {
       <h2>ロット追跡</h2>
       <p className="panel__hint">
         ロットを選ぶと、実際に何を消費して作られたか（後方追跡）と、そのロットが何に使われたか（前方追跡）を
-        実績のトランザクションから辿って表示する。ペギング追跡（計画上のつながり）とは別に、実際の消費・生成の事実を確認できる。
+        実績のトランザクションから辿って表示する。引当元追跡（計画上のつながり）とは別に、実際の消費・生成の事実を確認できる。
       </p>
 
       <form className="panel__form" onSubmit={(e) => e.preventDefault()}>

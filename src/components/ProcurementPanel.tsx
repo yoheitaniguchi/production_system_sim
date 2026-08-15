@@ -24,7 +24,7 @@ function ProcurementPanel({ state, dispatch }: ProcurementPanelProps) {
           <thead>
             <tr>
               <th>購買オーダ番号</th>
-              <th>ペグ先</th>
+              <th>引当元</th>
               <th>仕入先</th>
               <th>品目</th>
               <th>数量</th>

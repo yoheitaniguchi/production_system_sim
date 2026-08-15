@@ -1,4 +1,4 @@
-// ペギング追跡：受注→計画→確定オーダ→トランザクションを辿るツリー表示（design.md §5、v5-spec.md §7.4）
+// 引当元追跡（v5-spec.mdのペギング追跡）：受注→計画→確定オーダ→トランザクションを辿るツリー表示（design.md §5、v5-spec.md §7.4）
 import { useState } from "react";
 import { pegKey, traceFromOrder } from "../domain/pegging";
 import { MFG_ORDER_STATUS_LABELS, PURCHASE_ORDER_STATUS_LABELS, SO_LINE_STATUS_LABELS } from "../statusLabels";
@@ -105,10 +105,10 @@ function PeggingTracePanel({ state }: PeggingTracePanelProps) {
 
   return (
     <div className="panel">
-      <h2>ペギング追跡</h2>
+      <h2>引当元追跡</h2>
       <p className="panel__hint">
         受注明細を選ぶと、その受注がどの計画オーダ・確定オーダ（製造／購買）にひも付いているかを、
-        計画上のつながり（ペグ先）で下流までたどって表示する。
+        計画上のつながり（引当元）で下流までたどって表示する。
       </p>
 
       <form className="panel__form" onSubmit={(e) => e.preventDefault()}>

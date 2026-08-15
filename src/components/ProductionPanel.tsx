@@ -46,7 +46,7 @@ function ProductionPanel({ state, dispatch }: ProductionPanelProps) {
             <div key={mo.moNo} className="panel__group">
               <div className="panel__toolbar">
                 <strong>
-                  {mo.moNo}（{itemName(mo.itemId)} x{mo.planQty}、ペグ先 {mo.pegTo}、着手日 D+{mo.startDay}、
+                  {mo.moNo}（{itemName(mo.itemId)} x{mo.planQty}、引当元 {mo.pegTo}、着手日 D+{mo.startDay}、
                   完了予定 D+{mo.dueDay}、状態 {MFG_ORDER_STATUS_LABELS[mo.status]}）
                 </strong>
                 {mo.status === "FIRM" && (

@@ -161,8 +161,8 @@ const STEPS: InternalStep[] = [
   },
   {
     tc: "TC-18",
-    title: "ペギング追跡",
-    instruction: "ペギング追跡タブで受注から製造・購買オーダまでの繋がりを確認する",
+    title: "引当元追跡",
+    instruction: "引当元追跡タブで受注から製造・購買オーダまでの繋がりを確認する",
     expected: "MFG_ORDER・PURCHASE_ORDER・STOCK_TXNの繋がりが表示される",
     isDone: (state) => state.shipments.some((s) => s.status === "SHIPPED"),
   },
