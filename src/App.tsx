@@ -32,7 +32,7 @@ const TABS = [
   { id: "master-data", label: "マスタ", Component: MasterDataPage },
   { id: "kpi", label: "KPI", Component: KpiDashboard },
   { id: "cost", label: "原価", Component: CostPanel },
-  { id: "pegging", label: "ペギング追跡", Component: PeggingTracePanel },
+  { id: "pegging", label: "引当元追跡", Component: PeggingTracePanel },
   { id: "lot-trace", label: "ロット追跡", Component: LotTracePanel },
   { id: "exercise-guide", label: "演習ガイド", Component: ExerciseGuidePanel },
   { id: "process-flow", label: "プロセス連携図", Component: ProcessFlowDiagram },

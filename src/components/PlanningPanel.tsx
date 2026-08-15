@@ -1,4 +1,4 @@
-// 計画：MRP実行・計画オーダ一括確定・ペグ先/BOMレベル表示（design.md §5、v5-spec.md §7.1・UC-06/07）
+// 計画：MRP実行・計画オーダ一括確定・引当元/BOMレベル表示（design.md §5、v5-spec.md §7.1・UC-06/07）
 import type { SimulationAction } from "../domain/reducer";
 import type { SimulationState } from "../types";
 
@@ -37,7 +37,7 @@ function PlanningPanel({ state, dispatch }: PlanningPanelProps) {
             <th>区分</th>
             <th>必要日</th>
             <th>着手/発注日</th>
-            <th>ペグ先</th>
+            <th>引当元</th>
             <th>BOMレベル</th>
           </tr>
         </thead>
