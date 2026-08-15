@@ -47,7 +47,10 @@ function buildFourLevelMaster(): SimulationState {
   expect(state.items).toHaveLength(0);
 
   // 依存される側（作業区・仕入先・得意先）から順に登録する
-  state = dispatch(state, { type: "MASTER_ADD_WORK_CENTER", payload: { workCenter: { workCenter: "WC-1", ratePerHour: 2000 } } });
+  state = dispatch(state, {
+    type: "MASTER_ADD_WORK_CENTER",
+    payload: { workCenter: { workCenter: "WC-1", ratePerHour: 2000, capacityMinPerDay: 480 } },
+  });
   state = dispatch(state, { type: "MASTER_ADD_PARTNER", payload: { partnerType: "SUPPLIER", partnerId: "SUP-1", name: "仕入先1" } });
   state = dispatch(state, { type: "MASTER_ADD_PARTNER", payload: { partnerType: "CUSTOMER", partnerId: "CUST-X", name: "得意先X" } });
 

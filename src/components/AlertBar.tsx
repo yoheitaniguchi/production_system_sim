@@ -5,12 +5,13 @@
 // 種類の不整合を、操作の前に気付けるようにするのが狙い。
 //
 // 各警告は「読むだけ」で終わらせず、TodayActionsBarと同様に解消先のタブへ遷移できるボタンを添える
-// （マスタ不整合→マスタタブ、日程遅延・未充足需要→MRP再実行のある計画タブ）。
+// （マスタ不整合→マスタタブ、日程遅延・未充足需要→MRP再実行のある計画タブ、山積み超過→能力タブ）。
+import { capacityOverloads } from "../domain/capacity";
 import { validateMaster } from "../domain/masterIntegrity";
 import { checkSchedule, unmetDemand } from "../domain/schedule";
 import type { SimulationState } from "../types";
 
-type AlertNavigateTarget = "planning" | "master-data";
+type AlertNavigateTarget = "planning" | "master-data" | "capacity";
 
 interface AlertBarProps {
   state: SimulationState;
@@ -21,8 +22,11 @@ function AlertBar({ state, onNavigate }: AlertBarProps) {
   const alerts = checkSchedule(state);
   const unmet = unmetDemand(state);
   const masterIssues = validateMaster(state);
+  // 能力超過（山積み、design.md §9・EXT-31）。有限能力スケジューリングはしないため、
+  // checkSchedule/unmetDemandと同じ「警告のみ」で並べる
+  const overloads = capacityOverloads(state);
 
-  if (alerts.length === 0 && unmet.length === 0 && masterIssues.length === 0) {
+  if (alerts.length === 0 && unmet.length === 0 && masterIssues.length === 0 && overloads.length === 0) {
     return <div className="alert-bar alert-bar--ok">警告なし</div>;
   }
 
@@ -61,6 +65,20 @@ function AlertBar({ state, onNavigate }: AlertBarProps) {
           </button>
         </div>
       ))}
+      {overloads.map((o) => {
+        const required = Math.max(o.plannedMin, o.actualMin);
+        return (
+          <div key={`${o.workCenter}-${o.day}`} className="alert-bar__item">
+            <span>
+              作業区負荷超過：{o.workCenter} D+{o.day} 必要{required}分 / 能力{o.capacityMin}分（
+              {required - o.capacityMin}分超過）
+            </span>
+            <button type="button" className="alert-bar__link" onClick={() => onNavigate("capacity")}>
+              能力タブで確認
+            </button>
+          </div>
+        );
+      })}
     </div>
   );
 }

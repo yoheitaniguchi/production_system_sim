@@ -208,6 +208,18 @@ export function validateMaster(state: MasterView): MasterIssue[] {
     }
   }
 
+  // 能力計画（CRP、design.md §9・EXT-30〜32）：稼働能力0の作業区が工順で使われていると、
+  // その作業区に紐づく負荷は常に山積み超過表示になる。データ破損ではないため警告に留める
+  for (const wc of state.workCenters) {
+    if (wc.capacityMinPerDay === 0 && state.routingSteps.some((s) => s.workCenter === wc.workCenter)) {
+      issues.push({
+        level: "警告",
+        subject: wc.workCenter,
+        message: "稼働能力（分/日）が0の作業区が工順で使用されています（常に山積み超過として表示されます）",
+      });
+    }
+  }
+
   for (const item of state.items) {
     if (item.makeBuy === "MAKE" && !state.routingSteps.some((s) => s.itemId === item.itemId)) {
       issues.push({

@@ -15,6 +15,7 @@ import {
   MasterDataError,
   updateItem,
   updateRoutingStep,
+  updateWorkCenter,
 } from "./masterData";
 import { createTestState } from "./testUtils";
 import type { SimulationState } from "../types";
@@ -227,12 +228,46 @@ describe("工順（BOP）のCRUD", () => {
 describe("作業区・取引先のCRUD", () => {
   it("作業区を追加でき、工順から参照されている作業区は削除できない", () => {
     const state = createTestState();
-    addWorkCenter(state, { workCenter: "WC-PNT", ratePerHour: 1800 });
+    addWorkCenter(state, { workCenter: "WC-PNT", ratePerHour: 1800, capacityMinPerDay: 480 });
     expect(state.workCenters).toHaveLength(4);
+    expect(state.workCenters.find((w) => w.workCenter === "WC-PNT")).toMatchObject({
+      ratePerHour: 1800,
+      capacityMinPerDay: 480,
+    });
 
     expect(() => deleteWorkCenter(state, WORK_CENTERS.CUT)).toThrow(/参照されているため削除できません/);
     deleteWorkCenter(state, "WC-PNT");
     expect(state.workCenters).toHaveLength(3);
+  });
+
+  it("負の賃率・負の稼働能力は作業区追加時に拒否する", () => {
+    const state = createTestState();
+    expect(() => addWorkCenter(state, { workCenter: "WC-NG1", ratePerHour: -1, capacityMinPerDay: 480 })).toThrow(
+      /賃率は0以上/,
+    );
+    expect(() => addWorkCenter(state, { workCenter: "WC-NG2", ratePerHour: 1800, capacityMinPerDay: -1 })).toThrow(
+      /稼働可能時間（分\/日）は0以上/,
+    );
+  });
+
+  it("作業区の賃率・稼働能力をそれぞれ個別に更新できる", () => {
+    const state = createTestState();
+    updateWorkCenter(state, WORK_CENTERS.CUT, { ratePerHour: 2500 });
+    expect(state.workCenters.find((w) => w.workCenter === WORK_CENTERS.CUT)).toMatchObject({
+      ratePerHour: 2500,
+      capacityMinPerDay: 240,
+    });
+
+    updateWorkCenter(state, WORK_CENTERS.CUT, { capacityMinPerDay: 300 });
+    expect(state.workCenters.find((w) => w.workCenter === WORK_CENTERS.CUT)).toMatchObject({
+      ratePerHour: 2500,
+      capacityMinPerDay: 300,
+    });
+
+    expect(() => updateWorkCenter(state, WORK_CENTERS.CUT, { capacityMinPerDay: -1 })).toThrow(
+      /稼働可能時間（分\/日）は0以上/,
+    );
+    expect(() => updateWorkCenter(state, "WC-NOPE", { ratePerHour: 100 })).toThrow(/作業区が見つかりません/);
   });
 
   it("得意先・仕入先を追加でき、参照中は削除できない", () => {

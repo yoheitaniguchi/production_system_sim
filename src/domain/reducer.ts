@@ -77,7 +77,10 @@ export type SimulationAction =
     }
   | { type: "MASTER_DELETE_ROUTING_STEP"; payload: { itemId: string; stepNo: number } }
   | { type: "MASTER_ADD_WORK_CENTER"; payload: { workCenter: WorkCenter } }
-  | { type: "MASTER_UPDATE_WORK_CENTER"; payload: { workCenter: string; patch: { ratePerHour: number } } }
+  | {
+      type: "MASTER_UPDATE_WORK_CENTER";
+      payload: { workCenter: string; patch: { ratePerHour?: number; capacityMinPerDay?: number } };
+    }
   | { type: "MASTER_DELETE_WORK_CENTER"; payload: { workCenter: string } }
   | { type: "MASTER_ADD_PARTNER"; payload: { partnerType: PartnerType; partnerId: string; name: string } }
   | { type: "MASTER_UPDATE_PARTNER_NAME"; payload: { partnerType: PartnerType; partnerId: string; name: string } }

@@ -658,6 +658,16 @@ textarea {
   background: var(--bg-subtle);
 }
 
+/* 能力（山積み、CapacityPanel.tsx）：超過行のハイライト。既存のwarn系トークンを再利用する */
+.capacity-panel__row--overload td {
+  background: var(--warn-bg);
+}
+
+.capacity-panel__row--overload td:last-child {
+  color: var(--warn-border);
+  font-weight: 600;
+}
+
 .master__new-row input[type="text"],
 .master__new-row input[type="number"],
 .master__new-row select {
