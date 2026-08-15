@@ -49,6 +49,7 @@ function ItemMasterTable({ state, dispatch }: Props) {
   return (
     <>
       <h3>品目マスタ</h3>
+      <div className="panel__table-scroll">
       <table className="panel__table">
         <thead>
           <tr>
@@ -235,6 +236,12 @@ function ItemMasterTable({ state, dispatch }: Props) {
           </tr>
         </tbody>
       </table>
+      </div>
+      {draft.makeBuy === "BUY" && supplierOptions.length === 0 && (
+        <p className="master__note master__note--warn">
+          仕入先が1件も登録されていないため、購買品目には既定仕入先を設定できません。先に仕入先マスタで仕入先を登録してください。
+        </p>
+      )}
       <p className="master__note">
         品目コードは登録後に変更できません（受注・オーダ・在庫の参照が壊れるため）。改名する場合は削除して登録し直してください。
       </p>

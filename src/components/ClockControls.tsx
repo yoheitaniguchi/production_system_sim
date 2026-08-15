@@ -12,7 +12,15 @@ function ClockControls({ day, onAdvanceDay, onReset }: ClockControlsProps) {
       <button type="button" onClick={onAdvanceDay}>
         次の日へ進む
       </button>
-      <button type="button" className="clock-controls__reset" onClick={onReset}>
+      <button
+        type="button"
+        className="clock-controls__reset"
+        onClick={() => {
+          if (window.confirm("すべての受注・オーダ・在庫トランザクションを初期化します。よろしいですか？")) {
+            onReset();
+          }
+        }}
+      >
         リセット
       </button>
     </div>

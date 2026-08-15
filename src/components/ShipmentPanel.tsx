@@ -1,6 +1,7 @@
 // 出荷：引当（出荷指示）・出荷実績登録を別操作として提供（design.md §5、v5-spec.md §6.6・UC-18/19）
 import type { SimulationAction } from "../domain/reducer";
 import { shippableQty } from "../domain/shipment";
+import { SHIPMENT_STATUS_LABELS, SO_LINE_STATUS_LABELS } from "../statusLabels";
 import type { SimulationState } from "../types";
 
 interface ShipmentPanelProps {
@@ -20,6 +21,7 @@ function ShipmentPanel({ state, dispatch }: ShipmentPanelProps) {
       <h2>出荷</h2>
 
       <h3>引当（出荷指示）</h3>
+      <div className="panel__table-scroll">
       <table className="panel__table">
         <thead>
           <tr>
@@ -48,18 +50,19 @@ function ShipmentPanel({ state, dispatch }: ShipmentPanelProps) {
                   <td>{itemName(line.itemId)}</td>
                   <td>{remaining}</td>
                   <td>{available}</td>
-                  <td>{line.status}</td>
+                  <td>{SO_LINE_STATUS_LABELS[line.status]}</td>
                   <td className="panel__actions">
                     <button
                       type="button"
+                      className={available > 0 ? "panel__btn--primary" : undefined}
                       disabled={available <= 0}
-                      title={available <= 0 ? "出荷可能量がありません" : undefined}
                       onClick={() =>
                         dispatch({ type: "SHIPMENT_ALLOCATE", payload: { soNo: line.soNo, lineNo: line.lineNo } })
                       }
                     >
                       引当
                     </button>
+                    {available <= 0 && <span className="panel__hint-inline">出荷可能量がありません</span>}
                   </td>
                 </tr>
               );
@@ -67,8 +70,10 @@ function ShipmentPanel({ state, dispatch }: ShipmentPanelProps) {
           )}
         </tbody>
       </table>
+      </div>
 
       <h3>出荷指示一覧</h3>
+      <div className="panel__table-scroll">
       <table className="panel__table">
         <thead>
           <tr>
@@ -104,12 +109,13 @@ function ShipmentPanel({ state, dispatch }: ShipmentPanelProps) {
                   <td>{shipment.qty}</td>
                   <td>D+{shipment.planDay}</td>
                   <td>{shipment.actualDay != null ? `D+${shipment.actualDay}` : "—"}</td>
-                  <td>{shipment.status}</td>
+                  <td>{SHIPMENT_STATUS_LABELS[shipment.status]}</td>
                   <td className="panel__actions">
                     {shipment.status === "ALLOCATED" && (
                       <>
                         <button
                           type="button"
+                          className="panel__btn--primary"
                           onClick={() => dispatch({ type: "SHIPMENT_SHIP", payload: { shipNo: shipment.shipNo } })}
                         >
                           出荷実績登録
@@ -131,6 +137,7 @@ function ShipmentPanel({ state, dispatch }: ShipmentPanelProps) {
           )}
         </tbody>
       </table>
+      </div>
     </div>
   );
 }

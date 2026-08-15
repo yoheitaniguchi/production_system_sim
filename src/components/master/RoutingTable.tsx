@@ -151,6 +151,11 @@ function RoutingTable({ state, dispatch }: Props) {
           </tr>
         </tbody>
       </table>
+      {state.workCenters.length === 0 && (
+        <p className="master__note master__note--warn">
+          作業区が1件も登録されていないため、工順を追加できません。先に作業区マスタで作業区を登録してください。
+        </p>
+      )}
       <p className="master__note">
         内製品目には工順が1行以上必要です（0行だと作業指示が作られず、製造オーダを完了できません）。
         未完了の製造オーダがある品目は、工順の追加・削除ができません（標準時間・作業区の変更は可能です）。

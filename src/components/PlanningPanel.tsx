@@ -15,11 +15,12 @@ function PlanningPanel({ state, dispatch }: PlanningPanelProps) {
       <h2>計画</h2>
 
       <div className="panel__toolbar">
-        <button type="button" onClick={() => dispatch({ type: "MRP_RUN" })}>
+        <button type="button" className="panel__btn--primary" onClick={() => dispatch({ type: "MRP_RUN" })}>
           MRPを実行
         </button>
         <button
           type="button"
+          className={state.plannedOrders.length > 0 ? "panel__btn--primary" : undefined}
           disabled={state.plannedOrders.length === 0}
           onClick={() => dispatch({ type: "PLANNED_ORDERS_FIRM" })}
         >

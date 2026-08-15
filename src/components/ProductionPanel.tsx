@@ -1,6 +1,7 @@
 // 工程：製造オーダのリリース・工程着手/完了（design.md §5、v5-spec.md §6.3・§6.4・§7.3・UC-12/13/14）
 import { useState } from "react";
 import type { SimulationAction } from "../domain/reducer";
+import { MFG_ORDER_STATUS_LABELS, WORK_INSTRUCTION_STATUS_LABELS } from "../statusLabels";
 import type { SimulationState } from "../types";
 
 interface ProductionPanelProps {
@@ -46,15 +47,20 @@ function ProductionPanel({ state, dispatch }: ProductionPanelProps) {
               <div className="panel__toolbar">
                 <strong>
                   {mo.moNo}（{itemName(mo.itemId)} x{mo.planQty}、ペグ先 {mo.pegTo}、着手日 D+{mo.startDay}、
-                  完了予定 D+{mo.dueDay}、状態 {mo.status}）
+                  完了予定 D+{mo.dueDay}、状態 {MFG_ORDER_STATUS_LABELS[mo.status]}）
                 </strong>
                 {mo.status === "FIRM" && (
-                  <button type="button" onClick={() => dispatch({ type: "MFG_RELEASE", payload: { moNo: mo.moNo } })}>
+                  <button
+                    type="button"
+                    className="panel__btn--primary"
+                    onClick={() => dispatch({ type: "MFG_RELEASE", payload: { moNo: mo.moNo } })}
+                  >
                     リリース
                   </button>
                 )}
               </div>
 
+              <div className="panel__table-scroll">
               <table className="panel__table">
                 <thead>
                   <tr>
@@ -84,7 +90,7 @@ function ProductionPanel({ state, dispatch }: ProductionPanelProps) {
                         <td>{wi.status === "DONE" ? wi.scrapQty : "—"}</td>
                         <td>{wi.actualStartDay != null ? `D+${wi.actualStartDay}` : "—"}</td>
                         <td>{wi.actualEndDay != null ? `D+${wi.actualEndDay}` : "—"}</td>
-                        <td>{wi.status}</td>
+                        <td>{WORK_INSTRUCTION_STATUS_LABELS[wi.status]}</td>
                         <td className="panel__actions">
                           {wi.status === "WAIT" && readyToStart && (
                             <button
@@ -132,7 +138,6 @@ function ProductionPanel({ state, dispatch }: ProductionPanelProps) {
                                 type="button"
                                 className={draftInvalid ? undefined : "panel__btn--primary"}
                                 disabled={draftInvalid}
-                                title={draftInvalid ? `良品数＋不良数は投入数（${wi.inputQty}）と一致させてください` : undefined}
                                 onClick={() =>
                                   dispatch({
                                     type: "WI_COMPLETE",
@@ -147,6 +152,11 @@ function ProductionPanel({ state, dispatch }: ProductionPanelProps) {
                               >
                                 完了
                               </button>
+                              {draftInvalid && (
+                                <span className="panel__hint-inline">
+                                  良品数＋不良数を投入数（{wi.inputQty}）と一致させてください
+                                </span>
+                              )}
                             </>
                           )}
                         </td>
@@ -155,6 +165,7 @@ function ProductionPanel({ state, dispatch }: ProductionPanelProps) {
                   })}
                 </tbody>
               </table>
+              </div>
             </div>
           );
         })
