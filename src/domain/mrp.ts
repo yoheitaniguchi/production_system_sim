@@ -109,16 +109,20 @@ function explodeOpenOrderComponents(
     path: Set<string>;
   },
 ): void {
-  const openMakeOrders = state.mfgOrders.filter(
-    (mo) => mo.status !== "DONE" && mo.status !== "CANCELED" && mo.planQty - mo.goodQty > 0,
-  );
+  // design.md EXT-1と同じ規則（必要日昇順、同着はオーダ番号昇順）で決定的に処理する。
+  // 複数の既存オーダが同一の下位品目を取り合う場合、完了予定日が早いオーダを優先して
+  // 供給プールを消費させるため
+  const openMakeOrders = state.mfgOrders
+    .filter((mo) => mo.status !== "DONE" && mo.status !== "CANCELED" && mo.planQty - mo.goodQty > 0)
+    .sort((a, b) => a.dueDay - b.dueDay || a.moNo.localeCompare(b.moNo));
 
   for (const mo of openMakeOrders) {
     const outstanding = mo.planQty - mo.goodQty;
     for (const line of ctx.bom.filter((b) => b.parentItemId === mo.itemId)) {
       // 子品目の必要日は、このオーダ自身が本来投入を開始する予定だった日（startDay）とする
-      // （通常のexplode()が「親の着手日＝子の必要日」とする規則と揃える）
-      explode(line.childItemId, outstanding * line.qtyPer, mo.startDay, mo.ploNo, 0, ctx);
+      // （通常のexplode()が「親の着手日＝子の必要日」とする規則と揃える）。levelは、このオーダ
+      // 自身が持つ受注起点からの真のBOMレベル（bomLevel）の1つ下として渡す（常に0からではなく）
+      explode(line.childItemId, outstanding * line.qtyPer, mo.startDay, mo.ploNo, mo.bomLevel + 1, ctx);
     }
   }
 }
@@ -197,6 +201,7 @@ export function firmAllPlannedOrders(state: SimulationState, day: number): void 
         startDay: plo.startDay,
         dueDay: plo.dueDay,
         status: "FIRM",
+        bomLevel: plo.bomLevel,
       };
       state.mfgOrders.push(mo);
 

@@ -183,6 +183,13 @@ describe("runMRP / firmAllPlannedOrders", () => {
     expect(state.plannedOrders.some((p) => p.itemId === ITEM_IDS.FG_CHAIR)).toBe(false);
     expect(state.plannedOrders.some((p) => p.itemId === ITEM_IDS.PT_LEG)).toBe(false);
     expect(state.plannedOrders.some((p) => p.itemId === ITEM_IDS.PT_SCREW)).toBe(false);
+    // bomLevelは受注起点からの真の深さ（TC-04と同じくSA-200=1、RM-300=2）を維持する。
+    // 既存オーダ自身のbomLevelを起点にする（常に0から数え直さない）ことを確認する回帰テスト
+    const byItemLevel = Object.fromEntries(state.plannedOrders.map((p) => [p.itemId, p.bomLevel]));
+    expect(byItemLevel).toEqual({
+      [ITEM_IDS.SA_SEAT]: 1,
+      [ITEM_IDS.RM_BOARD]: 2,
+    });
 
     // 補充オーダを確定して実際に流し込むと、HOLD中だったFG-100を完成まで進められる
     firmAllPlannedOrders(state, 14);
