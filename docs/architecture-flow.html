@@ -292,10 +292,11 @@
       この画面は、ページ下部に埋め込まれた <strong>JSON</strong>（<code>&lt;script type="application/json" id="flow-data"&gt;</code>）を元に描画されています。
     </p>
     <p>
-      本シミュレータは7ドメイン（受注・計画・発注・工程・在庫・出荷・マスタ）＋分析系タブ（KPI・原価・ペギング追跡・
-      ロット追跡・演習ガイド・プロセス連携図）を持つため、姉妹リポジトリ<code>mini-simulator</code>より扱う操作の種類が多い。
-      ここでは全操作を網羅せず、MRP展開からペギング・バックフラッシュ・ロット系譜まで、v5仕様書の中核である
-      受注〜出荷の一連の流れを代表的な操作として選んでいる（全操作の一覧は <code>docs/design.md</code> §7 参照）。
+      本シミュレータは7ドメイン（受注・計画・発注・工程・在庫・出荷・マスタ）＋分析系タブ（進捗ガント・能力計画・
+      原価・KPI・ペギング追跡・ロット追跡・演習ガイド）およびフローティングのプロセス連携図ポップアップを持つため、
+      姉妹リポジトリ<code>mini-simulator</code>より扱う操作の種類が豊富です。
+      ここではMRP展開からペギング・バックフラッシュ・ロット系譜・CRP能力計画・進捗ガントまで、v5仕様書の中核である
+      受注〜出荷の一連の流れを代表的な操作として選んでいます（全操作の一覧は <code>docs/design.md</code> §7 参照）。
     </p>
     <p class="source">
       発想の元ネタ：
@@ -305,7 +306,7 @@
       で紹介されていたプロンプトを、このリポジトリのソースコード（<code>src/App.tsx</code>・<code>src/domain/reducer.ts</code>・
       <code>src/domain/*.ts</code> ほか）を実際に読んだ上で再現したものです。推測で埋めた箇所はありません。
       姉妹リポジトリ<code>mini-simulator</code>の <code>docs/architecture-flow.html</code>（同じ発想で先に作成済み）と
-      同じ構成のページを、本リポジトリのドメイン・アクション体系に合わせて作り直しています。
+      同じ構成のページを、本リポジトリの最新ドメイン・アクション体系に合わせて整備しています。
     </p>
   </div>
 
@@ -351,9 +352,11 @@
       "label": "components（UI）",
       "components": [
         "SalesOrderPanel", "PlanningPanel", "ProcurementPanel", "ProductionPanel",
-        "InventoryPanel", "ShipmentPanel", "MasterDataPage", "master/ItemMasterTable",
-        "ClockControls", "AlertBar", "TodayActionsBar", "KpiDashboard", "LotTracePanel",
-        "PeggingTracePanel", "ProcessFlowDiagram", "EventLogPanel"
+        "InventoryPanel", "ShipmentPanel", "GanttChartPanel", "CapacityPanel",
+        "CostPanel", "KpiDashboard", "LotTracePanel", "PeggingTracePanel",
+        "ExerciseGuidePanel", "MasterDataPage", "master/ItemMasterTable",
+        "ProcessFlowPopup", "ProcessFlowDiagram", "ClockControls", "AlertBar",
+        "TodayActionsBar", "BurgerMenu", "EventLogPanel"
       ]
     },
     {
@@ -366,7 +369,9 @@
       "label": "domain（ドメインロジック）",
       "components": [
         "reducer.ts", "salesOrder.ts", "mrp.ts", "procurement.ts", "production.ts",
-        "shipment.ts", "pegging.ts", "lot.ts", "masterData.ts", "processFlow.ts"
+        "shipment.ts", "inventory.ts", "pegging.ts", "schedule.ts", "capacity.ts",
+        "cost.ts", "lot.ts", "gantt.ts", "processFlow.ts", "todayActions.ts",
+        "exerciseGuide.ts", "masterData.ts", "masterIntegrity.ts", "masterIO.ts"
       ]
     },
     {
@@ -687,27 +692,79 @@
       ]
     },
     {
-      "id": "process-flow-view",
-      "name": "プロセス連携図タブ表示（直前の操作で動いたドメイン間フローの可視化）",
-      "trigger": "「プロセス連携図」タブをクリック",
-      "note": "業務ドメイン（受注・計画・発注・工程・在庫・出荷・マスタ）単位の可視化であり、このページ（コードのpackage/component単位の可視化）とは粒度が異なる別の可視化。判定はeventLogの末尾1件のmessageの文言を手がかりにする固定対応表であり、reducer.ts側のメッセージ文言を変更する際は processFlow.ts の判定ロジックも見直す必要がある（隠れた依存）。",
+      "id": "capacity-planning",
+      "name": "能力計画（CRP・山積み計算と負荷超過警告）",
+      "trigger": "製造オーダ確定時／「能力」タブを開いた時（AlertBar常時再計算）",
+      "note": "v5-spec.md §11.1 Phase 3 / design.md §9。確定済（FIRM/RELEASED/WIP/DONE）の製造オーダの工順負荷を標準時間×計画数量で算出し、作業区×日ごとに集計して能力（capacityMinPerDay、既定240分）と比較。負荷超過日はAlertBarおよびCapacityPanelでハイライト表示する。",
+      "steps": [
+        {
+          "package": "components",
+          "component": "CapacityPanel",
+          "action": "能力タブ表示時（またはAlertBar）で domain/capacity.ts の computeCapacityLoad(state) を呼び出し",
+          "passes": ["state.mfgOrders", "state.workInstructions", "state.workCenters", "state.routingSteps"]
+        },
+        {
+          "package": "domain",
+          "component": "capacity.ts",
+          "action": "computeCapacityLoad(): 作業区×日ごとに計画負荷（未着手＋仕掛中）・実績負荷を集計し、能力上限（capacityMinPerDay）との超過判定（overloadDays）を算出",
+          "passes": ["wcLoads", "dayLoads", "overloadDays"]
+        },
+        {
+          "package": "components",
+          "component": ["CapacityPanel", "AlertBar"],
+          "action": "再描画：能力タブの山積み表（負荷／能力比率・超過セル）と画面上部AlertBarの超過警告（例: WC-ASM D+13 300/240分）が表示される",
+          "passes": ["overloadDays", "wcLoads"]
+        }
+      ]
+    },
+    {
+      "id": "gantt-chart-view",
+      "name": "進捗ガントチャート（計画・実績タイムライン可視化）",
+      "trigger": "「進捗ガント」タブをクリック、および受注行の「展開」ボタン",
+      "note": "design.md EXT-29。受注（SO）の要求納期・回答納期と、紐づく購買・製造・出荷オーダ（pegging.traceFromOrder()で収集）の計画日程（枠線バー）と実績日程（塗り潰しバー）を同一行で重ねて可視化。遅延発生時は遅延色で強調表示する。",
       "steps": [
         {
           "package": "app",
           "component": "App",
-          "action": "「プロセス連携図」タブをクリック → activeTab状態を \"process-flow\" に変更 → ProcessFlowDiagram をレンダリング",
+          "action": "「進捗ガント」タブを選択 → activeTab \"gantt\" → GanttChartPanel をレンダリング",
           "passes": ["state"]
         },
         {
           "package": "domain",
-          "component": "processFlow.ts",
-          "action": "computeActiveFlows(): state.eventLogの末尾1件のmessage／tableDeltasを固定の対応表と照合し、動いたドメイン間フロー（FLOWS）のIDと両端ドメインを特定",
-          "passes": ["state.eventLog（末尾1件）"]
+          "component": ["gantt.ts", "pegging.ts"],
+          "action": "computeGanttData(): traceFromOrder()で受注配下の全オーダを収集し、計画期間・実績期間・遅延ステータス（ON_SCHEDULE/DELAYED/COMPLETED）を計算",
+          "passes": ["state.salesOrders", "state.soLines", "state.mfgOrders", "state.purchaseOrders", "state.shipments"]
         },
         {
           "package": "components",
-          "component": "ProcessFlowDiagram",
-          "action": "7ドメイン（受注・計画・発注・工程・在庫・出荷・マスタ）をプールとして描画し、アクティブな流れをアクセント色の実線でハイライト（マスタからの前提関係は常時点線で表示）",
+          "component": "GanttChartPanel",
+          "action": "再描画：受注一覧ガントチャートを描画。展開ボタンで購買・製造・出荷オーダの内訳階層が子行として表示される",
+          "passes": ["ganttOrders", "minDay", "maxDay"]
+        }
+      ]
+    },
+    {
+      "id": "process-flow-view",
+      "name": "プロセス連携図ポップアップ表示（ドメイン間フローのリアルタイム可視化）",
+      "trigger": "ヘッダーの「プロセス連携図」ボタン（またはバーガーメニュー内ボタン）をクリック",
+      "note": "業務7ドメイン間のデータ伝播を可視化するフローティングポップアップ（ProcessFlowPopup）。他タブを操作しながら常時閲覧可能で、ドラッグ移動やイベントログ履歴のコマ送り（進む／戻る）に対応。",
+      "steps": [
+        {
+          "package": "app",
+          "component": "App",
+          "action": "プロセス連携図ボタントグル → showProcessFlow(true) → ProcessFlowPopup をモーダル外・App直下にレンダリング",
+          "passes": ["state", "eventLog"]
+        },
+        {
+          "package": "domain",
+          "component": "processFlow.ts",
+          "action": "computeActiveFlows(): state.eventLog（指定インデックス）のmessage／tableDeltasを照合し、動いたドメイン間フロー（FLOWS）と両端ドメインを特定",
+          "passes": ["state.eventLog", "historyIndex"]
+        },
+        {
+          "package": "components",
+          "component": ["ProcessFlowPopup", "ProcessFlowDiagram"],
+          "action": "ドラッグ可能なフローティング枠として描画。7ドメイン（受注・計画・発注・工程・在庫・出荷・マスタ）をプールとしてSVG描画し、アクティブな流れをハイライト",
           "passes": ["activeDomains", "activeFlowDefs"]
         }
       ]
