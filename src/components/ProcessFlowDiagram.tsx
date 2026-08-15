@@ -116,15 +116,19 @@ function ProcessFlowDiagram({ state }: ProcessFlowDiagramProps) {
 
   return (
     <div className="panel">
-      <h2>プロセス連携図</h2>
       <p className="panel__hint">
         受注・計画・発注・工程・在庫・出荷・マスタの7ドメインをプールとして表し、ドメイン間を結ぶ矢印が
         「どちらからどちらへモノ・データが流れるか」を表す。マスタから他ドメインへの点線は常時表示の前提関係。
         アクセント色の実線は、直前の操作で実際に動いた流れ。
       </p>
 
-      <div className="process-flow-scroll">
-        <svg viewBox="-20 -10 1300 420" width="1280" height="410" role="img" aria-label="受注から出荷までのドメイン間のプロセス連携図">
+      <div className="process-flow-canvas">
+        <svg
+          viewBox="-20 -10 1300 420"
+          preserveAspectRatio="xMidYMid meet"
+          role="img"
+          aria-label="受注から出荷までのドメイン間のプロセス連携図"
+        >
           <defs>
             <marker id="pf-end-active" markerWidth={12} markerHeight={12} refX={8} refY={5} orient="auto-start-reverse">
               <path d="M1,1 L9,5 L1,9" fill="none" stroke="var(--pf-active)" strokeWidth={1.6} />

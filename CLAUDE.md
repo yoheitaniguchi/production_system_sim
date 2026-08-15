@@ -149,8 +149,12 @@ npm run preview   # build成果物をGitHub Pages相当のbaseパスで動作確
   `masterIntegrity.test.ts`・`masterIO.test.ts`でガードを個別に、`multiLevelBom.test.ts`で
   **4階層BOMをマスタ操作だけで組み立てて受注〜出荷まで通す**通し演習として検証済み
 - `src/App.tsx`：`useReducer`でreducerを保持し、共通シェル（`ClockControls`・`AlertBar`・`TodayActionsBar`・
-  `EventLogPanel`）と、13個のタブ（受注／計画／発注／工程／在庫／出荷／マスタ／KPI／原価／ペギング追跡／
-  ロット追跡／演習ガイド／プロセス連携図）を実装済み。各画面はPlaywrightでv5-spec.md TC-02〜19相当の
+  `EventLogPanel`）と、12個のタブ（受注／計画／発注／工程／在庫／出荷／マスタ／KPI／原価／ペギング追跡／
+  ロット追跡／演習ガイド）を実装済み。プロセス連携図（`ProcessFlowDiagram.tsx`）はタブではなく
+  `ProcessFlowPopup.tsx`によるフローティングポップアップとして表示し、他タブを操作しながら常時参照できる
+  （タブ切り替えでアンマウントされずApp直下に置く）。ヘッダー部分のドラッグで自由に移動でき（Pointer Events、
+  範囲制限なし）、閉じるボタンとEscキーの両方で閉じられる。SVGは`viewBox`＋`width:100%`で追従させ、PC画面での
+  横スクロールを不要にした。各画面はPlaywrightでv5-spec.md TC-02〜19相当の
   操作・§11.2/§11.3相当の操作を実際にブラウザで確認済み（ライト/ダーク両テーマ）。
   マスタ自由登録も、4階層マスタのJSONインポート→受注〜出荷の通し操作・循環BOMの登録拒否・
   参照中マスタの削除ブロックをブラウザで確認済み
