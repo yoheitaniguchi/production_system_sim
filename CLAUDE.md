@@ -170,12 +170,15 @@ npm run preview   # build成果物をGitHub Pages相当のbaseパスで動作確
 `docs/implementation-plan.md` §5「Phase 7（先送り事項）」とマスタ自由登録は全項目完了した。次の一手は
 特に決まっていないため、着手前にユーザーに優先順位を確認すること。候補：
 
-1. CI（既存ワークフローが全PRで正しく動作していることの継続的な確認）
-2. Phase 2-Bで簡略化した点（design.md EXT-18：STOCKの主キーは変更せずLOT/LOT_GENEALOGYを並行追加した）を
+1. **能力計画（CRP、v5-spec.md §11.1ロードマップ Phase 3）**：最小設計（`docs/design.md` §9、EXT-30〜32）と
+   実行可能タスクへの分解（`docs/implementation-plan.md` Phase 8）は完了済み。コードは未着手。着手する場合は
+   Phase 8のサブフェーズ（8a マスタ拡張→8b `domain/capacity.ts`→8c 画面→8d ドキュメント）の順で1PRずつ進める
+2. CI（既存ワークフローが全PRで正しく動作していることの継続的な確認）
+3. Phase 2-Bで簡略化した点（design.md EXT-18：STOCKの主キーは変更せずLOT/LOT_GENEALOGYを並行追加した）を
    踏まえ、より厳密な実装（STOCKの主キー変更を含む）へ発展させる必要性の検討
-3. マスタ自由登録で見送った点：品目コードの改名（EXT-24でカスケードを断念し「削除→再登録」に倒した）、
+4. マスタ自由登録で見送った点：品目コードの改名（EXT-24でカスケードを断念し「削除→再登録」に倒した）、
    マスタのlocalStorage永続化、複数プリセットの同梱、演習ガイドのマスタ非依存化（EXT-27）
-4. その他、`docs/v5-spec.md` §11に記載のロードマップ上の拡張項目の検討
+5. その他、`docs/v5-spec.md` §11に記載のロードマップ上の拡張項目の検討
 
 ## 実装時に確認すべき設計判断（design.mdの要点）
 

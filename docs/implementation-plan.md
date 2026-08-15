@@ -431,3 +431,97 @@ TC-04/TC-17の手検算）を実施し、以下の指摘に対応した。中核
   木板ロットへの後方追跡が正しく表示されること、ペギング追跡タブのSTOCK_TXN表示にロット番号が付記される
   ことを確認した。ダークモード表示も確認済み
 - `npm run build`・`npm test`（84件、lot.test.tsの5件を追加）がともに成功
+
+---
+
+## 6. Phase 8：能力計画（CRP、v5-spec.md §11.1ロードマップ Phase 3）の実行可能タスク
+
+`docs/design.md` §9（Phase 3：能力計画（CRP）最小設計）で仕様を確定した。v5仕様書には最小設計が無く
+（Phase 2-A/2-Bと違い§11.2/§11.3相当の記述が無い）、design.md側で新規に設計した点はPhase 7（§5）の
+各項目と同じ位置づけである。本節はそれを実装可能な単位に分解する。
+
+**前提**：本節は計画のみであり、実装はまだ行っていない。着手時はサブフェーズごとに1つずつPRを分ける
+ことを推奨する（Phase 5のサブフェーズ分割と同じ狙い。既存の検証済みテスト・画面への影響を最小化しながら
+差分をレビューしやすくするため）。
+
+| サブフェーズ | 内容 | 主な変更ファイル |
+|---|---|---|
+| 8a | マスタ拡張：`WorkCenter.capacityMinPerDay`の追加とガード | `types.ts`・`data/masterData.ts`・`domain/masterData.ts`・`domain/masterIO.ts`・`domain/masterIntegrity.ts`・`components/master/WorkCenterTable.tsx` |
+| 8b | ドメインロジック本体：山積み計算 | `domain/capacity.ts`（新設）・`domain/capacity.test.ts`（新設） |
+| 8c | 画面：能力パネル＋AlertBar連携 | `components/CapacityPanel.tsx`（新設）・`components/AlertBar.tsx`・`App.tsx` |
+| 8d | ドキュメント更新 | `CLAUDE.md`・本ファイル（実施結果の追記） |
+
+### 8a. マスタ拡張
+
+1. `src/types.ts`：`WorkCenter`に`capacityMinPerDay: number`を追加（design.md EXT-32）。コメントで
+   「1日あたり稼働可能分数、`stdTimeMin`と単位を揃える」ことを明記する
+2. `src/data/masterData.ts`：`initialWorkCenters`の3行（WC-CUT/WC-ASM/WC-INS）に`capacityMinPerDay: 240`を
+   追加する（design.md §9.5の教育的意図——既定シナリオ単体でWC-ASMが山積み超過になる値——をコード側
+   コメントにも一言残す）
+3. `src/domain/masterData.ts`：
+   - `addWorkCenter()`（319行目付近）に`if (input.capacityMinPerDay < 0) throw ...`を追加（`ratePerHour`と
+     同じパターン）
+   - `updateWorkCenter()`（324行目付近）の`patch`型に`capacityMinPerDay?: number`を追加し、同様のガードを
+     追加する
+4. `src/domain/masterIO.ts`：作業区パース処理（170行目付近、`ratePerHour: requireNonNegative(...)`の並び）に
+   `capacityMinPerDay: requireNonNegative(record, "capacityMinPerDay", where)`を追加する。design.md EXT-32の
+   とおり欠落時のデフォルト補完はしない（検証エラーになることを`masterIO.test.ts`に追記して明示する）
+5. `src/domain/masterIntegrity.ts`：`validateMaster()`に警告を追加する——稼働能力0の作業区が工順
+   （`routingSteps`）で使用されている場合、`level: "警告"`（データ破損ではなく「常に超過表示になる」ことの
+   案内のため、エラーにはしない）
+6. `src/components/master/WorkCenterTable.tsx`：
+   - 一覧テーブルに「能力（分/日）」列を追加する（`EditableNumberField`、`min={0}`）
+   - 新規追加フォームの`draft`初期値に`capacityMinPerDay: 480`を追加する（実働8時間、UIから追加する作業区の
+     現実的な既定値。既定プリセットの240分はTC-19相当の演習効果を狙った意図的な値であり、新規追加時の
+     既定値とは別に扱う。design.md §9.5参照）
+
+想定`npm test`件数への影響：`masterData.test.ts`・`masterIO.test.ts`・`masterIntegrity.test.ts`へ数件追加
+（既存の`ratePerHour`関連テストと対になる形）。
+
+### 8b. ドメインロジック本体
+
+1. `src/domain/capacity.ts`（新設）：design.md §9.4の疑似コードをそのまま実装する。エクスポート：
+   - `computeCapacityLoad(state: SimulationState): CapacityLoadEntry[]`
+   - `capacityOverloads(state: SimulationState): CapacityLoadEntry[]`
+
+   `schedule.ts`・`kpi.ts`と同じく状態を変更しない導出関数とする。他モジュールからは呼ばれない独立モジュール
+   （design.md §9.10）
+2. `src/domain/capacity.test.ts`（新設）：design.md §9.5の計算例（TC-04〜05を`runMRP()`→
+   `firmAllPlannedOrders()`で実際に流し込み、WC-ASMがD+13に300分/240分で超過、WC-CUT/WC-INSは超過しない
+   こと）を検証する。あわせて次の観点を検証する：
+   - 未着手工程の計画負荷が`mo.planQty`基準で計上されること（design.md C2-1の回帰テスト。`wi.inputQty`が
+     0のままの後工程でも負荷が0にならないことを確認する）
+   - 着手済み工程は実績負荷（`actualMin`）側に計上され、計画負荷とは二重計上されないこと
+   - DONE後も実績負荷が実着手日に残り続けること
+   - CANCELEDの製造オーダは計画負荷に算入されないこと
+
+### 8c. 画面
+
+1. `src/components/CapacityPanel.tsx`（新設）：`computeCapacityLoad()`を作業区×日のテーブルで表示し、
+   超過セルを警告色でハイライトする（`CostPanel.tsx`・`KpiDashboard.tsx`と同じ`.panel__table`パターンを
+   踏襲する。SVGバー化はdesign.md §9.9の任意拡張）
+2. `src/components/AlertBar.tsx`：`capacityOverloads(state)`を追加し、既存の日程遅延・未充足需要と並べて
+   「作業区負荷超過：{workCenter} D+{day} 必要{required}分 / 能力{capacity}分（{超過分}分超過）」を表示する
+   （design.md EXT-31）。`AlertNavigateTarget`型に`"capacity"`を追加する
+3. `src/App.tsx`：`TABS`配列に`{ id: "capacity", label: "能力", Component: CapacityPanel }`を分析タブ群に
+   追加する（KPI・原価の並びが自然。位置はKpiDashboard/CostPanelの後、PeggingTracePanelの前を推奨）。
+   `onNavigate={(tabId) => setActiveTab(tabId)}`は`tabId`をそのまま`TABS`の`id`として使う実装のため、
+   `AlertNavigateTarget`に`"capacity"`を追加してTABSに同名のタブを用意すれば、AlertBar側の追加実装は
+   警告オブジェクトの生成のみで済む
+
+Playwrightでの確認観点（Phase 5と同じ形式で実施する）：受注登録→MRP実行→計画オーダ確定（TC-04〜05相当）の
+直後に、警告バーへWC-ASMの超過警告が表示されること、能力タブでWC-CUT/ASM/INSそれぞれの負荷・能力・判定が
+一覧できること、ダークモード表示。
+
+### 8d. ドキュメント更新
+
+- `CLAUDE.md`の「現在の実装状況」に`capacity.ts`等のモジュール追加を反映し、「次にやるべきこと」から
+  CRPの項目を実施済みへ更新する
+- 本ファイルに「### 6.1 Phase 8 実施結果」を追記する（既存Phaseの実施結果と同じ形式）
+
+### 実装しないこと（design.md §9.2・§9.9の再掲）
+
+- 有限能力スケジューリング（山崩し・平準化・自動リスケジュール）
+- 稼働日カレンダー・複数直・段取り時間
+- 計画オーダ（未確定）段階での山積みプレビュー
+- KPIダッシュボード（`kpi.ts`）への統合
