@@ -101,6 +101,7 @@ describe("削除ガード（design.md EXT-21：参照中は削除禁止）", () 
       scrapQty: 0,
       startDay: 0,
       dueDay: 5,
+      bomLevel: 0,
     };
     state.mfgOrders.push({ ...base, moNo: "MO-001", status: "DONE" });
     expect(openMfgOrdersOf(state, ITEM_IDS.FG_CHAIR)).toEqual([]);

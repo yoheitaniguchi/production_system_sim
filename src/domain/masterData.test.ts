@@ -31,6 +31,7 @@ function withOpenMfgOrder(state: SimulationState, itemId: string): void {
     startDay: 0,
     dueDay: 5,
     status: "RELEASED",
+    bomLevel: 0,
   });
 }
 

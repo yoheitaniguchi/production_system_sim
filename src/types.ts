@@ -105,6 +105,8 @@ export interface MfgOrder {
   startDay: number;
   dueDay: number;
   status: MfgOrderStatus;
+  /** 由来の計画オーダのBOMレベル（受注起点の真の階層深度）。確定後もEXT-28の再展開で使うため保持する */
+  bomLevel: number;
 }
 
 /** 作業指示の状態遷移（v5-spec.md §6.4） */

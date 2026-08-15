@@ -88,6 +88,46 @@ function explode(
 }
 
 /**
+ * 既存の未完了（open）なMAKEのMFG_ORDERについて、残数量（planQty − goodQty）分の部材所要が
+ * 現在の供給で賄えるかを検証し、不足があれば補充の計画オーダを生成する。
+ *
+ * design.md EXT-6により、HOLD中（部品欠品で保留）のMFG_ORDERもそれ自体は供給に満額算入される。
+ * そのため、下位品目（仕掛品）の完了実績が不良で目減りしても、SO駆動の需要展開（explodeを
+ * デマンド側から呼ぶ通常のパス）だけでは「そのHOLDオーダを完成させるために本当は部材が
+ * 足りていない」という状態を検知できない（上位のFG-100は既存オーダで供給充足済みと見なされ、
+ * netQtyが0になった時点でBOMを降りないため）。このパスは、既に確定している各オーダ自身が
+ * 持つ部材所要をMRP実行のたびに再検証することで、その欠落を補う。
+ */
+function explodeOpenOrderComponents(
+  state: SimulationState,
+  ctx: {
+    items: ItemMaster[];
+    bom: BomLine[];
+    supply: Record<string, number>;
+    ploSeq: number;
+    plannedOrders: PlannedOrder[];
+    path: Set<string>;
+  },
+): void {
+  // design.md EXT-1と同じ規則（必要日昇順、同着はオーダ番号昇順）で決定的に処理する。
+  // 複数の既存オーダが同一の下位品目を取り合う場合、完了予定日が早いオーダを優先して
+  // 供給プールを消費させるため
+  const openMakeOrders = state.mfgOrders
+    .filter((mo) => mo.status !== "DONE" && mo.status !== "CANCELED" && mo.planQty - mo.goodQty > 0)
+    .sort((a, b) => a.dueDay - b.dueDay || a.moNo.localeCompare(b.moNo));
+
+  for (const mo of openMakeOrders) {
+    const outstanding = mo.planQty - mo.goodQty;
+    for (const line of ctx.bom.filter((b) => b.parentItemId === mo.itemId)) {
+      // 子品目の必要日は、このオーダ自身が本来投入を開始する予定だった日（startDay）とする
+      // （通常のexplode()が「親の着手日＝子の必要日」とする規則と揃える）。levelは、このオーダ
+      // 自身が持つ受注起点からの真のBOMレベル（bomLevel）の1つ下として渡す（常に0からではなく）
+      explode(line.childItemId, outstanding * line.qtyPer, mo.startDay, mo.ploNo, mo.bomLevel + 1, ctx);
+    }
+  }
+}
+
+/**
  * MRP実行（v5-spec.md §7.1 runMRP）。PLANNED_ORDERを全削除して再生成する。
  * design.md EXT-1：需要は必要日（confirmDay ?? requestDay）昇順、同着は受注番号昇順で展開する。
  */
@@ -114,6 +154,8 @@ export function runMRP(state: SimulationState): void {
     plannedOrders: state.plannedOrders,
     path: new Set<string>(),
   };
+
+  explodeOpenOrderComponents(state, ctx);
   for (const demand of demands) {
     explode(demand.itemId, demand.qty, demand.due, demand.pegTo, 0, ctx);
   }
@@ -159,6 +201,7 @@ export function firmAllPlannedOrders(state: SimulationState, day: number): void 
         startDay: plo.startDay,
         dueDay: plo.dueDay,
         status: "FIRM",
+        bomLevel: plo.bomLevel,
       };
       state.mfgOrders.push(mo);
 

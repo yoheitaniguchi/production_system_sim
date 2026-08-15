@@ -142,4 +142,66 @@ describe("runMRP / firmAllPlannedOrders", () => {
       [ITEM_IDS.PT_SCREW]: 8,
     });
   });
+
+  it("仕掛品（SA-200）の工程で不良が出た場合も、MRP再実行でその分の補充オーダが生成される", () => {
+    const state = createTestState(0);
+    const soNo = createSalesOrder(state, { customerId: "CUST-A", itemId: ITEM_IDS.FG_CHAIR, qty: 10, requestDay: 15 }, 0);
+    confirmDelivery(state, soNo, 15);
+    runMRP(state);
+    firmAllPlannedOrders(state, 0);
+
+    for (const po of state.purchaseOrders) {
+      ackPurchaseOrder(state, po.poNo, po.dueDay);
+      receivePurchaseOrder(state, po.poNo, po.dueDay);
+    }
+
+    // SA-200（座面ASSY、仕掛品）自身の工程で良品9・不良1。FG-100自身はまだ未着手
+    const saOrder = state.mfgOrders.find((mo) => mo.itemId === ITEM_IDS.SA_SEAT)!;
+    releaseMfgOrder(state, saOrder.moNo);
+    startStep(state, saOrder.moNo, 10, 12);
+    completeStep(state, saOrder.moNo, 10, 9, 1, 13);
+
+    // FG-100は投入数10に対しSA-200が9個しか無いため、着手時にHOLDになる（部品不足）
+    const fgOrder = state.mfgOrders.find((mo) => mo.itemId === ITEM_IDS.FG_CHAIR)!;
+    releaseMfgOrder(state, fgOrder.moNo);
+    startStep(state, fgOrder.moNo, 10, 13);
+    expect(() => completeStep(state, fgOrder.moNo, 10, 10, 0, 14)).toThrow();
+    expect(state.mfgOrders.find((mo) => mo.moNo === fgOrder.moNo)?.status).toBe("HOLD");
+
+    // design.md EXT-6により、HOLD中のFG-100オーダはそれ自体が受注需要を満額カバーする供給として
+    // 扱われるため、受注起点の展開だけでは「HOLDを完成させるためのSA-200が1個足りない」ことを
+    // 検知できない。既存オーダ自身の部材所要を再検証するパスがこれを補う
+    runMRP(state);
+
+    expect(state.plannedOrders).toHaveLength(2);
+    const byItem = Object.fromEntries(state.plannedOrders.map((p) => [p.itemId, p.qty]));
+    expect(byItem).toEqual({
+      [ITEM_IDS.SA_SEAT]: 1,
+      [ITEM_IDS.RM_BOARD]: 1,
+    });
+    // FG-100自体は既存のHOLDオーダで数量が足りており、PT-400/PT-500も在庫十分なので追加されない
+    expect(state.plannedOrders.some((p) => p.itemId === ITEM_IDS.FG_CHAIR)).toBe(false);
+    expect(state.plannedOrders.some((p) => p.itemId === ITEM_IDS.PT_LEG)).toBe(false);
+    expect(state.plannedOrders.some((p) => p.itemId === ITEM_IDS.PT_SCREW)).toBe(false);
+    // bomLevelは受注起点からの真の深さ（TC-04と同じくSA-200=1、RM-300=2）を維持する。
+    // 既存オーダ自身のbomLevelを起点にする（常に0から数え直さない）ことを確認する回帰テスト
+    const byItemLevel = Object.fromEntries(state.plannedOrders.map((p) => [p.itemId, p.bomLevel]));
+    expect(byItemLevel).toEqual({
+      [ITEM_IDS.SA_SEAT]: 1,
+      [ITEM_IDS.RM_BOARD]: 2,
+    });
+
+    // 補充オーダを確定して実際に流し込むと、HOLD中だったFG-100を完成まで進められる
+    firmAllPlannedOrders(state, 14);
+    const newSaOrder = state.mfgOrders.find((mo) => mo.itemId === ITEM_IDS.SA_SEAT && mo.moNo !== saOrder.moNo)!;
+    const newRmPo = state.purchaseOrders.find((po) => po.itemId === ITEM_IDS.RM_BOARD && po.receivedQty === 0)!;
+    ackPurchaseOrder(state, newRmPo.poNo, newRmPo.dueDay);
+    receivePurchaseOrder(state, newRmPo.poNo, newRmPo.dueDay);
+    releaseMfgOrder(state, newSaOrder.moNo);
+    startStep(state, newSaOrder.moNo, 10, 14);
+    completeStep(state, newSaOrder.moNo, 10, 1, 0, 15);
+
+    completeStep(state, fgOrder.moNo, 10, 10, 0, 15); // design.md EXT-10：同じ操作の再実行でHOLDから復帰
+    expect(state.mfgOrders.find((mo) => mo.moNo === fgOrder.moNo)?.status).toBe("WIP");
+  });
 });
