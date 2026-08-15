@@ -11,7 +11,7 @@ import LotTracePanel from "./components/LotTracePanel";
 import MasterDataPage from "./components/MasterDataPage";
 import PeggingTracePanel from "./components/PeggingTracePanel";
 import PlanningPanel from "./components/PlanningPanel";
-import ProcessFlowDiagram from "./components/ProcessFlowDiagram";
+import ProcessFlowPopup from "./components/ProcessFlowPopup";
 import ProcurementPanel from "./components/ProcurementPanel";
 import ProductionPanel from "./components/ProductionPanel";
 import SalesOrderPanel from "./components/SalesOrderPanel";
@@ -22,6 +22,8 @@ import { createInitialState, simulationReducer } from "./domain/reducer";
 import { loadStoredTheme, storeTheme } from "./theme";
 
 // ドメイン画面のタブ一覧。design.md §5の順序どおり実装済みのものから順に追加してきた（Phase 5a〜5g完了）。
+// プロセス連携図は他タブを操作しながら参照できるよう、タブ切り替えではなくポップアップ表示に分離している
+// （下のapp__tabs内で個別にトグルボタンとして扱う）。
 const TABS = [
   { id: "sales-order", label: "受注", Component: SalesOrderPanel },
   { id: "planning", label: "計画", Component: PlanningPanel },
@@ -35,13 +37,13 @@ const TABS = [
   { id: "pegging", label: "引当元追跡", Component: PeggingTracePanel },
   { id: "lot-trace", label: "ロット追跡", Component: LotTracePanel },
   { id: "exercise-guide", label: "演習ガイド", Component: ExerciseGuidePanel },
-  { id: "process-flow", label: "プロセス連携図", Component: ProcessFlowDiagram },
 ] as const;
 
 function App() {
   const [state, dispatch] = useReducer(simulationReducer, undefined, createInitialState);
   const [activeTab, setActiveTab] = useState<(typeof TABS)[number]["id"]>(TABS[0].id);
   const [themeId, setThemeId] = useState<string>(() => loadStoredTheme());
+  const [flowPopupOpen, setFlowPopupOpen] = useState(false);
 
   useLayoutEffect(() => {
     document.documentElement.dataset.theme = themeId;
@@ -83,10 +85,19 @@ function App() {
             {countByTab[tab.id] ? <span className="app__tab-badge">{countByTab[tab.id]}</span> : null}
           </button>
         ))}
+        <button
+          type="button"
+          className={flowPopupOpen ? "app__tab app__tab--active" : "app__tab"}
+          aria-pressed={flowPopupOpen}
+          onClick={() => setFlowPopupOpen((open) => !open)}
+        >
+          プロセス連携図
+        </button>
       </nav>
       <main className="app__main">
         <ActiveComponent state={state} dispatch={dispatch} />
       </main>
+      {flowPopupOpen && <ProcessFlowPopup state={state} onClose={() => setFlowPopupOpen(false)} />}
       <EventLogPanel entries={state.eventLog} />
       <ClockControls
         day={state.day}
