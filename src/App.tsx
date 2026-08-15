@@ -1,6 +1,7 @@
 import { useLayoutEffect, useReducer, useState } from "react";
 import AlertBar from "./components/AlertBar";
 import BurgerMenu from "./components/BurgerMenu";
+import CapacityPanel from "./components/CapacityPanel";
 import ClockControls from "./components/ClockControls";
 import CostPanel from "./components/CostPanel";
 import EventLogPanel from "./components/EventLogPanel";
@@ -35,6 +36,7 @@ const TABS = [
   { id: "master-data", label: "マスタ", Component: MasterDataPage },
   { id: "kpi", label: "KPI", Component: KpiDashboard },
   { id: "cost", label: "原価", Component: CostPanel },
+  { id: "capacity", label: "能力", Component: CapacityPanel },
   { id: "pegging", label: "引当元追跡", Component: PeggingTracePanel },
   { id: "lot-trace", label: "ロット追跡", Component: LotTracePanel },
   { id: "gantt", label: "進捗ガント", Component: GanttChartPanel },

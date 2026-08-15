@@ -525,3 +525,47 @@ Playwrightでの確認観点（Phase 5と同じ形式で実施する）：受注
 - 稼働日カレンダー・複数直・段取り時間
 - 計画オーダ（未確定）段階での山積みプレビュー
 - KPIダッシュボード（`kpi.ts`）への統合
+
+---
+
+## 6.1 Phase 8 実施結果
+
+サブフェーズ8a〜8dをこの順で実装した。設計（§9）からの逸脱は無し。
+
+- `src/types.ts`：`WorkCenter`に`capacityMinPerDay: number`を追加（EXT-32）
+- `src/data/masterData.ts`：`initialWorkCenters`の3行（WC-CUT/WC-ASM/WC-INS）を`capacityMinPerDay: 240`に統一
+- `src/domain/masterData.ts`：`addWorkCenter()`に稼働能力の0以上ガードを追加。`updateWorkCenter()`は
+  `updateRoutingStep()`と同じ「patchの各フィールドを個別に判定してchangesメッセージを組み立てる」形へ
+  作り直し（従来は`{ratePerHour: number}`必須の単一フィールドpatchだった）、`ratePerHour`・
+  `capacityMinPerDay`をそれぞれ単独でも同時でも更新できるようにした。`domain/reducer.ts`の
+  `MASTER_UPDATE_WORK_CENTER`アクション型も`patch`を両フィールドoptionalへ変更した
+- `src/domain/masterIO.ts`：作業区のインポート検証に`capacityMinPerDay: requireNonNegative(...)`を追加。
+  設計どおり欠落時のデフォルト補完はせず、検証エラーとして拒否する（EXT-32）
+- `src/domain/masterIntegrity.ts`：`validateMaster()`に「稼働能力0の作業区が工順で使用されている」警告を追加
+- `src/components/master/WorkCenterTable.tsx`：「能力（分/日）」列を追加（`EditableNumberField`、min=0）。
+  新規追加フォームの既定値は480分（実働8時間、§9.5のとおりプリセットの240分とは別扱い）
+- `src/domain/capacity.ts`（新設）：§9.4の疑似コードどおり`computeCapacityLoad()`・`capacityOverloads()`を
+  実装。1件のWORK_INSTRUCTIONは着手済みか否かで計画負荷・実績負荷のどちらか一方にのみ計上され、二重計上は
+  起きない
+- `src/domain/capacity.test.ts`（新設、6件）：§9.5の計算例（TC-04〜05の確定結果だけでWC-ASMがD+13に
+  300分/240分で山積み超過になり、WC-CUT・WC-INSは超過しないこと）、§9.6 C2-1の回帰（未着手の後工程が
+  `mo.planQty`基準で計上されること）、計画負荷→実績負荷への移行で二重計上されないこと、DONE後も実績負荷が
+  残り続けること、CANCELEDオーダが計画負荷から除外されることを検証した
+- 既存の`WorkCenter`リテラルを持つテスト（`masterData.test.ts`・`masterIO.test.ts`・`multiLevelBom.test.ts`）
+  に`capacityMinPerDay`を追加し、あわせて`updateWorkCenter()`の新規テスト（賃率・能力の個別更新、負値拒否）
+  ・`masterIO.test.ts`の新規テスト（負の`capacityMinPerDay`拒否、欠落時の拒否＝EXT-32の回帰）を追加した
+- `src/components/CapacityPanel.tsx`（新設、「能力」タブ）：作業区×日のテーブルで計画負荷・実績負荷・能力・
+  判定を表示し、超過行を警告色でハイライトする（`.capacity-panel__row--overload`、既存の`--warn-bg`/
+  `--warn-border`トークンを再利用し6テーマ全てに対応）
+- `src/components/AlertBar.tsx`：`capacityOverloads(state)`を追加し、既存の警告と並べて
+  「作業区負荷超過：{workCenter} D+{day} 必要{required}分 / 能力{capacity}分（{超過分}分超過）」を表示する。
+  `AlertNavigateTarget`に`"capacity"`を追加
+- `src/App.tsx`：`TABS`配列に「能力」タブ（`CostPanel`の後、`PeggingTracePanel`の前）を追加
+- `src/index.css`：`.capacity-panel__row--overload`を追加
+- Playwright（`/opt/pw-browsers`のChromiumをplaywright経由で起動）で、受注登録（FG-100 x10）→納期回答→
+  MRP実行→計画オーダ確定（TC-04〜05相当）の一連の流れを実際にブラウザ操作で通し、警告バーに
+  「作業区負荷超過：WC-ASM D+13 必要300分 / 能力240分（60分超過）」が表示されること、能力タブで
+  WC-CUT（180/240・OK）・WC-ASM（300/240・超過60分）・WC-INS（120/240・OK）が§9.5の計算例どおりに
+  表示され超過行がハイライトされることを確認した。ライト（マテリアル・クリーン）・ダーク（トゥルーブラック）
+  両テーマでの表示も確認済み
+- `npm run build`・`npm test`（164件、`capacity.test.ts`の6件と既存テストへの追加4件を含む）がともに成功

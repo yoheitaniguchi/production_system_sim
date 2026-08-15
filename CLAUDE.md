@@ -69,6 +69,7 @@ production_system_sim/
     │   ├── todayActions.ts     # 本日実行可能な操作の集計（design.md DEV-2の軽量代替案）
     │   ├── exerciseGuide.ts    # 演習ガイド（TC-01〜18の自動判定、v5-spec.md §8.1 D3、design.md DEV-4/EXT-17）
     │   ├── gantt.ts           # 受注一覧ガントチャート用の表示データ計算
+    │   ├── capacity.ts        # 能力計画（CRP）の山積み計算（v5-spec.md §11.1 Phase 3、design.md §9・EXT-30〜32）
     │   ├── processFlow.ts     # プロセス連携図（BPMN風）用の表示データ計算
     │   ├── reducer.ts         # useReducer用reducer。actionを各モジュールへディスパッチ
     │   └── *.test.ts          # 各モジュールに対応する単体テスト
@@ -94,6 +95,7 @@ production_system_sim/
         ├── EditableField.tsx      # マスタ画面用の編集可能フィールド（数値・テキスト・選択）
         ├── KpiDashboard.tsx       # 分析：KPIダッシュボード（組織目線/現場目線）
         ├── CostPanel.tsx          # 分析：原価（金額指標・品目別標準原価・オーダ別原価差異）
+        ├── CapacityPanel.tsx      # 分析：能力（山積み。作業区×日の計画/実績負荷と能力、超過ハイライト）
         ├── PeggingTracePanel.tsx  # 分析：ペギング追跡（受注→オーダ→実績）
         ├── LotTracePanel.tsx      # 分析：ロット追跡（後方追跡・前方追跡）
         ├── ExerciseGuidePanel.tsx # 分析：演習ガイド（TC-01〜18の進行状況と次の操作）
@@ -130,7 +132,10 @@ npm run preview   # build成果物をGitHub Pages相当のbaseパスで動作確
 **Phase 0〜5（プロジェクト初期化・型定義/初期マスタデータ・ドメインロジック本体・reducer・自動テスト拡充・
 画面実装）に加え、`docs/implementation-plan.md` §5「Phase 7（先送り事項）」の全項目
 （自動再生の軽量代替案・Phase 2-A原価・演習ガイドD3・Phase 2-Bトレーサビリティ）も完了。
-さらに品目・BOM・工順（BOP）・作業区・取引先の自由登録（フルCRUD＋JSON入出力、design.md EXT-19〜EXT-27）も完了。**
+さらに品目・BOM・工順（BOP）・作業区・取引先の自由登録（フルCRUD＋JSON入出力、design.md EXT-19〜EXT-27）と、
+`docs/implementation-plan.md` §6「Phase 8：能力計画（CRP、v5-spec.md §11.1ロードマップ Phase 3）」
+（`WorkCenter.capacityMinPerDay`の追加、`domain/capacity.ts`の山積み計算、`CapacityPanel.tsx`・
+`AlertBar.tsx`連携。design.md §9・EXT-30〜32）も完了。**
 
 - `src/types.ts`：design.md §4の対応表どおり、v5仕様書の13テーブルをTypeScript型に落とした（`SimulationState`を含む）。
   Phase 2-A/2-Bで`WorkCenter`・`Lot`・`LotGenealogy`と、`ItemMaster`/`StockTxn`への拡張フィールドを追加。
@@ -138,19 +143,23 @@ npm run preview   # build成果物をGitHub Pages相当のbaseパスで動作確
 - `src/data/masterData.ts`：v5-spec.md §1.1（木製イス）の品目5・BOM4行・工順3行・作業区3件。
   顧客2件（design.md §6の複数受注演習用）・仕入先3件（BUY品目ごとに1件、`defaultSupplierId`で対応付け）。
   これらは`CHAIR_PRESET`として既定プリセットにまとめてあり、`createInitialState()`の戻り値は従来どおり
-- `src/domain/`：18モジュール（`pegging.ts`・`mrp.ts`・`procurement.ts`・`shipment.ts`・`production.ts`・
+- `src/domain/`：19モジュール（`pegging.ts`・`mrp.ts`・`procurement.ts`・`shipment.ts`・`production.ts`・
   `salesOrder.ts`・`schedule.ts`・`inventory.ts`・`kpi.ts`・`cost.ts`・`lot.ts`・`todayActions.ts`・
-  `exerciseGuide.ts`・`processFlow.ts`・`gantt.ts`・`masterData.ts`・`masterIntegrity.ts`・`masterIO.ts`）＋
-  `reducer.ts`（design.md §7の action一覧を実装。`createInitialState()`・`simulationReducer()`）を実装済み
-- `src/domain/*.test.ts`：155件のテストで、v5-spec.md §9のTC-01〜18・TC-E1〜E3の全シナリオ、
+  `exerciseGuide.ts`・`processFlow.ts`・`gantt.ts`・`capacity.ts`・`masterData.ts`・`masterIntegrity.ts`・
+  `masterIO.ts`）＋`reducer.ts`（design.md §7の action一覧を実装。`createInitialState()`・
+  `simulationReducer()`）を実装済み
+- `src/domain/*.test.ts`：164件のテストで、v5-spec.md §9のTC-01〜18・TC-E1〜E3の全シナリオ、
   reducerの委譲・不変性・エラーハンドリング・RESET時のマスタ保持、`processFlow.ts`のフロー判定、
   §11.2の原価計算例・§11.3のロット系譜（後方/前方追跡）を検証済み。design.md §6の複数受注演習も
   TC-M1として`multiOrderExercise.test.ts`で検証済み。マスタ自由登録は`masterData.test.ts`・
   `masterIntegrity.test.ts`・`masterIO.test.ts`でガードを個別に、`multiLevelBom.test.ts`で
   **4階層BOMをマスタ操作だけで組み立てて受注〜出荷まで通す**通し演習として検証済み。`gantt.ts`は
-  `gantt.test.ts`でTC-01〜16の通し進行に沿って計画バー・実績バー・遅延（DELAYED）判定を検証済み（design.md EXT-29）
+  `gantt.test.ts`でTC-01〜16の通し進行に沿って計画バー・実績バー・遅延（DELAYED）判定を検証済み（design.md EXT-29）。
+  `capacity.ts`は`capacity.test.ts`でdesign.md §9.5の計算例（TC-04〜05の確定結果だけでWC-ASMがD+13に
+  300分/240分で山積み超過になること）・未着手工程がmo.planQty基準で計上されること（C2-1回帰）・
+  計画負荷と実績負荷が二重計上されないこと・CANCELEDオーダが除外されることを検証済み
 - `src/App.tsx`：`useReducer`でreducerを保持し、共通シェル（`ClockControls`・`AlertBar`・`TodayActionsBar`・
-  `EventLogPanel`）と、13個のタブ（受注／計画／発注／工程／在庫／出荷／マスタ／KPI／原価／ペギング追跡／
+  `EventLogPanel`）と、14個のタブ（受注／計画／発注／工程／在庫／出荷／マスタ／KPI／原価／能力／ペギング追跡／
   ロット追跡／進捗ガント／演習ガイド）を実装済み。プロセス連携図（`ProcessFlowDiagram.tsx`）はタブではなく
   `ProcessFlowPopup.tsx`によるフローティングポップアップとして表示し、他タブを操作しながら常時参照できる
   （タブ切り替えでアンマウントされずApp直下に置く）。ヘッダー部分のドラッグで自由に移動でき（Pointer Events、
@@ -163,22 +172,24 @@ npm run preview   # build成果物をGitHub Pages相当のbaseパスで動作確
   （既存の`--color-accent`/`--pf-active`/`--warn-*`トークンを再利用し6テーマ全てに対応）。各画面はPlaywrightで
   v5-spec.md TC-02〜19相当の操作・§11.2/§11.3相当の操作を実際にブラウザで確認済み（ライト/ダーク両テーマ）。
   マスタ自由登録も、4階層マスタのJSONインポート→受注〜出荷の通し操作・循環BOMの登録拒否・
-  参照中マスタの削除ブロックをブラウザで確認済み
+  参照中マスタの削除ブロックをブラウザで確認済み。能力タブも、TC-04〜05の操作直後にAlertBarへ
+  「作業区負荷超過：WC-ASM D+13 必要300分 / 能力240分（60分超過）」が表示されること、能力タブで
+  WC-CUT（180/240・OK）／WC-ASM（300/240・超過）／WC-INS（120/240・OK）が一覧できハイライトされること
+  をブラウザで確認済み（ライト/ダーク両テーマ）
 
 ## 次にやるべきこと（優先順）
 
-`docs/implementation-plan.md` §5「Phase 7（先送り事項）」とマスタ自由登録は全項目完了した。次の一手は
-特に決まっていないため、着手前にユーザーに優先順位を確認すること。候補：
+`docs/implementation-plan.md` §5「Phase 7（先送り事項）」・マスタ自由登録・§6「Phase 8：能力計画（CRP）」は
+全項目完了した。次の一手は特に決まっていないため、着手前にユーザーに優先順位を確認すること。候補：
 
-1. **能力計画（CRP、v5-spec.md §11.1ロードマップ Phase 3）**：最小設計（`docs/design.md` §9、EXT-30〜32）と
-   実行可能タスクへの分解（`docs/implementation-plan.md` Phase 8）は完了済み。コードは未着手。着手する場合は
-   Phase 8のサブフェーズ（8a マスタ拡張→8b `domain/capacity.ts`→8c 画面→8d ドキュメント）の順で1PRずつ進める
-2. CI（既存ワークフローが全PRで正しく動作していることの継続的な確認）
-3. Phase 2-Bで簡略化した点（design.md EXT-18：STOCKの主キーは変更せずLOT/LOT_GENEALOGYを並行追加した）を
+1. CI（既存ワークフローが全PRで正しく動作していることの継続的な確認）
+2. Phase 2-Bで簡略化した点（design.md EXT-18：STOCKの主キーは変更せずLOT/LOT_GENEALOGYを並行追加した）を
    踏まえ、より厳密な実装（STOCKの主キー変更を含む）へ発展させる必要性の検討
-4. マスタ自由登録で見送った点：品目コードの改名（EXT-24でカスケードを断念し「削除→再登録」に倒した）、
+3. マスタ自由登録で見送った点：品目コードの改名（EXT-24でカスケードを断念し「削除→再登録」に倒した）、
    マスタのlocalStorage永続化、複数プリセットの同梱、演習ガイドのマスタ非依存化（EXT-27）
-5. その他、`docs/v5-spec.md` §11に記載のロードマップ上の拡張項目の検討
+4. CRPで任意の拡張候補として切り出した項目（design.md §9.9）：計画オーダ（未確定）段階での山積みプレビュー、
+   段取り時間、山積み表のSVGバー化
+5. その他、`docs/v5-spec.md` §11に記載のロードマップ上の拡張項目（安全在庫・ロットサイズ、複数受注の競合）の検討
 
 ## 実装時に確認すべき設計判断（design.mdの要点）
 

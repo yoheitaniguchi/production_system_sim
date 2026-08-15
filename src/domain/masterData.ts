@@ -317,16 +317,33 @@ export function addWorkCenter(state: SimulationState, input: WorkCenter): string
     throw new MasterDataError(`作業区コードが重複しています: ${workCenter}`);
   }
   if (input.ratePerHour < 0) throw new MasterDataError("賃率は0以上で入力してください");
-  state.workCenters.push({ workCenter, ratePerHour: input.ratePerHour });
-  return `作業区 ${workCenter}（賃率${input.ratePerHour}円/時）を登録した`;
+  if (input.capacityMinPerDay < 0) throw new MasterDataError("稼働可能時間（分/日）は0以上で入力してください");
+  state.workCenters.push({ workCenter, ratePerHour: input.ratePerHour, capacityMinPerDay: input.capacityMinPerDay });
+  return `作業区 ${workCenter}（賃率${input.ratePerHour}円/時・能力${input.capacityMinPerDay}分/日）を登録した`;
 }
 
-export function updateWorkCenter(state: SimulationState, workCenter: string, patch: { ratePerHour: number }): string {
+export function updateWorkCenter(
+  state: SimulationState,
+  workCenter: string,
+  patch: { ratePerHour?: number; capacityMinPerDay?: number },
+): string {
   const wc = state.workCenters.find((w) => w.workCenter === workCenter);
   if (!wc) throw new MasterDataError(`作業区が見つかりません: ${workCenter}`);
-  if (patch.ratePerHour < 0) throw new MasterDataError("賃率は0以上で入力してください");
-  wc.ratePerHour = patch.ratePerHour;
-  return `${workCenter} の賃率を ${patch.ratePerHour} 円/時に変更した`;
+  const changes: string[] = [];
+
+  if (patch.ratePerHour !== undefined) {
+    if (patch.ratePerHour < 0) throw new MasterDataError("賃率は0以上で入力してください");
+    wc.ratePerHour = patch.ratePerHour;
+    changes.push(`賃率を ${patch.ratePerHour} 円/時に`);
+  }
+  if (patch.capacityMinPerDay !== undefined) {
+    if (patch.capacityMinPerDay < 0) throw new MasterDataError("稼働可能時間（分/日）は0以上で入力してください");
+    wc.capacityMinPerDay = patch.capacityMinPerDay;
+    changes.push(`能力を ${patch.capacityMinPerDay} 分/日に`);
+  }
+
+  if (changes.length === 0) return `${workCenter} に変更はなかった`;
+  return `${workCenter} の${changes.join("・")}変更した`;
 }
 
 export function deleteWorkCenter(state: SimulationState, workCenter: string): string {

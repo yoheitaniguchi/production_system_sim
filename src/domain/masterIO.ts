@@ -168,6 +168,9 @@ export function parseMasterSnapshot(json: string): MasterSnapshot {
     return {
       workCenter: requireString(record, "workCenter", where),
       ratePerHour: requireNonNegative(record, "ratePerHour", where),
+      // design.md EXT-32：欠落時のデフォルト補完はしない。本フィールド追加前にエクスポート済みのJSONは
+      // 再インポートできなくなるが、既存のrequireNonNegativeと同じ強さの検証を優先する
+      capacityMinPerDay: requireNonNegative(record, "capacityMinPerDay", where),
     };
   });
 

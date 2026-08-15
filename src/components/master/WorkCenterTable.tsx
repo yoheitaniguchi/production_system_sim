@@ -12,12 +12,20 @@ interface Props {
 }
 
 function WorkCenterTable({ state, dispatch }: Props) {
-  const [draft, setDraft] = useState({ workCenter: "", ratePerHour: 2000 });
+  // capacityMinPerDayの既定値480（実働8時間）は新規追加する作業区向けの現実的な既定値。
+  // 既定プリセットの240分/日は演習効果を狙った意図的な値であり別扱い（design.md §9.5）
+  const [draft, setDraft] = useState({ workCenter: "", ratePerHour: 2000, capacityMinPerDay: 480 });
 
   const handleAdd = () => {
     dispatch({
       type: "MASTER_ADD_WORK_CENTER",
-      payload: { workCenter: { workCenter: draft.workCenter, ratePerHour: draft.ratePerHour } },
+      payload: {
+        workCenter: {
+          workCenter: draft.workCenter,
+          ratePerHour: draft.ratePerHour,
+          capacityMinPerDay: draft.capacityMinPerDay,
+        },
+      },
     });
     setDraft({ ...draft, workCenter: "" });
   };
@@ -30,6 +38,7 @@ function WorkCenterTable({ state, dispatch }: Props) {
           <tr>
             <th>作業区</th>
             <th>賃率（円/時）</th>
+            <th>能力（分/日）</th>
             <th />
           </tr>
         </thead>
@@ -45,6 +54,18 @@ function WorkCenterTable({ state, dispatch }: Props) {
                     dispatch({
                       type: "MASTER_UPDATE_WORK_CENTER",
                       payload: { workCenter: wc.workCenter, patch: { ratePerHour } },
+                    })
+                  }
+                />
+              </td>
+              <td>
+                <EditableNumberField
+                  value={wc.capacityMinPerDay}
+                  min={0}
+                  onCommit={(capacityMinPerDay) =>
+                    dispatch({
+                      type: "MASTER_UPDATE_WORK_CENTER",
+                      payload: { workCenter: wc.workCenter, patch: { capacityMinPerDay } },
                     })
                   }
                 />
@@ -74,6 +95,14 @@ function WorkCenterTable({ state, dispatch }: Props) {
                 min={0}
                 value={draft.ratePerHour}
                 onChange={(e) => setDraft({ ...draft, ratePerHour: Number(e.target.value) })}
+              />
+            </td>
+            <td>
+              <input
+                type="number"
+                min={0}
+                value={draft.capacityMinPerDay}
+                onChange={(e) => setDraft({ ...draft, capacityMinPerDay: Number(e.target.value) })}
               />
             </td>
             <td>

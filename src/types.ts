@@ -23,6 +23,11 @@ export interface ItemMaster {
 export interface WorkCenter {
   workCenter: string;
   ratePerHour: number;
+  /**
+   * 1日あたり稼働可能時間（分）。stdTimeMinと単位を揃え、能力計画（CRP、design.md §9・EXT-30〜32）の
+   * 山積み計算で使う
+   */
+  capacityMinPerDay: number;
 }
 
 /** BOMの親子関係。1行 = 親品目1つに対する子品目1つとその員数 */

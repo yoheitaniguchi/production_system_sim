@@ -97,6 +97,23 @@ describe("数値の範囲検証（CRUD側と同じ強さで課す）", () => {
     const negativeRate = { ...CHAIR_PRESET, workCenters: [{ ...CHAIR_PRESET.workCenters[0], ratePerHour: -1 }] };
     expect(() => parseMasterSnapshot(JSON.stringify(negativeRate))).toThrow(/ratePerHour は0以上/);
   });
+
+  it("負の稼働能力（capacityMinPerDay）を拒否する", () => {
+    const negativeCapacity = {
+      ...CHAIR_PRESET,
+      workCenters: [{ ...CHAIR_PRESET.workCenters[0], capacityMinPerDay: -1 }],
+    };
+    expect(() => parseMasterSnapshot(JSON.stringify(negativeCapacity))).toThrow(/capacityMinPerDay は0以上/);
+  });
+
+  it("稼働能力（capacityMinPerDay）が欠落した作業区を拒否する（design.md EXT-32：欠落時の既定補完はしない）", () => {
+    const wc = CHAIR_PRESET.workCenters[0];
+    const missingCapacity = {
+      ...CHAIR_PRESET,
+      workCenters: [{ workCenter: wc.workCenter, ratePerHour: wc.ratePerHour }],
+    };
+    expect(() => parseMasterSnapshot(JSON.stringify(missingCapacity))).toThrow(/capacityMinPerDay は数値/);
+  });
 });
 
 describe("業務的な整合性検証（all-or-nothing）", () => {
@@ -144,7 +161,7 @@ describe("reducer経由の取り込み", () => {
         ],
         bom: [],
         routingSteps: [{ itemId: "P-1", stepNo: 10, workCenter: "WC-1", stdTimeMin: 6 }],
-        workCenters: [{ workCenter: "WC-1", ratePerHour: 1200 }],
+        workCenters: [{ workCenter: "WC-1", ratePerHour: 1200, capacityMinPerDay: 480 }],
         customers: [{ customerId: "C-1", name: "得意先1" }],
         suppliers: [],
       }),

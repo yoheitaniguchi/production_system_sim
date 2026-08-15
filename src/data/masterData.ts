@@ -83,11 +83,15 @@ export const initialSuppliers: Supplier[] = [
   { supplierId: SUPPLIER_IDS.PT_SCREW, name: "ネジ仕入先" },
 ];
 
-// 賃率はv5-spec.md §11.2の計算例（賃率2,000円/時）に合わせ、3作業区とも同一値とする
+// 賃率はv5-spec.md §11.2の計算例（賃率2,000円/時）に合わせ、3作業区とも同一値とする。
+// capacityMinPerDay（能力計画、design.md §9・EXT-30〜32）も3作業区とも240分/日（実働4時間相当）で統一する。
+// 480分（8時間）にすると既定シナリオ（SO-001-1、木製イス10個）単体では山積み超過が一度も発生せず、
+// CRPの学習効果を体験できなくなるため、design.md §9.5のとおり意図的に低い値を選んでいる
+// （TC-04〜05をそのまま実行するだけでWC-ASMがD+13に300分/240分で超過する）
 export const initialWorkCenters: WorkCenter[] = [
-  { workCenter: WORK_CENTERS.CUT, ratePerHour: 2000 },
-  { workCenter: WORK_CENTERS.ASM, ratePerHour: 2000 },
-  { workCenter: WORK_CENTERS.INS, ratePerHour: 2000 },
+  { workCenter: WORK_CENTERS.CUT, ratePerHour: 2000, capacityMinPerDay: 240 },
+  { workCenter: WORK_CENTERS.ASM, ratePerHour: 2000, capacityMinPerDay: 240 },
+  { workCenter: WORK_CENTERS.INS, ratePerHour: 2000, capacityMinPerDay: 240 },
 ];
 
 /** 木製イスの既定プリセット（design.md EXT-26）。「プリセットに戻す」とJSONエクスポートの基準 */
