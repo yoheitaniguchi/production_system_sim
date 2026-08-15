@@ -2,7 +2,7 @@
 
 このファイルはClaude Codeがこのプロジェクトで作業する際に毎回読み込む。簡潔さを優先しているので、
 設計判断の根拠や検討の経緯を確認したいときは `docs/design.md`（v5仕様書との差分・追加決定）と
-`docs/v5-spec.md`（業務仕様の一次資料）を参照すること。
+`docs/v5-spec.md`（業務仕様の一次資料）、および `docs/architecture-flow.html`（全体アーキテクチャ・データフローの可視化）を参照すること。
 
 ## プロジェクト概要
 
@@ -41,7 +41,8 @@ production_system_sim/
 ├── docs/
 │   ├── v5-spec.md          # v5仕様書（業務仕様の一次資料。原文のまま格納、直接編集しない）
 │   ├── design.md           # v5仕様書との差分・未規定点への追加決定・実装方針（★まず読む）
-│   └── implementation-plan.md
+│   ├── implementation-plan.md
+│   └── architecture-flow.html # アーキテクチャ・データフロー可視化ページ
 ├── package.json
 ├── tsconfig.json
 ├── vite.config.ts
@@ -50,6 +51,9 @@ production_system_sim/
     ├── main.tsx            # エントリポイント
     ├── App.tsx             # 画面本体。タブ切り替えとreducerの保持のみを行う
     ├── types.ts            # ドメインの型定義（design.md §4：v5の13テーブルとの対応）
+    ├── theme.ts            # テーマ定義・テーマ切り替え管理
+    ├── statusLabels.ts     # 各ドメインのステータス日本語ラベル定義
+    ├── index.css           # グローバルスタイル・デザイントークン
     ├── data/
     │   └── masterData.ts   # 初期マスタデータ＝既定プリセット（design.md §1 S2：木製イス、EXT-26）
     ├── domain/             # ドメインロジック本体（design.md §7〜§8）★最重要ディレクトリ
@@ -60,6 +64,7 @@ production_system_sim/
     │   ├── production.ts     # 工程着手・完了・バックフラッシュ（v5-spec.md §7.3）
     │   ├── procurement.ts    # 発注・納期回答・入荷計上（v5-spec.md §6.5）
     │   ├── shipment.ts       # 引当・出荷可否判定（v5-spec.md §7.2）
+    │   ├── inventory.ts      # 在庫計算・受払照会
     │   ├── salesOrder.ts     # 受注登録・納期回答・取消（v5-spec.md §6.1、design.md EXT-2/3）
     │   ├── pegging.ts        # ペギング追跡（v5-spec.md §7.4）
     │   ├── schedule.ts       # 日程整合チェック・未充足需要（v5-spec.md §7.5）
@@ -72,17 +77,20 @@ production_system_sim/
     │   ├── capacity.ts        # 能力計画（CRP）の山積み計算（v5-spec.md §11.1 Phase 3、design.md §9・EXT-30〜32）
     │   ├── processFlow.ts     # プロセス連携図（BPMN風）用の表示データ計算
     │   ├── reducer.ts         # useReducer用reducer。actionを各モジュールへディスパッチ
+    │   ├── testUtils.ts       # テスト用共通ヘルパー
     │   └── *.test.ts          # 各モジュールに対応する単体テスト
     └── components/         # 画面領域ごとのコンポーネント（design.md §5）
         ├── ClockControls.tsx      # 時計操作（Day表示・次の日へ進む・リセット）
         ├── AlertBar.tsx           # 日程整合警告・未充足需要（常時再計算、専用ボタン無し）
         ├── TodayActionsBar.tsx    # 本日実行可能な操作のハイライト（クリックでタブ遷移）
+        ├── BurgerMenu.tsx         # ハンバーガーメニュー（テーマ切替・外部リンク・リセット等）
         ├── SalesOrderPanel.tsx    # 受注：登録・納期回答・取消
         ├── PlanningPanel.tsx      # 計画：MRP実行・計画オーダ一括確定・ペグ先/BOMレベル表示
         ├── ProcurementPanel.tsx   # 発注：仕入先納期回答・入荷計上・注文残
         ├── ProductionPanel.tsx    # 工程：リリース・着手/完了（良品数・不良数）
         ├── InventoryPanel.tsx     # 在庫：現在庫・引当済・出荷可能量の3列
         ├── ShipmentPanel.tsx      # 出荷：引当（出荷指示）・出荷実績登録
+        ├── GanttChartPanel.tsx    # 進捗ガント：受注・製造・購買・出荷の計画と実績タイムライン
         ├── MasterDataPage.tsx     # マスタ：レイアウトのみ。各テーブルはmaster/配下へ分割
         ├── master/                # マスタCRUDのテーブル群（design.md §5）
         │   ├── ItemMasterTable.tsx   # 品目（追加・編集・削除。コードは作成後不変）
@@ -100,18 +108,21 @@ production_system_sim/
         ├── LotTracePanel.tsx      # 分析：ロット追跡（後方追跡・前方追跡）
         ├── ExerciseGuidePanel.tsx # 分析：演習ガイド（TC-01〜18の進行状況と次の操作）
         ├── ProcessFlowDiagram.tsx # 受注〜出荷プロセス連携図（BPMN風。ペギング追跡とは別画面）
+        ├── ProcessFlowPopup.tsx   # プロセス連携図フローティングポップアップ（ドラッグ移動対応）
         └── EventLogPanel.tsx      # データ増分ログ（テーブル別行数差分＋業務メッセージ）
 ```
 
 ## コマンド
 
-```
+```bash
 npm install
-npm run dev       # 開発サーバー起動
-npm run build     # 型チェック＋ビルド
-npm test          # vitestによる自動テスト実行（v5-spec.md §9 TC-01〜18・TC-E1〜3・複数受注演習・
-                  # マスタCRUDのガード・4階層BOMの通し演習を含む）
-npm run preview   # build成果物をGitHub Pages相当のbaseパスで動作確認
+npm run dev          # 開発サーバー起動
+npm run build        # 型チェック（tsc）＋ビルド（vite build）
+npx tsc --noEmit     # 型チェックのみ実行
+npm test             # vitestによる自動テスト全件実行（v5-spec.md §9 TC-01〜18・TC-E1〜3・複数受注演習・
+                     # マスタCRUDのガード・4階層BOMの通し演習を含む）
+npx vitest run <path> # 特定テストのみ実行（例: npx vitest run src/domain/capacity.test.ts）
+npm run preview      # build成果物をGitHub Pages相当のbaseパスで動作確認
 ```
 
 ## デプロイ
@@ -227,5 +238,6 @@ npm run preview   # build成果物をGitHub Pages相当のbaseパスで動作確
 - テストが落ちたら、ドメインロジックの不具合かテスト記述の誤りかを`docs/v5-spec.md`と`docs/design.md`の
   仕様と照らして判断し、ロジック側の不具合なら修正して再度`npm test`を回すサイクルを、全件passするまで
   繰り返す運用とする
-- レビュー専用のサブエージェント`logic-reviewer`（`.claude/agents/logic-reviewer.md`）を用意し、
-  `domain/`配下の実装とテストが`v5-spec.md`・`design.md`の仕様と矛盾していないかの確認に使う
+- レビュー専用のサブエージェントを用意している：
+  - `logic-reviewer`（`.claude/agents/logic-reviewer.md`）：`domain/`配下の実装とテストが`v5-spec.md`・`design.md`の仕様と矛盾していないかの確認
+  - `ux-reviewer`（`.claude/agents/ux-reviewer.md`）：UI/UXの操作性・アクセシビリティ・テーマ整合性のレビュー
