@@ -212,6 +212,50 @@ export interface EventLogEntry {
   tableDeltas: string[];
 }
 
+/** 数量と金額のペア。ダッシュボードの残高集計（バーンダウンチャート）で各ドメインに共通して使う */
+export interface BacklogMetric {
+  qty: number;
+  amount: number;
+}
+
+/** 受注残・計画残・発注残・製造残・出荷残・在庫の残高（数量・金額）。ダッシュボードのバーンダウンチャート用 */
+export interface DashboardBacklog {
+  order: BacklogMetric;
+  planned: BacklogMetric;
+  purchase: BacklogMetric;
+  production: BacklogMetric;
+  shipment: BacklogMetric;
+  inventory: BacklogMetric;
+}
+
+/** AlertBarが表示する4種のアラートの件数 */
+export interface DashboardAlertCounts {
+  schedule: number;
+  unmetDemand: number;
+  masterIssue: number;
+  capacityOverload: number;
+}
+
+/** KpiSnapshot（domain/kpi.ts）のうち、ダッシュボードのサマリーカードに表示する指標だけを抜粋したもの */
+export interface DashboardKpiHighlights {
+  deliveryComplianceRate: number | null;
+  planAchievementRate: number | null;
+  firstPassYieldRate: number | null;
+  inventoryTurnover: number | null;
+}
+
+/**
+ * ダッシュボード用の日次スナップショット（design.md ダッシュボード機能）。ADVANCE_DAY等の操作のたびに
+ * 当日分を上書き記録し（reducer.tsのupsertDashboardSnapshot）、日ごとの推移をバーンダウンチャートとして
+ * 描画するために使う。EventLogEntryと同じく状態に保持する記録用の型であり、永続化はしない。
+ */
+export interface DashboardSnapshot {
+  day: number;
+  backlog: DashboardBacklog;
+  alertCounts: DashboardAlertCounts;
+  kpiHighlights: DashboardKpiHighlights;
+}
+
 /**
  * マスタ一式のスナップショット（design.md EXT-26）。JSON入出力とプリセット定義に使う。
  * トランザクションは含まない（取り込み時は全トランザクションを初期化するため）。
@@ -251,6 +295,9 @@ export interface SimulationState {
   lotGenealogy: LotGenealogy[];
 
   eventLog: EventLogEntry[];
+
+  /** ダッシュボードのバーンダウンチャート用（design.md ダッシュボード機能）。day昇順、当日分は都度上書き */
+  dashboardHistory: DashboardSnapshot[];
 
   // 採番用シーケンス。PLANNED_ORDERはMRP実行のたびに全削除・全再生成される揮発データ
   // （v5-spec.md §6.2）であり、番号もrunMRP()内でPLO-001から採番し直すため、ここには持たない

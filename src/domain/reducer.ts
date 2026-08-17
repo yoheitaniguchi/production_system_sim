@@ -18,6 +18,7 @@ import type {
   Supplier,
   WorkCenter,
 } from "../types";
+import { computeDashboardSnapshot } from "./dashboard";
 import { adjustStock } from "./inventory";
 import {
   addBomLine,
@@ -143,7 +144,22 @@ function applyAction(state: SimulationState, fn: (next: SimulationState) => stri
     const message = err instanceof Error ? err.message : String(err);
     next.eventLog.push({ day: next.day, message: `[エラー] ${message}`, tableDeltas: diffTableDeltas(before, next) });
   }
+  upsertDashboardSnapshot(next);
   return next;
+}
+
+/**
+ * stateの現在日（state.day）分のダッシュボードスナップショットを記録する。同じ日の記録が既にあれば
+ * 上書きし（1日のうちに複数操作しても履歴が1日1件のまま最新値を反映する）、日を跨いだら追記する。
+ */
+function upsertDashboardSnapshot(state: SimulationState): void {
+  const snapshot = computeDashboardSnapshot(state);
+  const last = state.dashboardHistory[state.dashboardHistory.length - 1];
+  if (last && last.day === snapshot.day) {
+    state.dashboardHistory[state.dashboardHistory.length - 1] = snapshot;
+  } else {
+    state.dashboardHistory.push(snapshot);
+  }
 }
 
 function emptyStateWithMasters(
@@ -154,7 +170,7 @@ function emptyStateWithMasters(
   suppliers: Supplier[],
   workCenters: WorkCenter[],
 ): SimulationState {
-  return {
+  const state: SimulationState = {
     day: 0,
     items,
     bom,
@@ -174,6 +190,7 @@ function emptyStateWithMasters(
     lots: [],
     lotGenealogy: [],
     eventLog: [],
+    dashboardHistory: [],
     nextSoSeq: 1,
     nextMoSeq: 1,
     nextPoSeq: 1,
@@ -181,6 +198,8 @@ function emptyStateWithMasters(
     nextShipSeq: 1,
     nextLotSeq: 1,
   };
+  upsertDashboardSnapshot(state);
+  return state;
 }
 
 export function createInitialState(): SimulationState {
@@ -210,6 +229,7 @@ export function simulationReducer(state: SimulationState, action: SimulationActi
     case "ADVANCE_DAY": {
       const next = structuredClone(state);
       next.day += 1;
+      upsertDashboardSnapshot(next);
       return next;
     }
 

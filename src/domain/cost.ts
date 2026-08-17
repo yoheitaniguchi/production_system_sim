@@ -63,6 +63,16 @@ function newRollupCtx(): RollupCtx {
 }
 
 /**
+ * 品目ID→標準原価の参照関数を1回だけ生成する。複数品目の原価をまとめて集計する呼び出し側
+ * （domain/dashboard.tsのバーンダウン集計等）が、品目ごとにrollupCost()を呼び直してBOMを
+ * 再走査するのを防ぐ（inventoryValue/scrapLossValueと同じ「ctxを1回だけ作る」方針）。
+ */
+export function standardCostLookup(state: SimulationState): (itemId: string) => number {
+  const ctx = newRollupCtx();
+  return (itemId: string) => rollupInto(state, itemId, ctx).standardCost;
+}
+
+/**
  * 標準原価の積上げ（v5-spec.md §11.2 rollupCost疑似コードそのまま）。
  * BUY品目は購入単価を材料費として使い、加工費は0。MAKE品目はBOMの子品目の標準原価×員数を材料費、
  * 工順の標準時間×作業区の賃率を加工費として積み上げる。
