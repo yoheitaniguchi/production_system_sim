@@ -2,7 +2,8 @@
 
 このファイルはClaude Codeがこのプロジェクトで作業する際に毎回読み込む。簡潔さを優先しているので、
 設計判断の根拠や検討の経緯を確認したいときは `docs/design.md`（v5仕様書との差分・追加決定）と
-`docs/v5-spec.md`（業務仕様の一次資料）、および `docs/architecture-flow.html`（全体アーキテクチャ・データフローの可視化）を参照すること。
+`docs/v5-spec.md`（業務仕様の一次資料）、`docs/architecture-flow.html`（全体アーキテクチャ・データフローの可視化）、
+および `docs/issue-workflow.md`（Issue駆動開発プロセスの手順）を参照すること。
 
 ## プロジェクト概要
 
@@ -263,3 +264,6 @@ KPIサマリーカード、アラート件数の可視化。`domain/dashboard.ts
 - レビュー専用のサブエージェントを用意している：
   - `logic-reviewer`（`.claude/agents/logic-reviewer.md`）：`domain/`配下の実装とテストが`v5-spec.md`・`design.md`の仕様と矛盾していないかの確認
   - `ux-reviewer`（`.claude/agents/ux-reviewer.md`）：UI/UXの操作性・アクセシビリティ・テーマ整合性のレビュー
+- Issue駆動開発向けのSkillも用意している：`issue-workflow`（`.claude/skills/issue-workflow/SKILL.md`）：
+  要望・要件のIssue化からPR作成（`Closes #`連携）・マージ後の対応までの手順を定型化。詳細は
+  `docs/issue-workflow.md`参照
