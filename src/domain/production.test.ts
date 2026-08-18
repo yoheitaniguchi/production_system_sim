@@ -3,7 +3,7 @@ import { ITEM_IDS } from "../data/masterData";
 import { confirmDelivery, createSalesOrder } from "./salesOrder";
 import { firmAllPlannedOrders, runMRP } from "./mrp";
 import { ackPurchaseOrder } from "./procurement";
-import { completeStep, ProductionError, releaseMfgOrder, startStep } from "./production";
+import { completeStep, ProductionError, releaseMfgOrder, splitMfgOrder, startStep } from "./production";
 import { checkSchedule } from "./schedule";
 import { createTestState } from "./testUtils";
 import type { SimulationState } from "../types";
@@ -126,5 +126,57 @@ describe("startStep / completeStep（v5-spec.md §7.3）", () => {
 
     expect(() => completeStep(state, saOrder.moNo, 10, 10, 0, 12)).toThrow(ProductionError);
     expect(state.mfgOrders.find((mo) => mo.moNo === saOrder.moNo)?.status).toBe("HOLD");
+  });
+});
+
+describe("splitMfgOrder（design.md EXT-33：能力超過解消のための分割）", () => {
+  it("FIRMのオーダを数量で分割し、元オーダの残数量・第1工程投入数を減らし、新オーダを別日で新設する", () => {
+    const { state } = setupFirmOrder(10);
+    const fgOrder = state.mfgOrders.find((mo) => mo.itemId === ITEM_IDS.FG_CHAIR)!;
+
+    const newMoNo = splitMfgOrder(state, fgOrder.moNo, 4, 14, 15);
+
+    const original = state.mfgOrders.find((mo) => mo.moNo === fgOrder.moNo)!;
+    expect(original.planQty).toBe(6);
+    const originalFirstWi = state.workInstructions.find((w) => w.moNo === fgOrder.moNo && w.stepNo === 10)!;
+    expect(originalFirstWi.inputQty).toBe(6);
+
+    const created = state.mfgOrders.find((mo) => mo.moNo === newMoNo)!;
+    expect(created).toMatchObject({
+      itemId: ITEM_IDS.FG_CHAIR,
+      planQty: 4,
+      startDay: 14,
+      dueDay: 15,
+      status: "FIRM",
+      ploNo: fgOrder.ploNo,
+      pegTo: fgOrder.pegTo,
+      bomLevel: fgOrder.bomLevel,
+    });
+    const createdSteps = state.workInstructions
+      .filter((w) => w.moNo === newMoNo)
+      .sort((a, b) => a.stepNo - b.stepNo);
+    expect(createdSteps).toHaveLength(2); // FG-100は工程10・20の2行
+    expect(createdSteps[0]).toMatchObject({ stepNo: 10, inputQty: 4, status: "WAIT" });
+    expect(createdSteps[1]).toMatchObject({ stepNo: 20, inputQty: 0, status: "WAIT" });
+  });
+
+  it("FIRM以外（リリース済み）は分割できない", () => {
+    const { state } = setupFirmOrder(10);
+    const fgOrder = state.mfgOrders.find((mo) => mo.itemId === ITEM_IDS.FG_CHAIR)!;
+    releaseMfgOrder(state, fgOrder.moNo);
+    expect(() => splitMfgOrder(state, fgOrder.moNo, 4, 14, 15)).toThrow(ProductionError);
+  });
+
+  it("分割数量が0以下・元数量以上は拒否される", () => {
+    const { state } = setupFirmOrder(10);
+    const fgOrder = state.mfgOrders.find((mo) => mo.itemId === ITEM_IDS.FG_CHAIR)!;
+    expect(() => splitMfgOrder(state, fgOrder.moNo, 0, 14, 15)).toThrow(ProductionError);
+    expect(() => splitMfgOrder(state, fgOrder.moNo, 10, 14, 15)).toThrow(ProductionError);
+  });
+
+  it("分割先の完了予定日が着手日より前は拒否される", () => {
+    const { state } = setupFirmOrder(10);
+    const fgOrder = state.mfgOrders.find((mo) => mo.itemId === ITEM_IDS.FG_CHAIR)!;
+    expect(() => splitMfgOrder(state, fgOrder.moNo, 4, 15, 14)).toThrow(ProductionError);
   });
 });

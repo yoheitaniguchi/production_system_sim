@@ -1,5 +1,5 @@
-// 工程着手・完了・バックフラッシュ（v5-spec.md §7.3・§6.3・§6.4、design.md EXT-10）
-import type { SimulationState } from "../types";
+// 工程着手・完了・バックフラッシュ（v5-spec.md §7.3・§6.3・§6.4、design.md EXT-10・EXT-33）
+import type { MfgOrder, SimulationState } from "../types";
 import { consumeFifo, createLot } from "./lot";
 import { shippableQty } from "./shipment";
 
@@ -31,6 +31,71 @@ export function releaseMfgOrder(state: SimulationState, moNo: string): void {
   if (!mo) throw new ProductionError(`製造オーダが見つかりません: ${moNo}`);
   if (mo.status !== "FIRM") throw new ProductionError(`確定（FIRM）以外はリリースできません: ${moNo}`);
   mo.status = "RELEASED";
+}
+
+/**
+ * 製造オーダの分割（design.md EXT-33）。能力超過（山積み）を解消するため、未リリースの製造オーダを
+ * 数量で2件に分け、分割先を別の着手日／完了予定日へ振り分けられるようにする人による判断操作。
+ * 有限能力スケジューリング（自動リスケジュール）ではなく、あくまで人が手動で発動する操作であり、
+ * capacity.ts側の山積み計算・AlertBarの警告表示は状態を保持しない導出値のため、分割後は自動的に
+ * 再計算されて警告が消える（design.md §9.2の「見せるだけ」という方針とは矛盾しない）。
+ * FIRM（未リリース）のオーダのみ対象とする。リリース後は作業指示の投入数・実績が積み上がり始め、
+ * 分割時の再配分ルールが自明でなくなるため対象外とする。
+ */
+export function splitMfgOrder(
+  state: SimulationState,
+  moNo: string,
+  splitQty: number,
+  newStartDay: number,
+  newDueDay: number,
+): string {
+  const mo = state.mfgOrders.find((m) => m.moNo === moNo);
+  if (!mo) throw new ProductionError(`製造オーダが見つかりません: ${moNo}`);
+  if (mo.status !== "FIRM") throw new ProductionError(`確定（FIRM）以外は分割できません: ${moNo}`);
+  if (!Number.isInteger(splitQty) || splitQty <= 0 || splitQty >= mo.planQty) {
+    throw new ProductionError(`分割数量は1以上${mo.planQty - 1}以下の整数で指定してください: ${moNo}`);
+  }
+  if (!Number.isInteger(newStartDay) || !Number.isInteger(newDueDay) || newStartDay < 0 || newDueDay < newStartDay) {
+    throw new ProductionError(`分割後の着手日・完了予定日を正しく指定してください: ${moNo}`);
+  }
+
+  mo.planQty -= splitQty;
+  const first = firstStepNo(state, mo.itemId);
+  const firstWi = state.workInstructions.find((w) => w.moNo === moNo && w.stepNo === first);
+  if (firstWi) firstWi.inputQty = mo.planQty;
+
+  const newMoNo = `MO-${String(state.nextMoSeq).padStart(3, "0")}`;
+  state.nextMoSeq += 1;
+  const newMo: MfgOrder = {
+    moNo: newMoNo,
+    ploNo: mo.ploNo,
+    pegTo: mo.pegTo,
+    itemId: mo.itemId,
+    planQty: splitQty,
+    goodQty: 0,
+    scrapQty: 0,
+    startDay: newStartDay,
+    dueDay: newDueDay,
+    status: "FIRM",
+    bomLevel: mo.bomLevel,
+  };
+  state.mfgOrders.push(newMo);
+
+  for (const step of state.routingSteps.filter((s) => s.itemId === mo.itemId)) {
+    state.workInstructions.push({
+      moNo: newMoNo,
+      stepNo: step.stepNo,
+      workCenter: step.workCenter,
+      inputQty: step.stepNo === first ? splitQty : 0,
+      goodQty: 0,
+      scrapQty: 0,
+      actualStartDay: null,
+      actualEndDay: null,
+      status: "WAIT",
+    });
+  }
+
+  return newMoNo;
 }
 
 /**
