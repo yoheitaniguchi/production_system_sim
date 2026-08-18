@@ -76,10 +76,12 @@ production_system_sim/
     │   ├── gantt.ts           # 受注一覧ガントチャート用の表示データ計算
     │   ├── capacity.ts        # 能力計画（CRP）の山積み計算（v5-spec.md §11.1 Phase 3、design.md §9・EXT-30〜32）
     │   ├── processFlow.ts     # プロセス連携図（BPMN風）用の表示データ計算
+    │   ├── dashboard.ts       # ダッシュボード用の日次スナップショット計算（残高バーンダウン・KPI/アラート件数）
     │   ├── reducer.ts         # useReducer用reducer。actionを各モジュールへディスパッチ
     │   ├── testUtils.ts       # テスト用共通ヘルパー
     │   └── *.test.ts          # 各モジュールに対応する単体テスト
     └── components/         # 画面領域ごとのコンポーネント（design.md §5）
+        ├── DashboardPanel.tsx     # ダッシュボード：残高バーンダウンチャート（数量/金額）・KPIサマリー・アラート件数
         ├── ClockControls.tsx      # 時計操作（Day表示・次の日へ進む・リセット）
         ├── AlertBar.tsx           # 日程整合警告・未充足需要（常時再計算、専用ボタン無し）
         ├── TodayActionsBar.tsx    # 本日実行可能な操作のハイライト（クリックでタブ遷移）
@@ -146,20 +148,29 @@ npm run preview      # build成果物をGitHub Pages相当のbaseパスで動作
 さらに品目・BOM・工順（BOP）・作業区・取引先の自由登録（フルCRUD＋JSON入出力、design.md EXT-19〜EXT-27）と、
 `docs/implementation-plan.md` §6「Phase 8：能力計画（CRP、v5-spec.md §11.1ロードマップ Phase 3）」
 （`WorkCenter.capacityMinPerDay`の追加、`domain/capacity.ts`の山積み計算、`CapacityPanel.tsx`・
-`AlertBar.tsx`連携。design.md §9・EXT-30〜32）も完了。**
+`AlertBar.tsx`連携。design.md §9・EXT-30〜32）も完了。さらにダッシュボード機能
+（受注残・計画残・発注残・製造残・出荷残・在庫の残高バーンダウンチャート［数量/金額切替］、
+KPIサマリーカード、アラート件数の可視化。`domain/dashboard.ts`・`DashboardPanel.tsx`）も完了。**
 
 - `src/types.ts`：design.md §4の対応表どおり、v5仕様書の13テーブルをTypeScript型に落とした（`SimulationState`を含む）。
   Phase 2-A/2-Bで`WorkCenter`・`Lot`・`LotGenealogy`と、`ItemMaster`/`StockTxn`への拡張フィールドを追加。
-  マスタ自由登録で`MasterSnapshot`（JSON入出力・プリセット定義用）を追加
+  マスタ自由登録で`MasterSnapshot`（JSON入出力・プリセット定義用）を追加。ダッシュボード機能で
+  `DashboardSnapshot`（`BacklogMetric`・`DashboardBacklog`・`DashboardAlertCounts`・`DashboardKpiHighlights`）と
+  `SimulationState.dashboardHistory`を追加（EventLogEntryと同じく状態に保持する記録用の型）
 - `src/data/masterData.ts`：v5-spec.md §1.1（木製イス）の品目5・BOM4行・工順3行・作業区3件。
   顧客2件（design.md §6の複数受注演習用）・仕入先3件（BUY品目ごとに1件、`defaultSupplierId`で対応付け）。
   これらは`CHAIR_PRESET`として既定プリセットにまとめてあり、`createInitialState()`の戻り値は従来どおり
-- `src/domain/`：19モジュール（`pegging.ts`・`mrp.ts`・`procurement.ts`・`shipment.ts`・`production.ts`・
+- `src/domain/`：20モジュール（`pegging.ts`・`mrp.ts`・`procurement.ts`・`shipment.ts`・`production.ts`・
   `salesOrder.ts`・`schedule.ts`・`inventory.ts`・`kpi.ts`・`cost.ts`・`lot.ts`・`todayActions.ts`・
   `exerciseGuide.ts`・`processFlow.ts`・`gantt.ts`・`capacity.ts`・`masterData.ts`・`masterIntegrity.ts`・
-  `masterIO.ts`）＋`reducer.ts`（design.md §7の action一覧を実装。`createInitialState()`・
-  `simulationReducer()`）を実装済み
-- `src/domain/*.test.ts`：164件のテストで、v5-spec.md §9のTC-01〜18・TC-E1〜E3の全シナリオ、
+  `masterIO.ts`・`dashboard.ts`）＋`reducer.ts`（design.md §7の action一覧を実装。`createInitialState()`・
+  `simulationReducer()`）を実装済み。`dashboard.ts`の`computeDashboardSnapshot()`は受注残・計画残・発注残・
+  製造残・出荷残・在庫の残高（数量・金額）と、KPI/アラート件数を1回で計算する導出関数。金額換算は
+  `cost.ts`に追加した`standardCostLookup()`（ctxを1回だけ作って複数品目の原価をまとめて参照する）で
+  統一し、原価タブの算出方法と食い違わないようにしている。`reducer.ts`の`upsertDashboardSnapshot()`が
+  `applyAction()`とADVANCE_DAYの末尾で毎回呼ばれ、`state.dashboardHistory`の当日分を上書き・日を跨いだら
+  追記する（EventLogEntryと同じ「状態に保持する記録」だが、永続化はしない）
+- `src/domain/*.test.ts`：168件のテストで、v5-spec.md §9のTC-01〜18・TC-E1〜E3の全シナリオ、
   reducerの委譲・不変性・エラーハンドリング・RESET時のマスタ保持、`processFlow.ts`のフロー判定、
   §11.2の原価計算例・§11.3のロット系譜（後方/前方追跡）を検証済み。design.md §6の複数受注演習も
   TC-M1として`multiOrderExercise.test.ts`で検証済み。マスタ自由登録は`masterData.test.ts`・
@@ -170,8 +181,9 @@ npm run preview      # build成果物をGitHub Pages相当のbaseパスで動作
   300分/240分で山積み超過になること）・未着手工程がmo.planQty基準で計上されること（C2-1回帰）・
   計画負荷と実績負荷が二重計上されないこと・CANCELEDオーダが除外されることを検証済み
 - `src/App.tsx`：`useReducer`でreducerを保持し、共通シェル（`ClockControls`・`AlertBar`・`TodayActionsBar`・
-  `EventLogPanel`）と、14個のタブ（受注／計画／発注／工程／在庫／出荷／マスタ／KPI／原価／能力／ペギング追跡／
-  ロット追跡／進捗ガント／演習ガイド）を実装済み。プロセス連携図（`ProcessFlowDiagram.tsx`）はタブではなく
+  `EventLogPanel`）と、15個のタブ（ダッシュボード／受注／計画／発注／工程／在庫／出荷／マスタ／KPI／原価／能力／
+  ペギング追跡／ロット追跡／進捗ガント／演習ガイド）を実装済み。ダッシュボードは俯瞰画面としてタブの先頭
+  （既定タブ）に置いている。プロセス連携図（`ProcessFlowDiagram.tsx`）はタブではなく
   `ProcessFlowPopup.tsx`によるフローティングポップアップとして表示し、他タブを操作しながら常時参照できる
   （タブ切り替えでアンマウントされずApp直下に置く）。ヘッダー部分のドラッグで自由に移動でき（Pointer Events、
   範囲制限なし）、閉じるボタンとEscキーの両方で閉じられる。SVGは`viewBox`＋`width:100%`で追従させ、PC画面での
@@ -186,12 +198,19 @@ npm run preview      # build成果物をGitHub Pages相当のbaseパスで動作
   参照中マスタの削除ブロックをブラウザで確認済み。能力タブも、TC-04〜05の操作直後にAlertBarへ
   「作業区負荷超過：WC-ASM D+13 必要300分 / 能力240分（60分超過）」が表示されること、能力タブで
   WC-CUT（180/240・OK）／WC-ASM（300/240・超過）／WC-INS（120/240・OK）が一覧できハイライトされること
-  をブラウザで確認済み（ライト/ダーク両テーマ）
+  をブラウザで確認済み（ライト/ダーク両テーマ）。ダッシュボードタブも、受注登録→MRP実行→計画オーダ確定→
+  日を進める、の一連の操作後に残高バーンダウンチャート（数量/金額切替）へ受注残・発注残・製造残・在庫が
+  正しく反映されること、KPIサマリーカードが推移データ不足時に「―」表示になること、アラート件数バッジが
+  能力超過1件を警告色でハイライトすることを、ライト（マテリアル・クリーン）・ダーク（トゥルーブラック）
+  両テーマでブラウザ確認済み。系列色は6テーマ全てに`--chart-planned`/`--chart-purchase`/`--chart-shipment`/
+  `--chart-inventory`の4トークンを追加し（受注残=`--color-accent`、製造残=`--pf-active`を再利用）、
+  `index.css`のテーマブロックごとに定義した
 
 ## 次にやるべきこと（優先順）
 
-`docs/implementation-plan.md` §5「Phase 7（先送り事項）」・マスタ自由登録・§6「Phase 8：能力計画（CRP）」は
-全項目完了した。次の一手は特に決まっていないため、着手前にユーザーに優先順位を確認すること。候補：
+`docs/implementation-plan.md` §5「Phase 7（先送り事項）」・マスタ自由登録・§6「Phase 8：能力計画（CRP）」・
+ダッシュボード機能（残高バーンダウン・KPI/アラート件数の可視化）は全項目完了した。次の一手は特に決まって
+いないため、着手前にユーザーに優先順位を確認すること。候補：
 
 1. CI（既存ワークフローが全PRで正しく動作していることの継続的な確認）
 2. Phase 2-Bで簡略化した点（design.md EXT-18：STOCKの主キーは変更せずLOT/LOT_GENEALOGYを並行追加した）を
@@ -201,6 +220,9 @@ npm run preview      # build成果物をGitHub Pages相当のbaseパスで動作
 4. CRPで任意の拡張候補として切り出した項目（design.md §9.9）：計画オーダ（未確定）段階での山積みプレビュー、
    段取り時間、山積み表のSVGバー化
 5. その他、`docs/v5-spec.md` §11に記載のロードマップ上の拡張項目（安全在庫・ロットサイズ、複数受注の競合）の検討
+6. ダッシュボード機能で今回スコープ外にした項目：遅延ランキング（`checkSchedule()`の警告を遅延日数順に一覧化）、
+   ボトルネック作業区の推移ハイライト（山積み超過の慢性化検知）、KPIのトレンド化（現状は数値カードのみ）、
+   アラート件数バッジから該当タブへのワンクリック遷移（現状はAlertBar側の導線のみ）
 
 ## 実装時に確認すべき設計判断（design.mdの要点）
 

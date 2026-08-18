@@ -31,6 +31,28 @@ describe("simulationReducer", () => {
     expect(next.soLines).toEqual(state.soLines);
   });
 
+  it("dashboardHistoryは初期状態でday0の1件を持ち、同日の操作は上書き・ADVANCE_DAYで追記する", () => {
+    let state = createInitialState();
+    expect(state.dashboardHistory).toHaveLength(1);
+    expect(state.dashboardHistory[0].day).toBe(0);
+    expect(state.dashboardHistory[0].backlog.order.qty).toBe(0);
+
+    // 同じ日（day0）にSO_CREATEしても、履歴の件数は増えず最新値に上書きされる
+    state = dispatch(state, {
+      type: "SO_CREATE",
+      payload: { customerId: "CUST-A", itemId: ITEM_IDS.FG_CHAIR, qty: 10, requestDay: 15 },
+    });
+    expect(state.dashboardHistory).toHaveLength(1);
+    expect(state.dashboardHistory[0].day).toBe(0);
+    expect(state.dashboardHistory[0].backlog.order.qty).toBe(10);
+
+    // 日を跨ぐと履歴が1件追加される
+    state = dispatch(state, { type: "ADVANCE_DAY" });
+    expect(state.dashboardHistory).toHaveLength(2);
+    expect(state.dashboardHistory[1].day).toBe(1);
+    expect(state.dashboardHistory[1].backlog.order.qty).toBe(10);
+  });
+
   it("SO_CREATE〜SHIPMENT_SHIPまで、一連のactionが対応するドメイン関数へ正しく委譲される", () => {
     let state = createInitialState();
     state = dispatch(state, {
@@ -151,6 +173,10 @@ describe("simulationReducer", () => {
     expect(next.soLines).toHaveLength(0);
     expect(next.eventLog).toHaveLength(0);
     expect(next.items.find((i) => i.itemId === ITEM_IDS.RM_BOARD)?.leadTimeDays).toBe(3);
+    // RESETでトランザクションと共にdashboardHistoryも初期化され、day0の1件だけに戻る
+    expect(next.dashboardHistory).toHaveLength(1);
+    expect(next.dashboardHistory[0]).toMatchObject({ day: 0 });
+    expect(next.dashboardHistory[0].backlog.order.qty).toBe(0);
   });
 
   it("MASTER_UPDATE系はBOM員数・工順標準時間・取引先名称を更新できる", () => {

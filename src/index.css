@@ -27,6 +27,12 @@
   --shadow-panel: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.08);
   --panel-blur: none;
   --radius: 8px;
+  /* ダッシュボードのバーンダウンチャート系列色（DashboardPanel.tsx）。受注残=--color-accent、
+     製造残=--pf-active を再利用し、残り4系列だけ専用トークンを持つ */
+  --chart-planned: #8e24aa;
+  --chart-purchase: #ef6c00;
+  --chart-shipment: #d81b60;
+  --chart-inventory: #00838f;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -54,6 +60,10 @@
     --shadow-panel: 0 1px 3px rgba(0, 0, 0, 0.5);
     --panel-blur: none;
     --radius: 8px;
+    --chart-planned: #d0a9f5;
+    --chart-purchase: #ffa94d;
+    --chart-shipment: #ff6b9d;
+    --chart-inventory: #66d9e8;
   }
 }
 
@@ -82,6 +92,10 @@
   --shadow-panel: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.08);
   --panel-blur: none;
   --radius: 8px;
+  --chart-planned: #8e24aa;
+  --chart-purchase: #ef6c00;
+  --chart-shipment: #d81b60;
+  --chart-inventory: #00838f;
 }
 
 /* 2. ソフトペーパー（ライト） */
@@ -109,6 +123,10 @@
   --shadow-panel: 0 2px 6px rgba(120, 90, 50, 0.12);
   --panel-blur: none;
   --radius: 12px;
+  --chart-planned: #7d5ba6;
+  --chart-purchase: #4a7a8c;
+  --chart-shipment: #b5495b;
+  --chart-inventory: #5b7fa6;
 }
 
 /* 3. グラスモフィズム・ライト */
@@ -136,6 +154,10 @@
   --shadow-panel: 0 8px 32px rgba(31, 38, 135, 0.15);
   --panel-blur: blur(16px);
   --radius: 16px;
+  --chart-planned: #d6336c;
+  --chart-purchase: #f08c00;
+  --chart-shipment: #12b886;
+  --chart-inventory: #1c7ed6;
 }
 
 /* 4. ディープグレー（OLED向けダーク） */
@@ -163,6 +185,10 @@
   --shadow-panel: 0 1px 3px rgba(0, 0, 0, 0.5);
   --panel-blur: none;
   --radius: 8px;
+  --chart-planned: #d0a9f5;
+  --chart-purchase: #ffa94d;
+  --chart-shipment: #ff6b9d;
+  --chart-inventory: #66d9e8;
 }
 
 /* 5. トゥルーブラック（AMOLED向けダーク） */
@@ -190,6 +216,10 @@
   --shadow-panel: 0 0 0 1px rgba(255, 255, 255, 0.05);
   --panel-blur: none;
   --radius: 6px;
+  --chart-planned: #c77dff;
+  --chart-purchase: #ffb340;
+  --chart-shipment: #ff5d8f;
+  --chart-inventory: #ffd60a;
 }
 
 /* 6. ダークネイビー・ミッドナイト */
@@ -217,6 +247,10 @@
   --shadow-panel: 0 4px 12px rgba(0, 0, 10, 0.4);
   --panel-blur: none;
   --radius: 10px;
+  --chart-planned: #b083f0;
+  --chart-purchase: #ffb15c;
+  --chart-shipment: #ff7aa8;
+  --chart-inventory: #5cd6e8;
 }
 
 body {
@@ -1225,4 +1259,201 @@ textarea {
 .gantt__milestone--canceled {
   fill: var(--color-text-muted);
   opacity: 0.45;
+}
+
+/* ダッシュボード（DashboardPanel.tsx）。受注残=--color-accent、製造残=--pf-active を再利用し、
+   残り4系列は専用トークン（--chart-planned/--chart-purchase/--chart-shipment/--chart-inventory）を使う */
+.dashboard__kpi-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 0.75rem;
+  margin: 0.5rem 0 1rem;
+}
+
+.dashboard__kpi-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0.6rem 0.8rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+  backdrop-filter: var(--panel-blur);
+}
+
+.dashboard__kpi-card-label {
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+}
+
+.dashboard__kpi-card-value {
+  font-size: 1.3rem;
+  font-weight: 600;
+}
+
+.dashboard__spark {
+  display: block;
+}
+
+.dashboard__spark-line {
+  fill: none;
+  stroke: var(--color-accent);
+  stroke-width: 1.5;
+}
+
+.dashboard__spark-dot {
+  fill: var(--color-accent);
+}
+
+.dashboard__spark-empty {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}
+
+.dashboard__alerts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 0.5rem 0 1rem;
+}
+
+.dashboard__alert-badge {
+  padding: 0.3rem 0.7rem;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  border: 1px solid var(--border);
+}
+
+.dashboard__alert-badge--ok {
+  background: var(--ok-bg);
+  border-color: var(--pf-active);
+  color: var(--pf-active);
+}
+
+.dashboard__alert-badge--warn {
+  background: var(--warn-bg);
+  border-color: var(--warn-border);
+  color: var(--warn-border);
+}
+
+.dashboard__toolbar {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.dashboard__legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.9rem;
+  margin-bottom: 0.5rem;
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+}
+
+.dashboard__legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.dashboard__swatch {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.dashboard__swatch--order {
+  background: var(--color-accent);
+}
+
+.dashboard__swatch--planned {
+  background: var(--chart-planned);
+}
+
+.dashboard__swatch--purchase {
+  background: var(--chart-purchase);
+}
+
+.dashboard__swatch--production {
+  background: var(--pf-active);
+}
+
+.dashboard__swatch--shipment {
+  background: var(--chart-shipment);
+}
+
+.dashboard__swatch--inventory {
+  background: var(--chart-inventory);
+}
+
+.dashboard__chart-scroll {
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+}
+
+.dashboard__grid-line {
+  stroke: var(--border);
+  stroke-width: 1;
+}
+
+.dashboard__grid-label {
+  font-size: 10px;
+  fill: var(--color-text-muted);
+}
+
+.dashboard__series {
+  fill: none;
+  stroke-width: 2;
+}
+
+.dashboard__series--order {
+  stroke: var(--color-accent);
+}
+
+.dashboard__series--planned {
+  stroke: var(--chart-planned);
+}
+
+.dashboard__series--purchase {
+  stroke: var(--chart-purchase);
+}
+
+.dashboard__series--production {
+  stroke: var(--pf-active);
+}
+
+.dashboard__series--shipment {
+  stroke: var(--chart-shipment);
+}
+
+.dashboard__series--inventory {
+  stroke: var(--chart-inventory);
+}
+
+.dashboard__point--order {
+  fill: var(--color-accent);
+}
+
+.dashboard__point--planned {
+  fill: var(--chart-planned);
+}
+
+.dashboard__point--purchase {
+  fill: var(--chart-purchase);
+}
+
+.dashboard__point--production {
+  fill: var(--pf-active);
+}
+
+.dashboard__point--shipment {
+  fill: var(--chart-shipment);
+}
+
+.dashboard__point--inventory {
+  fill: var(--chart-inventory);
 }

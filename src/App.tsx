@@ -4,6 +4,7 @@ import BurgerMenu from "./components/BurgerMenu";
 import CapacityPanel from "./components/CapacityPanel";
 import ClockControls from "./components/ClockControls";
 import CostPanel from "./components/CostPanel";
+import DashboardPanel from "./components/DashboardPanel";
 import EventLogPanel from "./components/EventLogPanel";
 import ExerciseGuidePanel from "./components/ExerciseGuidePanel";
 import GanttChartPanel from "./components/GanttChartPanel";
@@ -27,6 +28,7 @@ import { loadStoredTheme, storeTheme } from "./theme";
 // プロセス連携図は他タブを操作しながら参照できるよう、タブ切り替えではなくポップアップ表示に分離している
 // （下のapp__tabs内で個別にトグルボタンとして扱う）。
 const TABS = [
+  { id: "dashboard", label: "ダッシュボード", Component: DashboardPanel },
   { id: "sales-order", label: "受注", Component: SalesOrderPanel },
   { id: "planning", label: "計画", Component: PlanningPanel },
   { id: "procurement", label: "発注", Component: ProcurementPanel },
