@@ -4,7 +4,7 @@ import { ITEM_IDS, WORK_CENTERS } from "../data/masterData";
 import { capacityOverloads, computeCapacityLoad } from "./capacity";
 import { firmAllPlannedOrders, runMRP } from "./mrp";
 import { ackPurchaseOrder, receivePurchaseOrder } from "./procurement";
-import { completeStep, releaseMfgOrder, startStep } from "./production";
+import { completeStep, releaseMfgOrder, splitMfgOrder, startStep } from "./production";
 import { cancelSalesOrder, confirmDelivery, createSalesOrder } from "./salesOrder";
 import { createTestState } from "./testUtils";
 
@@ -85,5 +85,23 @@ describe("computeCapacityLoad（design.md §9.5の計算例）", () => {
 
     expect(state.mfgOrders.every((mo) => mo.status === "CANCELED")).toBe(true);
     expect(computeCapacityLoad(state)).toHaveLength(0);
+  });
+
+  // design.md EXT-33：WC-ASMのD+13山積み超過（FG-100 x10、300分 > 240分）を、製造オーダの分割
+  // （数量を分けて別の着手日へ振り分ける人による操作）で解消できることを検証する
+  it("山積み超過のオーダを分割して別日へ振り分けると、超過が解消される", () => {
+    const { state } = firmChairOrder();
+    const fgOrder = state.mfgOrders.find((mo) => mo.itemId === ITEM_IDS.FG_CHAIR)!;
+    expect(capacityOverloads(state)).toHaveLength(1); // 分割前：WC-ASM D+13が超過
+
+    // x10（300分/D+13）を x6（180分/D+13）＋ x4（120分/D+14）に分割する。
+    // D+13：180分 ≤ 240分、D+14：120分 ≤ 240分となり、いずれも能力内に収まる
+    splitMfgOrder(state, fgOrder.moNo, 4, 14, 15);
+
+    expect(capacityOverloads(state)).toHaveLength(0);
+    const load = computeCapacityLoad(state);
+    const byKey = Object.fromEntries(load.map((e) => [`${e.workCenter}@${e.day}`, e]));
+    expect(byKey[`${WORK_CENTERS.ASM}@13`]).toMatchObject({ plannedMin: 180, capacityMin: 240 });
+    expect(byKey[`${WORK_CENTERS.ASM}@14`]).toMatchObject({ plannedMin: 120, capacityMin: 240 });
   });
 });

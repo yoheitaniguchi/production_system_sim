@@ -14,8 +14,15 @@ interface CompleteDraft {
   scrapQty: number;
 }
 
+interface SplitDraft {
+  splitQty: number;
+  newStartDay: number;
+  newDueDay: number;
+}
+
 function ProductionPanel({ state, dispatch }: ProductionPanelProps) {
   const [completeDrafts, setCompleteDrafts] = useState<Record<string, CompleteDraft>>({});
+  const [splitDrafts, setSplitDrafts] = useState<Record<string, SplitDraft>>({});
 
   const itemName = (id: string) => state.items.find((i) => i.itemId === id)?.name ?? id;
 
@@ -29,6 +36,18 @@ function ProductionPanel({ state, dispatch }: ProductionPanelProps) {
       ...prev,
       [draftKey(moNo, stepNo)]: { ...draftFor(moNo, stepNo, inputQty), ...patch },
     }));
+  };
+
+  // 能力超過（山積み）を解消するための分割操作（design.md EXT-33）。既定値は「半分を翌日以降へ」
+  const splitDraftFor = (mo: SimulationState["mfgOrders"][number]): SplitDraft =>
+    splitDrafts[mo.moNo] ?? {
+      splitQty: Math.max(1, Math.floor(mo.planQty / 2)),
+      newStartDay: mo.startDay + 1,
+      newDueDay: mo.dueDay + 1,
+    };
+
+  const setSplitDraft = (mo: SimulationState["mfgOrders"][number], patch: Partial<SplitDraft>) => {
+    setSplitDrafts((prev) => ({ ...prev, [mo.moNo]: { ...splitDraftFor(mo), ...patch } }));
   };
 
   return (
@@ -59,6 +78,82 @@ function ProductionPanel({ state, dispatch }: ProductionPanelProps) {
                   </button>
                 )}
               </div>
+
+              {mo.status === "FIRM" && mo.planQty >= 2 && (
+                <div className="panel__toolbar" title="能力超過（山積み）の解消などのため、数量を分けて別の着手日へ振り分ける">
+                  {(() => {
+                    const draft = splitDraftFor(mo);
+                    const splitInvalid =
+                      !Number.isInteger(draft.splitQty) ||
+                      draft.splitQty <= 0 ||
+                      draft.splitQty >= mo.planQty ||
+                      draft.newDueDay < draft.newStartDay;
+                    return (
+                      <>
+                        <label>
+                          分割数量
+                          <input
+                            type="number"
+                            min={1}
+                            max={mo.planQty - 1}
+                            className="panel__inline-input"
+                            value={draft.splitQty}
+                            onChange={(e) => setSplitDraft(mo, { splitQty: Number(e.target.value) })}
+                          />
+                        </label>
+                        <label>
+                          分割先の着手日 D+
+                          <input
+                            type="number"
+                            min={0}
+                            className="panel__inline-input"
+                            value={draft.newStartDay}
+                            onChange={(e) => setSplitDraft(mo, { newStartDay: Number(e.target.value) })}
+                          />
+                        </label>
+                        <label>
+                          分割先の完了予定日 D+
+                          <input
+                            type="number"
+                            min={0}
+                            className="panel__inline-input"
+                            value={draft.newDueDay}
+                            onChange={(e) => setSplitDraft(mo, { newDueDay: Number(e.target.value) })}
+                          />
+                        </label>
+                        <button
+                          type="button"
+                          className={splitInvalid ? undefined : "panel__btn--primary"}
+                          disabled={splitInvalid}
+                          onClick={() => {
+                            dispatch({
+                              type: "MFG_SPLIT",
+                              payload: {
+                                moNo: mo.moNo,
+                                splitQty: draft.splitQty,
+                                newStartDay: draft.newStartDay,
+                                newDueDay: draft.newDueDay,
+                              },
+                            });
+                            setSplitDrafts((prev) => {
+                              const next = { ...prev };
+                              delete next[mo.moNo];
+                              return next;
+                            });
+                          }}
+                        >
+                          分割
+                        </button>
+                        {splitInvalid && (
+                          <span className="panel__hint-inline">
+                            分割数量は1〜{mo.planQty - 1}、完了予定日は着手日以降にしてください
+                          </span>
+                        )}
+                      </>
+                    );
+                  })()}
+                </div>
+              )}
 
               <div className="panel__table-scroll">
               <table className="panel__table">

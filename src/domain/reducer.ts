@@ -41,7 +41,7 @@ import {
 import { assertSnapshotUsable } from "./masterIO";
 import { firmAllPlannedOrders, runMRP } from "./mrp";
 import { ackPurchaseOrder, receivePurchaseOrder } from "./procurement";
-import { completeStep, releaseMfgOrder, startStep } from "./production";
+import { completeStep, releaseMfgOrder, splitMfgOrder, startStep } from "./production";
 import { cancelSalesOrder, confirmDelivery, createSalesOrder, type CreateSalesOrderInput } from "./salesOrder";
 import { allocateShipment, cancelShipmentAllocation, shipOut } from "./shipment";
 
@@ -54,6 +54,10 @@ export type SimulationAction =
   | { type: "PO_ACK"; payload: { poNo: string; confirmDay: number } }
   | { type: "PO_RECEIVE"; payload: { poNo: string } }
   | { type: "MFG_RELEASE"; payload: { moNo: string } }
+  | {
+      type: "MFG_SPLIT";
+      payload: { moNo: string; splitQty: number; newStartDay: number; newDueDay: number };
+    }
   | { type: "WI_START"; payload: { moNo: string; stepNo: number } }
   | { type: "WI_COMPLETE"; payload: { moNo: string; stepNo: number; goodQty: number; scrapQty: number } }
   | { type: "STOCK_ADJUST"; payload: { itemId: string; deltaQty: number } }
@@ -260,6 +264,18 @@ export function simulationReducer(state: SimulationState, action: SimulationActi
       return applyAction(state, (next) => {
         releaseMfgOrder(next, action.payload.moNo);
         return `${action.payload.moNo} をリリースした`;
+      });
+
+    case "MFG_SPLIT":
+      return applyAction(state, (next) => {
+        const newMoNo = splitMfgOrder(
+          next,
+          action.payload.moNo,
+          action.payload.splitQty,
+          action.payload.newStartDay,
+          action.payload.newDueDay,
+        );
+        return `${action.payload.moNo} を分割し ${newMoNo}（x${action.payload.splitQty}、着手日 D+${action.payload.newStartDay}）を新設した`;
       });
 
     case "WI_START":
