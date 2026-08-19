@@ -48,7 +48,8 @@ function LotTracePanel({ state }: LotTracePanelProps) {
             <option value="">選択してください</option>
             {options.map((lot) => (
               <option key={lot.lotNo} value={lot.lotNo}>
-                {lot.lotNo}（{itemName(lot.itemId)} 残{lot.qty} / 起票元{lot.sourceRef} / D+{lot.createdDay}）
+                {lot.lotNo}（{itemName(lot.itemId)} 元{lot.originalQty} 残{lot.qty} / 起票元{lot.sourceRef} / D+
+                {lot.createdDay}）
               </option>
             ))}
           </select>

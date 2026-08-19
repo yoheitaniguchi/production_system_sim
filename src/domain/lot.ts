@@ -3,7 +3,9 @@
 // ペギングとロット系譜は別物（v5-spec.md §11.3）。ペギング（domain/pegging.ts）は「何のために作るか」
 // という計画上の意図、ロット系譜は「実際に何を使ったか」という事実。既存のSTOCK（品目単位のfungibleな
 // 残高、design.md §4）は変更せず、実際の入出庫（RCV/PRD/ADJ+で生成、ISS/SHP/ADJ-で消費）と連動する形で
-// ロット台帳を並行して維持する（design.md EXT-18）。
+// ロット台帳を並行して維持する（design.md EXT-18）。この並行台帳は在庫モデルの厳密化検討（design.md
+// EXT-18追記）の結論として維持を継続した設計であり、実際の受払を経由する限り「品目ごとのLot.qty合計 ===
+// Stock.onHand」の不変条件が常に成り立つ（lot.test.tsの整合性検証テストで確認）。
 //
 // テストコードが`receivePurchaseOrder()`等のドメイン関数を経由せず`state.stocks`へ在庫を直接注入している
 // 箇所（production.test.ts等）では、注入した数量に対応するLotが存在しない。この「ロット台帳に基づかない
@@ -16,6 +18,7 @@ export function createLot(state: SimulationState, itemId: string, qty: number, d
     lotNo: `LOT-${String(state.nextLotSeq).padStart(4, "0")}`,
     itemId,
     qty,
+    originalQty: qty,
     createdDay: day,
     sourceRef,
   };
