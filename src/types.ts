@@ -174,11 +174,16 @@ export interface StockTxn {
   lotNo?: string;
 }
 
-/** ロットの実体（v5-spec.md §11.3 Phase 2-B）。qtyはFIFO消費のたびに減る残数量 */
+/**
+ * ロットの実体（v5-spec.md §11.3 Phase 2-B）。qtyはFIFO消費のたびに減る残数量、
+ * originalQtyは入庫・完成入庫時点の元数量（不変。design.md EXT-18が「別途必要になった場合の対応」
+ * として予告していた拡張）
+ */
 export interface Lot {
   lotNo: string;
   itemId: string;
   qty: number;
+  originalQty: number;
   createdDay: number;
   /** 入庫元PO番号／完成入庫元MO番号／棚卸調整なら"ADJ" */
   sourceRef: string;
