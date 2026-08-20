@@ -273,6 +273,9 @@ design.md EXT-18追記。STOCKの主キー変更は見送りと結論）は全�
 - レビュー専用のサブエージェントを用意している：
   - `logic-reviewer`（`.claude/agents/logic-reviewer.md`）：`domain/`配下の実装とテストが`v5-spec.md`・`design.md`の仕様と矛盾していないかの確認
   - `ux-reviewer`（`.claude/agents/ux-reviewer.md`）：UI/UXの操作性・アクセシビリティ・テーマ整合性のレビュー
+  - `issue-spec-reviewer`（`.claude/agents/issue-spec-reviewer.md`）：Issue下書きの目的・効果の明確さ／要件の
+    分解粒度／開発方針との整合性／費用対効果／テンプレート必須項目の充足を確認し、改善済み下書きを生成する
+    （`issue-workflow`のIssue下書き作成直後に自動で使う）
 - Issue駆動開発向けのSkillも用意している：`issue-workflow`（`.claude/skills/issue-workflow/SKILL.md`）：
   要望・要件のIssue化からPR作成（`Closes #`連携）・マージ後の対応までの手順を定型化。詳細は
   `docs/issue-workflow.md`参照
