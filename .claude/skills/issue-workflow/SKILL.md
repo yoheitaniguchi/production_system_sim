@@ -1,6 +1,6 @@
 ---
 name: issue-workflow
-description: 要望・要件をGitHub Issueとして起票し、そのIssueを元にブランチ作成・実装・PR作成（Closes #連携）までを定型手順で進める。ユーザーが「Issueにまとめて」「Issueを元にPRを作って」等、Issue駆動での開発を依頼したときに使う。
+description: 要望・要件をGitHub Issueとして起票し、そのIssueを元にブランチ作成・実装・PR作成（Closes #連携）までを定型手順で進める。ユーザーが「Issueにまとめて」「Issueを元にPRを作って」「複数のIssueを並行して実装して」等、Issue駆動での開発を依頼したときに使う。
 ---
 
 要望・要件をIssue駆動で開発するときは、以下の手順に従う。詳細な背景・理由づけは
@@ -25,3 +25,8 @@ description: 要望・要件をGitHub Issueとして起票し、そのIssueを�
    Issueと自動リンクする。CI（型チェック・ビルド・`npm test`）がgreenであることを確認する
 9. **マージ後**：Issueが自動クローズされたことを確認し、`CLAUDE.md`「現在の実装状況」
    「次にやるべきこと」の更新要否を判断する
+
+複数のIssueを同時並行で実装するよう依頼された場合は、5（ブランチ作成）に入る前に
+`docs/issue-workflow.md` §10の手順に従う：対象Issueのfootprint（影響しそうなファイル）を確認し、
+重ならないIssueだけを同時並行にする。並行実行するIssueは、別ブランチ・別セッション（`create_session`）
+または別worktreeなど、作業領域を分離すること。
