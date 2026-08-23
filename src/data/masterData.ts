@@ -3,7 +3,7 @@
 // マスタが自由に登録できるようになった後も、この木製イスは「既定プリセット」として維持する
 // （design.md EXT-26）。v5-spec.md §9のTC-01〜18・演習ガイド・既存の自動テストはすべて
 // このプリセットを前提にしており、createInitialState()の戻り値は従来どおりである。
-import type { BomLine, Customer, ItemMaster, MasterSnapshot, RoutingStep, Supplier, WorkCenter } from "../types";
+import type { BomLine, Customer, ItemMaster, MasterPreset, MasterSnapshot, RoutingStep, Supplier, WorkCenter } from "../types";
 
 export const ITEM_IDS = {
   FG_CHAIR: "FG-100",
@@ -104,3 +104,125 @@ export const CHAIR_PRESET: MasterSnapshot = {
   customers: initialCustomers,
   suppliers: initialSuppliers,
 };
+
+// 自転車プリセット（design.md EXT-34）：木製イス（2階層BOM）とは別業種・4階層BOMの題材。
+// multiLevelBom.test.tsが検証している「FG→SA→SA→RM」の4階層構造を土台に、実在感のある品目名を当てた。
+//   自転車（内製・LT2・売価15,000）
+//     ├─ 車輪ASSY（内製・LT1）×2
+//     │    └─ リムASSY（内製・LT1）×1
+//     │         └─ アルミリム材（購買・LT3・単価300）×1
+//     └─ フレーム（購買・LT3・単価4,000）×1
+export const BIKE_ITEM_IDS = {
+  FG_BIKE: "FG-700",
+  SA_WHEEL: "SA-710",
+  SA_RIM: "SA-720",
+  RM_ALUM: "RM-730",
+  PT_FRAME: "PT-740",
+} as const;
+
+export const BIKE_WORK_CENTERS = {
+  WELD: "WC-WELD",
+  ASSM: "WC-BASM",
+  INSP: "WC-BINS",
+} as const;
+
+export const BIKE_SUPPLIER_IDS = {
+  RM_ALUM: "SUP-RM730",
+  PT_FRAME: "SUP-PT740",
+} as const;
+
+// 売価15,000円は、標準原価9,600円（rollupCost()の積上げ：リムASSY=アルミリム材300+加工費600=900、
+// 車輪ASSY=リムASSY900+加工費800=1,700、自転車=車輪ASSY1,700×2+フレーム4,000+加工費2,200=9,600。
+// bicyclePreset.test.tsで固定値検証済み）に対し約36%の粗利率で仮置きした値
+// （design.md EXT-15と同じ位置付け。マスタ画面でいつでも変更可）
+export const bikeItems: ItemMaster[] = [
+  { itemId: BIKE_ITEM_IDS.FG_BIKE, name: "自転車", makeBuy: "MAKE", leadTimeDays: 2, salesPrice: 15000 },
+  { itemId: BIKE_ITEM_IDS.SA_WHEEL, name: "車輪ASSY", makeBuy: "MAKE", leadTimeDays: 1 },
+  { itemId: BIKE_ITEM_IDS.SA_RIM, name: "リムASSY", makeBuy: "MAKE", leadTimeDays: 1 },
+  {
+    itemId: BIKE_ITEM_IDS.RM_ALUM,
+    name: "アルミリム材",
+    makeBuy: "BUY",
+    leadTimeDays: 3,
+    defaultSupplierId: BIKE_SUPPLIER_IDS.RM_ALUM,
+    purchasePrice: 300,
+  },
+  {
+    itemId: BIKE_ITEM_IDS.PT_FRAME,
+    name: "フレーム",
+    makeBuy: "BUY",
+    leadTimeDays: 3,
+    defaultSupplierId: BIKE_SUPPLIER_IDS.PT_FRAME,
+    purchasePrice: 4000,
+  },
+];
+
+export const bikeBom: BomLine[] = [
+  { parentItemId: BIKE_ITEM_IDS.FG_BIKE, childItemId: BIKE_ITEM_IDS.SA_WHEEL, qtyPer: 2 },
+  { parentItemId: BIKE_ITEM_IDS.FG_BIKE, childItemId: BIKE_ITEM_IDS.PT_FRAME, qtyPer: 1 },
+  { parentItemId: BIKE_ITEM_IDS.SA_WHEEL, childItemId: BIKE_ITEM_IDS.SA_RIM, qtyPer: 1 },
+  { parentItemId: BIKE_ITEM_IDS.SA_RIM, childItemId: BIKE_ITEM_IDS.RM_ALUM, qtyPer: 1 },
+];
+
+export const bikeRoutingSteps: RoutingStep[] = [
+  { itemId: BIKE_ITEM_IDS.SA_RIM, stepNo: 10, workCenter: BIKE_WORK_CENTERS.WELD, stdTimeMin: 15 },
+  { itemId: BIKE_ITEM_IDS.SA_WHEEL, stepNo: 10, workCenter: BIKE_WORK_CENTERS.ASSM, stdTimeMin: 20 },
+  { itemId: BIKE_ITEM_IDS.FG_BIKE, stepNo: 10, workCenter: BIKE_WORK_CENTERS.ASSM, stdTimeMin: 40 },
+  { itemId: BIKE_ITEM_IDS.FG_BIKE, stepNo: 20, workCenter: BIKE_WORK_CENTERS.INSP, stdTimeMin: 15 },
+];
+
+export const bikeCustomers: Customer[] = [
+  { customerId: "CUST-1", name: "得意先1" },
+  { customerId: "CUST-2", name: "得意先2" },
+];
+
+export const bikeSuppliers: Supplier[] = [
+  { supplierId: BIKE_SUPPLIER_IDS.RM_ALUM, name: "アルミ材仕入先" },
+  { supplierId: BIKE_SUPPLIER_IDS.PT_FRAME, name: "フレーム仕入先" },
+];
+
+export const bikeWorkCenters: WorkCenter[] = [
+  { workCenter: BIKE_WORK_CENTERS.WELD, ratePerHour: 2400, capacityMinPerDay: 480 },
+  { workCenter: BIKE_WORK_CENTERS.ASSM, ratePerHour: 2400, capacityMinPerDay: 480 },
+  { workCenter: BIKE_WORK_CENTERS.INSP, ratePerHour: 2400, capacityMinPerDay: 480 },
+];
+
+/** 自転車の第2プリセット（design.md EXT-34）。木製イスとは別業種・4階層BOMの題材 */
+export const BICYCLE_PRESET: MasterSnapshot = {
+  version: 1,
+  items: bikeItems,
+  bom: bikeBom,
+  routingSteps: bikeRoutingSteps,
+  workCenters: bikeWorkCenters,
+  customers: bikeCustomers,
+  suppliers: bikeSuppliers,
+};
+
+/** 既定プリセットの一覧（design.md EXT-34）。マスタ画面のプリセット切替ドロップダウン・MASTER_RESET_TO_PRESETが参照する */
+export const DEFAULT_PRESET_ID = "CHAIR";
+
+export const MASTER_PRESETS: readonly MasterPreset[] = [
+  { id: "CHAIR", label: "木製イス", snapshot: CHAIR_PRESET },
+  { id: "BICYCLE", label: "自転車（4階層BOM）", snapshot: BICYCLE_PRESET },
+];
+
+/**
+ * 現在のマスタ（品目コードの集合）がいずれかのプリセットと一致するかを判定する（design.md EXT-34）。
+ * `exerciseGuide.isPresetMaster()`と同じ「品目コード集合の一致」判定を、プリセット一覧全体に広げたもの。
+ * MasterIOToolbarの「現在のプリセット」表示が、切替・JSONインポート・個別のマスタCRUD編集のいずれの後でも
+ * 専用の状態を持たずにstateから都度正しく導出できるようにする（一致するプリセットが無ければnull）
+ */
+export function resolveActivePresetId(state: { items: Pick<ItemMaster, "itemId">[] }): string | null {
+  const currentIds = new Set(state.items.map((i) => i.itemId));
+  const match = MASTER_PRESETS.find(
+    (p) => p.snapshot.items.length === currentIds.size && p.snapshot.items.every((i) => currentIds.has(i.itemId)),
+  );
+  return match?.id ?? null;
+}
+
+/** presetIdからプリセット定義を引く。未知のIDは既定プリセット（木製イス）へフォールバックする */
+export function resolveMasterPreset(presetId: string | undefined): MasterPreset {
+  return (
+    MASTER_PRESETS.find((p) => p.id === presetId) ?? MASTER_PRESETS.find((p) => p.id === DEFAULT_PRESET_ID)!
+  );
+}

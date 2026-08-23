@@ -1,6 +1,6 @@
 // マスタのJSON入出力（design.md EXT-26）
 import { describe, expect, it } from "vitest";
-import { CHAIR_PRESET, ITEM_IDS } from "../data/masterData";
+import { BICYCLE_PRESET, BIKE_ITEM_IDS, CHAIR_PRESET, ITEM_IDS } from "../data/masterData";
 import { exportMasterSnapshot, MasterIOError, parseMasterSnapshot, serializeMasterSnapshot } from "./masterIO";
 import { createInitialState, simulationReducer } from "./reducer";
 import { createTestState } from "./testUtils";
@@ -174,7 +174,7 @@ describe("reducer経由の取り込み", () => {
     expect(state.eventLog.at(-1)?.message).toContain("マスタをインポートした");
   });
 
-  it("MASTER_RESET_TO_PRESETで木製イスへ戻せる", () => {
+  it("MASTER_RESET_TO_PRESETで木製イスへ戻せる（ペイロード省略時は既定プリセット）", () => {
     let state = createInitialState();
     state = simulationReducer(state, { type: "MASTER_DELETE_BOM_LINE", payload: { parentItemId: ITEM_IDS.FG_CHAIR, childItemId: ITEM_IDS.PT_SCREW } });
     expect(state.bom).toHaveLength(3);
@@ -182,6 +182,34 @@ describe("reducer経由の取り込み", () => {
     state = simulationReducer(state, { type: "MASTER_RESET_TO_PRESET" });
     expect(state.bom).toHaveLength(4);
     expect(state.items).toHaveLength(5);
+  });
+
+  it("MASTER_RESET_TO_PRESETはpresetIdでプリセットを選べる（design.md EXT-34）", () => {
+    let state = createInitialState();
+
+    state = simulationReducer(state, { type: "MASTER_RESET_TO_PRESET", payload: { presetId: "BICYCLE" } });
+    expect(state.items.map((i) => i.itemId).sort()).toEqual(BICYCLE_PRESET.items.map((i) => i.itemId).sort());
+    expect(state.bom).toEqual(BICYCLE_PRESET.bom);
+    expect(state.routingSteps).toEqual(BICYCLE_PRESET.routingSteps);
+    expect(state.workCenters).toEqual(BICYCLE_PRESET.workCenters);
+    expect(state.customers).toEqual(BICYCLE_PRESET.customers);
+    expect(state.suppliers).toEqual(BICYCLE_PRESET.suppliers);
+    expect(state.items.some((i) => i.itemId === BIKE_ITEM_IDS.FG_BIKE)).toBe(true);
+    expect(state.eventLog.at(-1)?.message).toContain("自転車");
+
+    // CHAIRを明示指定すれば木製イスへ戻せる（既存の「既定プリセットに戻す」ボタンの挙動）
+    state = simulationReducer(state, { type: "MASTER_RESET_TO_PRESET", payload: { presetId: "CHAIR" } });
+    expect(state.items).toHaveLength(5);
+    expect(state.items.some((i) => i.itemId === ITEM_IDS.FG_CHAIR)).toBe(true);
+  });
+
+  it("未知のpresetIdは既定プリセット（木製イス）へフォールバックする", () => {
+    let state = createInitialState();
+    state = simulationReducer(state, { type: "MASTER_RESET_TO_PRESET", payload: { presetId: "BICYCLE" } });
+
+    state = simulationReducer(state, { type: "MASTER_RESET_TO_PRESET", payload: { presetId: "NO-SUCH-PRESET" } });
+    expect(state.items).toHaveLength(5);
+    expect(state.items.some((i) => i.itemId === ITEM_IDS.FG_CHAIR)).toBe(true);
   });
 
   it("取り込めないスナップショットはエラーログに残り、状態は変わらない", () => {
