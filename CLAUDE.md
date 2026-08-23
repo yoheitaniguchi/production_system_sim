@@ -239,13 +239,33 @@ label／select-name（マスタタブのフォーム部品、critical）に該�
 既存の`test`ジョブ（型チェック・ビルド・vitest）とは独立しているため他ジョブやデプロイ（`deploy.yml`は
 `a11y`ジョブを参照しない）には影響しない**
 
+Issue #63のフォローアップとして起票された、ほぼ全タブのcolor-contrast違反（WCAG AA未達）の解消（Issue #72）
+も完了した。実行結果から根本原因を3つに整理した：①`.panel__empty`・`.panel__hint`・`.process-flow-legend`・
+`.pegging-tree__txns`・`.event-log__deltas`・`.event-log__empty`がテーマトークンを使わず literal な
+`color: gray`を直書きしていた（既存の`--color-text-muted`に統一）。②`.app__tab--active`（太字）が
+`--color-accent`（#1976d2）を`--color-bg`上で使っており、material-lightテーマでのみコントラスト比4.28
+（要件4.5未達）だった（`--color-accent`を`#1565c0`に変更。`:root`のライトデフォルトと
+`[data-theme="material-light"]`のみ、他4テーマは今回検証対象外のため未変更）。③本来「枠線」用途の
+`--warn-border`が、警告背景（`--warn-bg`）やパネル背景（`--color-surface`）上の「テキスト色」としても
+再利用されており、特にダークテーマでコントラスト不足だった（`.guide__expected`・
+`.capacity-panel__row--overload td:last-child`・`.master__note--warn`・`.gantt__status-badge--delayed`・
+`.dashboard__alert-badge--warn`の5箇所）。新規トークン`--warn-text`を6テーマ全てに追加し（値はWCAGの
+相対輝度式で4.5:1を満たすよう算出。material-light: #8a6100、warm-paper/glass-light: #6b4a00、
+deep-gray/true-black/midnight-blue: #ffca28）、上記5箇所を置き換えた（`--warn-border`自体は枠線用途で
+そのまま残す）。`npm run test:a11y`で修正後は両テーマともcolor-contrast由来のserious違反が0件になった
+ことを確認済み。マスタタブのlabel／select-name違反（critical）はIssue #72のスコープ外（Issue #63が
+起票時に個別Issue化する方針とした別問題）として残っており、`a11y`ジョブは当面その分のみでred（failure）
+のままになる想定
+
 ## 次にやるべきこと（優先順）
 
 `docs/implementation-plan.md` §5「Phase 7（先送り事項）」・マスタ自由登録・§6「Phase 8：能力計画（CRP）」・
 ダッシュボード機能（残高バーンダウン・KPI/アラート件数の可視化）・在庫モデルの厳密化検討（旧②、
 design.md EXT-18追記。STOCKの主キー変更は見送りと結論）・アクセシビリティの自動テスト化（Issue #63、
-CI基盤の新設。検出された実違反の修正は個別Issue化して別途対応）は全項目完了した。次の一手は特に決まって
-いないため、着手前にユーザーに優先順位を確認すること。
+CI基盤の新設。検出された実違反の修正は個別Issue化して別途対応）・ほぼ全タブのcolor-contrast違反の解消
+（Issue #72）は全項目完了した。次の一手は特に決まっていないため、着手前にユーザーに優先順位を確認すること。
+なお`a11y`ジョブはマスタタブのlabel／select-name違反（critical、Issue #63で個別Issue化する方針とした
+別問題）が未着手のため引き続きredである（別途Issue化して対応する候補になる）。
 
 以下は既存の先送り事項（マスタ自由登録・CRP・v5-spec.md §11ロードマップ・ダッシュボード）に費用対効果を
 付記した候補と、現状の実装（20ドメインモジュール・15画面）を踏まえて新規に提案する候補を、
