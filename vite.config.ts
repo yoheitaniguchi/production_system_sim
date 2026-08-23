@@ -1,4 +1,4 @@
-import { defineConfig } from "vite";
+import { configDefaults, defineConfig } from "vitest/config";
 import react from "@vitejs/plugin-react";
 
 // GitHub Pages（プロジェクトサイト）は https://<owner>.github.io/<repo>/ 配下で配信されるため、
@@ -9,4 +9,9 @@ import react from "@vitejs/plugin-react";
 export default defineConfig(({ command, isPreview }) => ({
   plugins: [react()],
   base: process.env.BASE_PATH ?? (command === "build" || isPreview ? "/production_system_sim/" : "/"),
+  // e2e/配下はPlaywright専用（playwright.config.ts参照）。ファイル名が*.spec.tsのためvitestの
+  // デフォルトincludeと衝突するので明示的に除外する
+  test: {
+    exclude: [...configDefaults.exclude, "e2e/**"],
+  },
 }));
