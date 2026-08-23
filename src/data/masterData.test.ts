@@ -1,11 +1,14 @@
 import { describe, expect, it } from "vitest";
 import {
+  BICYCLE_PRESET,
+  BIKE_ITEM_IDS,
   initialBom,
   initialCustomers,
   initialItems,
   initialRoutingSteps,
   initialSuppliers,
   ITEM_IDS,
+  resolveActivePresetId,
 } from "./masterData";
 
 describe("初期マスタデータ（v5-spec.md §1.1：木製イス）", () => {
@@ -61,5 +64,20 @@ describe("初期マスタデータ（v5-spec.md §1.1：木製イス）", () => 
     expect(qtyPer(ITEM_IDS.FG_CHAIR, ITEM_IDS.PT_LEG)).toBe(4);
     expect(qtyPer(ITEM_IDS.FG_CHAIR, ITEM_IDS.PT_SCREW)).toBe(8);
     expect(qtyPer(ITEM_IDS.SA_SEAT, ITEM_IDS.RM_BOARD)).toBe(1);
+  });
+});
+
+describe("resolveActivePresetId（design.md EXT-34：現在のマスタがどのプリセットと一致するか）", () => {
+  it("木製イスの品目集合はCHAIRと一致する", () => {
+    expect(resolveActivePresetId({ items: initialItems })).toBe("CHAIR");
+  });
+
+  it("自転車の品目集合はBICYCLEと一致する", () => {
+    expect(resolveActivePresetId({ items: BICYCLE_PRESET.items })).toBe("BICYCLE");
+  });
+
+  it("どのプリセットとも一致しない品目集合はnullを返す（マスタCRUD編集後の状態を想定）", () => {
+    expect(resolveActivePresetId({ items: [...initialItems, { itemId: "FG-999" }] })).toBeNull();
+    expect(resolveActivePresetId({ items: [{ itemId: BIKE_ITEM_IDS.FG_BIKE }] })).toBeNull();
   });
 });

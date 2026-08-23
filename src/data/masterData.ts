@@ -206,6 +206,20 @@ export const MASTER_PRESETS: readonly MasterPreset[] = [
   { id: "BICYCLE", label: "自転車（4階層BOM）", snapshot: BICYCLE_PRESET },
 ];
 
+/**
+ * 現在のマスタ（品目コードの集合）がいずれかのプリセットと一致するかを判定する（design.md EXT-34）。
+ * `exerciseGuide.isPresetMaster()`と同じ「品目コード集合の一致」判定を、プリセット一覧全体に広げたもの。
+ * MasterIOToolbarの「現在のプリセット」表示が、切替・JSONインポート・個別のマスタCRUD編集のいずれの後でも
+ * 専用の状態を持たずにstateから都度正しく導出できるようにする（一致するプリセットが無ければnull）
+ */
+export function resolveActivePresetId(state: { items: Pick<ItemMaster, "itemId">[] }): string | null {
+  const currentIds = new Set(state.items.map((i) => i.itemId));
+  const match = MASTER_PRESETS.find(
+    (p) => p.snapshot.items.length === currentIds.size && p.snapshot.items.every((i) => currentIds.has(i.itemId)),
+  );
+  return match?.id ?? null;
+}
+
 /** presetIdからプリセット定義を引く。未知のIDは既定プリセット（木製イス）へフォールバックする */
 export function resolveMasterPreset(presetId: string | undefined): MasterPreset {
   return (

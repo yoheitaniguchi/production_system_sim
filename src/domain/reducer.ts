@@ -396,7 +396,9 @@ export function simulationReducer(state: SimulationState, action: SimulationActi
 
     case "MASTER_RESET_TO_PRESET": {
       const preset = resolveMasterPreset(action.payload?.presetId);
-      return applyMasterSnapshot(state, preset.snapshot, `マスタをプリセット（${preset.label}）に戻した`);
+      // プリセット名自体に全角括弧を含むものがある（例：「自転車（4階層BOM）」）ため、
+      // 二重括弧で読みにくくならないよう鉤括弧で囲む
+      return applyMasterSnapshot(state, preset.snapshot, `マスタをプリセット「${preset.label}」に戻した`);
     }
 
     default:

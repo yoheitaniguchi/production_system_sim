@@ -3,7 +3,7 @@
 // バックエンドが無いので、エクスポートはBlobのダウンロード、インポートはFileReaderで行う。
 // 取り込み・プリセット復元はどちらも全トランザクションを初期化するため、必ず確認を挟む。
 import { useRef, useState } from "react";
-import { DEFAULT_PRESET_ID, MASTER_PRESETS } from "../../data/masterData";
+import { DEFAULT_PRESET_ID, MASTER_PRESETS, resolveActivePresetId } from "../../data/masterData";
 import { MasterIOError, parseMasterSnapshot, serializeMasterSnapshot } from "../../domain/masterIO";
 import type { SimulationAction } from "../../domain/reducer";
 import type { SimulationState } from "../../types";
@@ -19,6 +19,10 @@ function MasterIOToolbar({ state, dispatch }: Props) {
   const [selectedPresetId, setSelectedPresetId] = useState<string>(DEFAULT_PRESET_ID);
 
   const hasTransactions = state.salesOrders.length > 0 || state.stockTxns.length > 0;
+  // 「現在どのプリセットが読み込まれているか」は専用の状態を持たず、品目コード集合からstateの都度導出する。
+  // JSONインポートや個別のマスタCRUD編集の後でも自動的に正しくなる（design.md EXT-34）
+  const activePresetId = resolveActivePresetId(state);
+  const activePreset = MASTER_PRESETS.find((p) => p.id === activePresetId);
 
   const handleExport = () => {
     const blob = new Blob([serializeMasterSnapshot(state)], { type: "application/json" });
@@ -49,10 +53,17 @@ function MasterIOToolbar({ state, dispatch }: Props) {
   const handleSwitchPreset = () => {
     const preset = MASTER_PRESETS.find((p) => p.id === selectedPresetId);
     if (!preset) return;
+    // 既定プリセット（木製イス）以外へ切り替えると演習ガイドの自動判定が使えなくなる（design.md EXT-27・EXT-34）
+    // ため、切替の入口であるこの確認ダイアログでその旨も伝える
+    const guideCaveat =
+      preset.id === DEFAULT_PRESET_ID ? "" : " 既定プリセット（木製イス）以外では演習ガイドの自動判定が使用できません。";
     if (
-      window.confirm(`マスタをプリセット（${preset.label}）に切り替えます。トランザクションはすべて初期化されます。`)
+      window.confirm(
+        `マスタをプリセット「${preset.label}」に切り替えます。トランザクションはすべて初期化されます。${guideCaveat}`,
+      )
     ) {
       dispatch({ type: "MASTER_RESET_TO_PRESET", payload: { presetId: preset.id } });
+      setSelectedPresetId(preset.id);
     }
   };
 
@@ -64,19 +75,8 @@ function MasterIOToolbar({ state, dispatch }: Props) {
       <button type="button" onClick={() => fileInputRef.current?.click()}>
         JSONをインポート
       </button>
-      <button
-        type="button"
-        onClick={() => {
-          if (window.confirm("マスタを既定プリセット（木製イス）に戻します。トランザクションはすべて初期化されます。")) {
-            dispatch({ type: "MASTER_RESET_TO_PRESET", payload: { presetId: DEFAULT_PRESET_ID } });
-            setSelectedPresetId(DEFAULT_PRESET_ID);
-          }
-        }}
-      >
-        既定プリセットに戻す
-      </button>
-      <label>
-        プリセット切替:{" "}
+      <label className="master__preset-select">
+        プリセット切替
         <select value={selectedPresetId} onChange={(e) => setSelectedPresetId(e.target.value)}>
           {MASTER_PRESETS.map((preset) => (
             <option key={preset.id} value={preset.id}>
@@ -88,6 +88,20 @@ function MasterIOToolbar({ state, dispatch }: Props) {
       <button type="button" onClick={handleSwitchPreset}>
         選択したプリセットに切り替える
       </button>
+      <button
+        type="button"
+        onClick={() => {
+          if (window.confirm("マスタを既定プリセット「木製イス」に戻します。トランザクションはすべて初期化されます。")) {
+            dispatch({ type: "MASTER_RESET_TO_PRESET", payload: { presetId: DEFAULT_PRESET_ID } });
+            setSelectedPresetId(DEFAULT_PRESET_ID);
+          }
+        }}
+      >
+        既定プリセットに戻す
+      </button>
+      <span className="master__active-preset">
+        現在のプリセット: {activePreset ? activePreset.label : "不明（プリセット外のマスタ）"}
+      </span>
       <input
         ref={fileInputRef}
         type="file"
