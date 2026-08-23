@@ -131,8 +131,10 @@ export const BIKE_SUPPLIER_IDS = {
   PT_FRAME: "SUP-PT740",
 } as const;
 
-// 売価15,000円は、標準原価9,600円（アルミリム材300×2＋フレーム4,000＋溶接/組立/検査の加工費2,200×2＋…実際は
-// rollupCost()参照）に対し約36%の粗利率で仮置きした値（design.md EXT-15と同じ位置付け。マスタ画面でいつでも変更可）
+// 売価15,000円は、標準原価9,600円（rollupCost()の積上げ：リムASSY=アルミリム材300+加工費600=900、
+// 車輪ASSY=リムASSY900+加工費800=1,700、自転車=車輪ASSY1,700×2+フレーム4,000+加工費2,200=9,600。
+// bicyclePreset.test.tsで固定値検証済み）に対し約36%の粗利率で仮置きした値
+// （design.md EXT-15と同じ位置付け。マスタ画面でいつでも変更可）
 export const bikeItems: ItemMaster[] = [
   { itemId: BIKE_ITEM_IDS.FG_BIKE, name: "自転車", makeBuy: "MAKE", leadTimeDays: 2, salesPrice: 15000 },
   { itemId: BIKE_ITEM_IDS.SA_WHEEL, name: "車輪ASSY", makeBuy: "MAKE", leadTimeDays: 1 },

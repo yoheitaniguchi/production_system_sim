@@ -6,6 +6,7 @@
 // こちらはあらかじめ用意された第2プリセットへ「切り替える」操作（MASTER_RESET_TO_PRESET）そのものを検証する。
 import { describe, expect, it } from "vitest";
 import { BICYCLE_PRESET, BIKE_ITEM_IDS } from "../data/masterData";
+import { rollupCost } from "./cost";
 import { traceFromOrder } from "./pegging";
 import { createInitialState, simulationReducer, type SimulationAction } from "./reducer";
 import type { SimulationState } from "../types";
@@ -80,6 +81,21 @@ describe("自転車プリセットで4階層BOMのMRPを展開する", () => {
     expect(byItem[BIKE_ITEM_IDS.PT_FRAME]).toMatchObject({ qty: 2, bomLevel: 1, dueDay: 8, startDay: 5, orderType: "BUY" });
     expect(byItem[BIKE_ITEM_IDS.SA_RIM]).toMatchObject({ qty: 4, bomLevel: 2, dueDay: 7, startDay: 6, orderType: "MAKE" });
     expect(byItem[BIKE_ITEM_IDS.RM_ALUM]).toMatchObject({ qty: 4, bomLevel: 3, dueDay: 6, startDay: 3, orderType: "BUY" });
+  });
+});
+
+describe("自転車プリセットで標準原価を4階層にわたって積み上げる", () => {
+  it("EXT-34が売価の仮置き根拠として引用する原価内訳と一致する", () => {
+    const state = switchToBicyclePreset();
+
+    // アルミリム材（購買）300
+    expect(rollupCost(state, BIKE_ITEM_IDS.RM_ALUM).standardCost).toBe(300);
+    // リムASSY = アルミリム材×1(300) + 15分×2400円/時(600) = 900
+    expect(rollupCost(state, BIKE_ITEM_IDS.SA_RIM)).toEqual({ material: 300, labor: 600, standardCost: 900 });
+    // 車輪ASSY = リムASSY×1(900) + 20分×2400円/時(800) = 1,700
+    expect(rollupCost(state, BIKE_ITEM_IDS.SA_WHEEL)).toEqual({ material: 900, labor: 800, standardCost: 1700 });
+    // 自転車 = 車輪ASSY×2(3,400) + フレーム×1(4,000) + (40分+15分)×2400円/時(2,200) = 9,600
+    expect(rollupCost(state, BIKE_ITEM_IDS.FG_BIKE)).toEqual({ material: 7400, labor: 2200, standardCost: 9600 });
   });
 });
 
