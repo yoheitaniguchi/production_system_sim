@@ -22,7 +22,7 @@
   --color-surface: #ffffff;
   --color-text: #1a1a1a;
   --color-text-muted: #666666;
-  --color-accent: #1976d2;
+  --color-accent: #1565c0;
   --color-accent-contrast: #ffffff;
   --shadow-panel: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.08);
   --panel-blur: none;
@@ -33,6 +33,9 @@
   --chart-purchase: #ef6c00;
   --chart-shipment: #d81b60;
   --chart-inventory: #00838f;
+  /* 警告色（--warn-border）を背景（--warn-bg／--color-surface）の上でテキストとして使う箇所専用の
+     コントラスト確保用トークン（Issue #72）。--warn-borderは枠線用途では引き続きそのまま使う */
+  --warn-text: #8a6100;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -64,6 +67,7 @@
     --chart-purchase: #ffa94d;
     --chart-shipment: #ff6b9d;
     --chart-inventory: #66d9e8;
+    --warn-text: #ffca28;
   }
 }
 
@@ -87,7 +91,7 @@
   --color-surface: #ffffff;
   --color-text: #1a1a1a;
   --color-text-muted: #666666;
-  --color-accent: #1976d2;
+  --color-accent: #1565c0;
   --color-accent-contrast: #ffffff;
   --shadow-panel: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.08);
   --panel-blur: none;
@@ -96,6 +100,7 @@
   --chart-purchase: #ef6c00;
   --chart-shipment: #d81b60;
   --chart-inventory: #00838f;
+  --warn-text: #8a6100;
 }
 
 /* 2. ソフトペーパー（ライト） */
@@ -127,6 +132,7 @@
   --chart-purchase: #4a7a8c;
   --chart-shipment: #b5495b;
   --chart-inventory: #5b7fa6;
+  --warn-text: #6b4a00;
 }
 
 /* 3. グラスモフィズム・ライト */
@@ -158,6 +164,7 @@
   --chart-purchase: #f08c00;
   --chart-shipment: #12b886;
   --chart-inventory: #1c7ed6;
+  --warn-text: #6b4a00;
 }
 
 /* 4. ディープグレー（OLED向けダーク） */
@@ -189,6 +196,7 @@
   --chart-purchase: #ffa94d;
   --chart-shipment: #ff6b9d;
   --chart-inventory: #66d9e8;
+  --warn-text: #ffca28;
 }
 
 /* 5. トゥルーブラック（AMOLED向けダーク） */
@@ -220,6 +228,7 @@
   --chart-purchase: #ffb340;
   --chart-shipment: #ff5d8f;
   --chart-inventory: #ffd60a;
+  --warn-text: #ffca28;
 }
 
 /* 6. ダークネイビー・ミッドナイト */
@@ -251,6 +260,7 @@
   --chart-purchase: #ffb15c;
   --chart-shipment: #ff7aa8;
   --chart-inventory: #5cd6e8;
+  --warn-text: #ffca28;
 }
 
 body {
@@ -417,7 +427,7 @@ textarea {
 }
 
 .guide__expected {
-  color: var(--color-text-muted);
+  color: var(--warn-text);
   font-size: 0.9rem;
 }
 
@@ -499,12 +509,12 @@ textarea {
 }
 
 .panel__empty {
-  color: gray;
+  color: var(--color-text-muted);
   text-align: center;
 }
 
 .panel__hint {
-  color: gray;
+  color: var(--color-text-muted);
   font-size: 0.85rem;
   max-width: 60rem;
 }
@@ -538,7 +548,7 @@ textarea {
 }
 
 .process-flow-legend {
-  color: gray;
+  color: var(--color-text-muted);
   font-size: 0.8rem;
   margin-top: 0.5rem;
 }
@@ -710,7 +720,7 @@ textarea {
 }
 
 .capacity-panel__row--overload td:last-child {
-  color: var(--warn-border);
+  color: var(--warn-text);
   font-weight: 600;
 }
 
@@ -740,7 +750,7 @@ textarea {
 }
 
 .master__note--warn {
-  color: var(--warn-border);
+  color: var(--warn-text);
   opacity: 1;
   font-weight: 600;
 }
@@ -805,7 +815,7 @@ textarea {
 .pegging-tree__txns {
   display: block;
   margin-top: 0.15rem;
-  color: gray;
+  color: var(--color-text-muted);
   font-size: 0.8rem;
 }
 
@@ -910,12 +920,12 @@ textarea {
 }
 
 .event-log__deltas {
-  color: gray;
+  color: var(--color-text-muted);
   font-size: 0.8rem;
 }
 
 .event-log__empty {
-  color: gray;
+  color: var(--color-text-muted);
 }
 
 .burger-menu {
@@ -1177,7 +1187,7 @@ textarea {
 }
 
 .gantt__status-badge--delayed {
-  color: var(--warn-border);
+  color: var(--warn-text);
   border-color: var(--warn-border);
   background: var(--warn-bg);
 }
@@ -1345,7 +1355,7 @@ textarea {
 .dashboard__alert-badge--warn {
   background: var(--warn-bg);
   border-color: var(--warn-border);
-  color: var(--warn-border);
+  color: var(--warn-text);
 }
 
 .dashboard__toolbar {
