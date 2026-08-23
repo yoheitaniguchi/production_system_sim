@@ -3,6 +3,7 @@
 // バックエンドが無いので、エクスポートはBlobのダウンロード、インポートはFileReaderで行う。
 // 取り込み・プリセット復元はどちらも全トランザクションを初期化するため、必ず確認を挟む。
 import { useRef, useState } from "react";
+import { DEFAULT_PRESET_ID, MASTER_PRESETS } from "../../data/masterData";
 import { MasterIOError, parseMasterSnapshot, serializeMasterSnapshot } from "../../domain/masterIO";
 import type { SimulationAction } from "../../domain/reducer";
 import type { SimulationState } from "../../types";
@@ -15,6 +16,7 @@ interface Props {
 function MasterIOToolbar({ state, dispatch }: Props) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [error, setError] = useState<string | null>(null);
+  const [selectedPresetId, setSelectedPresetId] = useState<string>(DEFAULT_PRESET_ID);
 
   const hasTransactions = state.salesOrders.length > 0 || state.stockTxns.length > 0;
 
@@ -44,6 +46,16 @@ function MasterIOToolbar({ state, dispatch }: Props) {
     }
   };
 
+  const handleSwitchPreset = () => {
+    const preset = MASTER_PRESETS.find((p) => p.id === selectedPresetId);
+    if (!preset) return;
+    if (
+      window.confirm(`マスタをプリセット（${preset.label}）に切り替えます。トランザクションはすべて初期化されます。`)
+    ) {
+      dispatch({ type: "MASTER_RESET_TO_PRESET", payload: { presetId: preset.id } });
+    }
+  };
+
   return (
     <div className="master__toolbar">
       <button type="button" onClick={handleExport}>
@@ -56,11 +68,25 @@ function MasterIOToolbar({ state, dispatch }: Props) {
         type="button"
         onClick={() => {
           if (window.confirm("マスタを既定プリセット（木製イス）に戻します。トランザクションはすべて初期化されます。")) {
-            dispatch({ type: "MASTER_RESET_TO_PRESET" });
+            dispatch({ type: "MASTER_RESET_TO_PRESET", payload: { presetId: DEFAULT_PRESET_ID } });
+            setSelectedPresetId(DEFAULT_PRESET_ID);
           }
         }}
       >
         既定プリセットに戻す
+      </button>
+      <label>
+        プリセット切替:{" "}
+        <select value={selectedPresetId} onChange={(e) => setSelectedPresetId(e.target.value)}>
+          {MASTER_PRESETS.map((preset) => (
+            <option key={preset.id} value={preset.id}>
+              {preset.label}
+            </option>
+          ))}
+        </select>
+      </label>
+      <button type="button" onClick={handleSwitchPreset}>
+        選択したプリセットに切り替える
       </button>
       <input
         ref={fileInputRef}

@@ -1,12 +1,12 @@
 // useReducer用reducer。actionを各ドメインモジュールへディスパッチする（design.md §7）
 import {
-  CHAIR_PRESET,
   initialBom,
   initialCustomers,
   initialItems,
   initialRoutingSteps,
   initialSuppliers,
   initialWorkCenters,
+  resolveMasterPreset,
 } from "../data/masterData";
 import type {
   BomLine,
@@ -91,7 +91,7 @@ export type SimulationAction =
   | { type: "MASTER_UPDATE_PARTNER_NAME"; payload: { partnerType: PartnerType; partnerId: string; name: string } }
   | { type: "MASTER_DELETE_PARTNER"; payload: { partnerType: PartnerType; partnerId: string } }
   | { type: "MASTER_IMPORT"; payload: { snapshot: MasterSnapshot } }
-  | { type: "MASTER_RESET_TO_PRESET" };
+  | { type: "MASTER_RESET_TO_PRESET"; payload?: { presetId?: string } };
 
 /** データ増分ログ（design.md EXT-8）の対象テーブル。行の追加・削除のみを見る（値の更新は対象外） */
 const TABLE_LABELS = {
@@ -394,8 +394,10 @@ export function simulationReducer(state: SimulationState, action: SimulationActi
     case "MASTER_IMPORT":
       return applyMasterSnapshot(state, action.payload.snapshot, "マスタをインポートした");
 
-    case "MASTER_RESET_TO_PRESET":
-      return applyMasterSnapshot(state, CHAIR_PRESET, "マスタを既定プリセット（木製イス）に戻した");
+    case "MASTER_RESET_TO_PRESET": {
+      const preset = resolveMasterPreset(action.payload?.presetId);
+      return applyMasterSnapshot(state, preset.snapshot, `マスタをプリセット（${preset.label}）に戻した`);
+    }
 
     default:
       return state;

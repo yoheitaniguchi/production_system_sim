@@ -275,6 +275,13 @@ export interface MasterSnapshot {
   suppliers: Supplier[];
 }
 
+/** 既定プリセットの一覧表示・切替に使う定義（design.md EXT-34）。MasterIOToolbarのドロップダウンの1件に対応する */
+export interface MasterPreset {
+  id: string;
+  label: string;
+  snapshot: MasterSnapshot;
+}
+
 export interface SimulationState {
   day: number;
 
