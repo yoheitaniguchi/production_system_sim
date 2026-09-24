@@ -8,7 +8,7 @@ import { createTestState } from "./testUtils";
 
 // v5-spec.md §9.3 TC-02〜TC-06 に対応する単体テスト。
 describe("runMRP / firmAllPlannedOrders", () => {
-  it("TC-04: 受注 FG-100 x10 / 回答納期 D+15 を展開すると5件の計画オーダが期待どおりの値で生成される", () => {
+  it("[UC-06][単体][機能テスト][正常] TC-04: 受注 FG-100 x10 / 回答納期 D+15 を展開すると5件の計画オーダが期待どおりの値で生成される", () => {
     const state = createTestState(0);
     const soNo = createSalesOrder(state, { customerId: "CUST-A", itemId: ITEM_IDS.FG_CHAIR, qty: 10, requestDay: 15 }, 0);
     confirmDelivery(state, soNo, 15);
@@ -65,7 +65,7 @@ describe("runMRP / firmAllPlannedOrders", () => {
     });
   });
 
-  it("TC-05〜06: 確定するとPLANNED_ORDERは実体化し、再実行しても確定オーダの分は再計画されない", () => {
+  it("[UC-06/UC-07][単体][機能テスト][正常] TC-05〜06: 確定するとPLANNED_ORDERは実体化し、再実行しても確定オーダの分は再計画されない", () => {
     const state = createTestState(0);
     const soNo = createSalesOrder(state, { customerId: "CUST-A", itemId: ITEM_IDS.FG_CHAIR, qty: 10, requestDay: 15 }, 0);
     confirmDelivery(state, soNo, 15);
@@ -104,7 +104,7 @@ describe("runMRP / firmAllPlannedOrders", () => {
     expect(fgSteps[1]).toMatchObject({ inputQty: 0, status: "WAIT" });
   });
 
-  it("TC-14: 不良1個の発生後にMRPを再実行すると、不足1個分の計画オーダ5件が再生成される", () => {
+  it("[UC-06][単体][機能テスト][異常] TC-14: 不良1個の発生後にMRPを再実行すると、不足1個分の計画オーダ5件が再生成される", () => {
     const state = createTestState(0);
     const soNo = createSalesOrder(state, { customerId: "CUST-A", itemId: ITEM_IDS.FG_CHAIR, qty: 10, requestDay: 15 }, 0);
     confirmDelivery(state, soNo, 15);

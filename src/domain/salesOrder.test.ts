@@ -6,7 +6,7 @@ import { cancelSalesOrder, confirmDelivery, createSalesOrder, SalesOrderError } 
 import { createTestState } from "./testUtils";
 
 describe("createSalesOrder / confirmDelivery / cancelSalesOrder（v5-spec.md §6.1）", () => {
-  it("TC-02〜03: 受注登録すると1受注1明細（RECEIVED）が作られ、納期回答するとCONFIRMEDになる", () => {
+  it("[UC-04/UC-05][単体][機能テスト][正常] TC-02〜03: 受注登録すると1受注1明細（RECEIVED）が作られ、納期回答するとCONFIRMEDになる", () => {
     const state = createTestState(0);
     const soNo = createSalesOrder(state, { customerId: "CUST-A", itemId: ITEM_IDS.FG_CHAIR, qty: 10, requestDay: 15 }, 0);
 

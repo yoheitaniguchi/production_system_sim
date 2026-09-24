@@ -17,7 +17,7 @@ import { createTestState } from "./testUtils";
 // 登録が後のZが先に処理され、限られた1枚の木板在庫はZの所要を満たすために使われる。
 // Yはその分、木板を新規に2枚とも発注する必要が生じる。
 describe("複数受注の資源競合演習（design.md §6 TC-M1）", () => {
-  it("納期が早いZが手元在庫（木板1枚）を優先的に使い、Yは全量を新規発注する", () => {
+  it("[結合][機能テスト][境界] TC-M1: 納期が早いZが手元在庫（木板1枚）を優先的に使い、Yは全量を新規発注する", () => {
     const state = createTestState(0);
     state.stocks.push({ itemId: ITEM_IDS.RM_BOARD, onHand: 1, allocated: 0 });
 

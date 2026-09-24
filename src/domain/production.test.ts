@@ -24,7 +24,7 @@ describe("startStep / completeStep（v5-spec.md §7.3）", () => {
     expect(() => startStep(state, saOrder.moNo, 10, 12)).toThrow(ProductionError);
   });
 
-  it("TC-09: 部品が十分ならバックフラッシュで消費し完成入庫する（良品のみ）", () => {
+  it("[UC-13/UC-14][単体][機能テスト][正常] TC-09: 部品が十分ならバックフラッシュで消費し完成入庫する（良品のみ）", () => {
     const { state } = setupFirmOrder(10);
     const saOrder = state.mfgOrders.find((mo) => mo.itemId === ITEM_IDS.SA_SEAT)!;
     state.stocks.push({ itemId: ITEM_IDS.RM_BOARD, onHand: 10, allocated: 0 });
@@ -60,7 +60,7 @@ describe("startStep / completeStep（v5-spec.md §7.3）", () => {
     expect(state.mfgOrders.find((mo) => mo.moNo === saOrder.moNo)?.status).toBe("DONE");
   });
 
-  it("TC-11〜12: 良品数と不良数を分けて登録し、不良分は完成入庫されない。次工程の投入数は前工程の良品数", () => {
+  it("[UC-13/UC-14][単体][機能テスト][正常] TC-11〜12: 良品数と不良数を分けて登録し、不良分は完成入庫されない。次工程の投入数は前工程の良品数", () => {
     const { state } = setupFirmOrder(10);
     // 下位階層（SA-200・PT-400・PT-500）をあらかじめ在庫として用意する
     state.stocks.push(
@@ -113,7 +113,7 @@ describe("startStep / completeStep（v5-spec.md §7.3）", () => {
     expect(step20.status).toBe("WAIT");
   });
 
-  it("TC-E1〜E3: 木板の納期回答が遅れて警告が出たまま製造着手を試みると、部品が無いためHOLDになる", () => {
+  it("[UC-08/UC-13/UC-14][結合][機能テスト][異常] TC-E1〜E3: 木板の納期回答が遅れて警告が出たまま製造着手を試みると、部品が無いためHOLDになる", () => {
     const { state } = setupFirmOrder(10);
     const rmPo = state.purchaseOrders.find((p) => p.itemId === ITEM_IDS.RM_BOARD)!;
     ackPurchaseOrder(state, rmPo.poNo, 14); // TC-E1：D+12の希望に対しD+14回答（2日遅延）

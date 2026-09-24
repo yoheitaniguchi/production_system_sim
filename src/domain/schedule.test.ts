@@ -7,7 +7,7 @@ import { checkSchedule, unmetDemand } from "./schedule";
 import { createTestState } from "./testUtils";
 
 describe("checkSchedule（v5-spec.md §7.5）", () => {
-  it("TC-07: 希望どおりの納期回答なら警告は出ない", () => {
+  it("[UC-08][単体][機能テスト][正常] TC-07: 希望どおりの納期回答なら警告は出ない", () => {
     const state = createTestState(0);
     const soNo = createSalesOrder(state, { customerId: "CUST-A", itemId: ITEM_IDS.FG_CHAIR, qty: 10, requestDay: 15 }, 0);
     confirmDelivery(state, soNo, 15);
@@ -18,7 +18,7 @@ describe("checkSchedule（v5-spec.md §7.5）", () => {
     expect(checkSchedule(state)).toHaveLength(0);
   });
 
-  it("TC-E1〜E2: 木板の納期回答が遅れると、親（座面ASSY）の着手日に対する遅延警告が出て受注まで辿れる", () => {
+  it("[UC-08/UC-21][単体][機能テスト][異常] TC-E1〜E2: 木板の納期回答が遅れると、親（座面ASSY）の着手日に対する遅延警告が出て受注まで辿れる", () => {
     const state = createTestState(0);
     const soNo = createSalesOrder(state, { customerId: "CUST-A", itemId: ITEM_IDS.FG_CHAIR, qty: 10, requestDay: 15 }, 0);
     confirmDelivery(state, soNo, 15);
@@ -35,7 +35,7 @@ describe("checkSchedule（v5-spec.md §7.5）", () => {
 });
 
 describe("unmetDemand（v5-spec.md §7.5）", () => {
-  it("TC-13: 完成数が受注数量に満たない場合、不足数量を返す", () => {
+  it("[UC-09][単体][機能テスト][異常] TC-13: 完成数が受注数量に満たない場合、不足数量を返す", () => {
     const state = createTestState(0);
     const soNo = createSalesOrder(state, { customerId: "CUST-A", itemId: ITEM_IDS.FG_CHAIR, qty: 10, requestDay: 15 }, 0);
     confirmDelivery(state, soNo, 15);

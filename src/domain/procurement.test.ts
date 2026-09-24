@@ -15,7 +15,7 @@ function setupPurchaseOrder(): { state: ReturnType<typeof createTestState> } {
 }
 
 describe("ackPurchaseOrder / receivePurchaseOrder（v5-spec.md §6.5）", () => {
-  it("TC-07: 納期回答を登録するとACKEDになる", () => {
+  it("[UC-10][単体][機能テスト][正常] TC-07: 納期回答を登録するとACKEDになる", () => {
     const { state } = setupPurchaseOrder();
     const po = state.purchaseOrders.find((p) => p.itemId === ITEM_IDS.RM_BOARD)!;
     ackPurchaseOrder(state, po.poNo, po.dueDay);
@@ -32,7 +32,7 @@ describe("ackPurchaseOrder / receivePurchaseOrder（v5-spec.md §6.5）", () => 
     expect(() => receivePurchaseOrder(state, po.poNo, po.dueDay - 1)).toThrow(ProcurementError);
   });
 
-  it("TC-08: 入荷予定日以降に入荷計上するとRCVトランザクションが起票され在庫が増える", () => {
+  it("[UC-11][単体][機能テスト][正常] TC-08: 入荷予定日以降に入荷計上するとRCVトランザクションが起票され在庫が増える", () => {
     const { state } = setupPurchaseOrder();
     const po = state.purchaseOrders.find((p) => p.itemId === ITEM_IDS.RM_BOARD)!;
     ackPurchaseOrder(state, po.poNo, po.dueDay);
@@ -54,7 +54,7 @@ describe("ackPurchaseOrder / receivePurchaseOrder（v5-spec.md §6.5）", () => 
     expect(() => receivePurchaseOrder(state, po.poNo, po.dueDay)).toThrow(ProcurementError);
   });
 
-  it("TC-10: PT-400・PT-500の入荷予定日にまとめて入荷計上すると、STOCK_TXNが2件（RCV +40 / +80）起票される", () => {
+  it("[UC-11][単体][機能テスト][正常] TC-10: PT-400・PT-500の入荷予定日にまとめて入荷計上すると、STOCK_TXNが2件（RCV +40 / +80）起票される", () => {
     const { state } = setupPurchaseOrder();
     const ptLegPo = state.purchaseOrders.find((p) => p.itemId === ITEM_IDS.PT_LEG)!;
     const ptScrewPo = state.purchaseOrders.find((p) => p.itemId === ITEM_IDS.PT_SCREW)!;

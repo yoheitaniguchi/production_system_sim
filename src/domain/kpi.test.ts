@@ -11,7 +11,7 @@ import { createTestState } from "./testUtils";
 // v5-spec.md §9.3 TC-01〜17 を通しで再現し、TC-17のKPI期待値
 // （納期遵守率100%・直行率90%・計画達成率90%・受注残1個）を検証する。
 describe("computeKpi（v5-spec.md §10）", () => {
-  it("TC-17: 不良1個を含む通し演習の結果、期待どおりのKPIになる", () => {
+  it("[UC-20][単体][機能テスト][正常] TC-17: 不良1個を含む通し演習の結果、期待どおりのKPIになる", () => {
     const state = createTestState(0);
 
     const soNo = createSalesOrder(state, { customerId: "CUST-A", itemId: ITEM_IDS.FG_CHAIR, qty: 10, requestDay: 15 }, 0);
