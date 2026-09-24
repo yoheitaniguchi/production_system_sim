@@ -13,6 +13,11 @@ issue-workflow（.claude/skills/issue-workflow/SKILL.md）の手順1（Issue下�
 - **表記ミス**：「TC-02〜19相当」はv5-spec.md §9.3の実在項番（TC-01〜TC-18）と食い違っていた → 「TC-02〜18相当」に修正した。
 - **費用対効果**：`src/domain/`・`src/components/`への変更はゼロだが、シナリオが6画面以上にまたがり`data-testid`等の安定したセレクタが現状無いことを確認。判定＝**中**。
 
+## ユーザーによる決定事項の反映（2回目の確認）
+
+- **スコープ確定**：縮小版スコープ（TC-02・03・04・05・07・08・09・10・11・12・15・16相当の12ステップ）で確定。フルスコープ化はしない
+- **JUnit出力の追加**：`test:e2e:scenario`スクリプトにJUnit形式のレポーターも指定する（下記要件3に反映）
+
 ## 改善済み下書き
 
 # [要望] 業務シナリオの自動E2Eテストの新設（縮小版スコープ）
@@ -48,7 +53,7 @@ CLAUDE.md「現在の実装状況」には「各画面はPlaywrightで…実際�
    - 出荷指示9個を作成（TC-15、出荷タブ）
    - D+15で出荷実績登録（TC-16、出荷タブ）
    - 各ステップ後、該当画面の表示（在庫タブの現在庫・出荷可能量、SO_LINEのstatus表示等）が期待値どおりであることをアサートする
-3. `package.json`に`test:a11y`とは独立したnpm script `test:e2e:scenario`を追加し、`playwright test e2e/scenario.spec.ts`のように**対象ファイルを明示指定**する。あわせて既存の`test:a11y`スクリプトも`playwright test e2e/a11y.spec.ts`とファイル指定へ変更し、`playwright.config.ts`の`testDir: "./e2e"`により今後`e2e/`配下にファイルが増えても両コマンドが互いを巻き込まないようにする（現状の`playwright test`という無指定呼び出しのままでは、新規specファイル追加時に`a11y`ジョブがシナリオテストも実行してしまうため必須の対応）。
+3. `package.json`に`test:a11y`とは独立したnpm script `test:e2e:scenario`を追加し、`playwright test e2e/scenario.spec.ts --reporter=list,junit`のように**対象ファイルを明示指定**したうえでJUnit形式のレポーターも指定する（出力先は`test-results/e2e-scenario-junit.xml`とし、`docs/issue-drafts/issue-b1-ci-junit-triggers.md`で追加するvitestの`test-results/junit.xml`と衝突しないファイル名にする。Playwrightの`reporter`オプションの`outputFile`設定、または環境変数`PLAYWRIGHT_JUNIT_OUTPUT_NAME`で明示的にパス指定する）。あわせて既存の`test:a11y`スクリプトも`playwright test e2e/a11y.spec.ts`とファイル指定へ変更し、`playwright.config.ts`の`testDir: "./e2e"`により今後`e2e/`配下にファイルが増えても両コマンドが互いを巻き込まないようにする（現状の`playwright test`という無指定呼び出しのままでは、新規specファイル追加時に`a11y`ジョブがシナリオテストも実行してしまうため必須の対応）。
 4. `.github/workflows/test.yml`に新規ジョブ`e2e-scenario`を追加し、既存の`test`ジョブ・`a11y`ジョブとは独立させる（`needs`を指定しない並列ジョブとし、それぞれの成否が他方に波及しないようにする）。
 5. `a11y`ジョブと同様に`npx playwright install --with-deps chromium`が必要になるが、`actions/cache`で`~/.cache/ms-playwright`をOS・Playwrightバージョン（`package-lock.json`のハッシュ等）をキーにキャッシュし、`a11y`ジョブ・`e2e-scenario`ジョブの両方でキャッシュヒット時はダウンロードをスキップすることで、ブラウザインストールの二重コストを抑える。
 
@@ -64,6 +69,7 @@ CLAUDE.md「現在の実装状況」には「各画面はPlaywrightで…実際�
 
 - [ ] `e2e/scenario.spec.ts`が追加され、要件2に列挙した12ステップ（TC-02・03・04・05・07・08・09・10・11・12・15・16相当）を1本のテストとして実装している
 - [ ] `npm run test:e2e:scenario`で`e2e/scenario.spec.ts`のみが実行され、`npm run test:a11y`で`e2e/a11y.spec.ts`のみが実行される（互いのテストファイルを実行しない）ことをローカルで確認できる
+- [ ] `npm run test:e2e:scenario`実行後、`test-results/e2e-scenario-junit.xml`にJUnit形式の結果ファイルが生成される（`test-results/junit.xml`と衝突しない）
 - [ ] `.github/workflows/test.yml`に`e2e-scenario`ジョブが追加され、既存の`test`ジョブ・`a11y`ジョブに`needs`等の依存を持たず、CI実行結果上でも各ジョブが独立して成否表示されることを確認できる
 - [ ] `e2e-scenario`ジョブ・`a11y`ジョブの双方で`actions/cache`によるPlaywrightブラウザキャッシュが機能し、2回目以降のCI実行でブラウザの再ダウンロードが発生しない（キャッシュヒットのログで確認できる）
 - [ ] `npm test`（vitest）・`npm run build`の既存挙動に影響がないこと
@@ -76,7 +82,7 @@ CLAUDE.md「現在の実装状況」には「各画面はPlaywrightで…実際�
 - CLAUDE.md「現在の実装状況」（Issue #63：アクセシビリティの自動テスト化。CI基盤新設の先例）
 - `docs/issue-workflow.md`（Issue駆動開発プロセス）
 
-## レビュー時の確認事項
+## レビュー時の確認事項（解決済み）
 
-- **スコープ確定の最終判断**：本レビューでは費用対効果と受け入れ条件の検証可能性を優先し、フルスコープ版（TC-02〜18全体）ではなく縮小版（TC-02〜18のうち12ステップ）を本Issueの確定スコープとして提案した。フルスコープ化（TC-06・13・14の山場やTC-17 KPI確認・TC-18 ペギング追跡）は別Issueとして起票する前提で対象範囲外へ回している。この判断（縮小版を先行させる／フルスコープを見送らない旨）自体はプロダクトオーナーとしての最終確認をお願いしたい。
-- **外部PoC（自動テスト管理アプリ）との関係整理**：背景・目的に残した「PoC接続の準備」という文脈は動機としては残したが、実装スコープからは明示的に除外した。将来的にPoC接続を進める場合は、本Issueとは別に「このリポジトリのE2Eテスト結果を外部にどう連携するか」を扱う新規Issueが必要になる想定である。
+- **スコープ確定の最終判断** → **解決**。縮小版（12ステップ）で確定。フルスコープ化はしない
+- **外部PoC（自動テスト管理アプリ）との関係整理**：背景・目的に残した「PoC接続の準備」という文脈は動機としては残したが、実装スコープからは明示的に除外したまま。将来的にPoC接続を進める場合は、本Issueとは別に「このリポジトリのE2Eテスト結果を外部にどう連携するか」を扱う新規Issueが必要になる想定である（JUnit出力の追加により、連携時の受け皿は用意された）。

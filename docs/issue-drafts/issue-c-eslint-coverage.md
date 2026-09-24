@@ -12,6 +12,10 @@ issue-workflow（.claude/skills/issue-workflow/SKILL.md）の手順1（Issue下�
 - **開発方針との整合性**：Issue #63→#72の「新規導入した自動検査で見つかった既存の指摘は個別Issue化する」という前例と整合しており問題なし。
 - **費用対効果**：`src/domain/`（20ファイル）・`src/components/`（29ファイル）を実際に変更するものではなく、設定/ドキュメントファイルに閉じる。判定＝**軽〜中**。
 
+## ユーザーによる決定事項の反映（2回目の確認）
+
+「レビュー時の確認事項」のうち、外部PoCとの接続を前提とした追加要件について、ユーザーから次の決定を得た：将来の自動テスト管理アプリでの取り込みに備え、カバレッジ・lintの結果を機械可読な形式でも出力できるようにする（CIでの実行・成果物アップロードは引き続き対象範囲外）。これを要件B・Aにそれぞれ追記した（下記4・3参照）。ESLint（A）とカバレッジ（B）を別Issueに分割する要否については、分割せず1 Issueのまま進める（ユーザーからの分割指示なし）。
+
 ## 改善済み下書き
 
 ## 概要
@@ -33,10 +37,10 @@ ESLintと`@vitest/coverage-v8`を新規導入し、`npm run lint`・`npm run tes
 ### A. ESLint導入
 1. ESLintをdevDependencyとして追加する。ESLint 9系のflat config（`eslint.config.js`）を使い、`@typescript-eslint`のrecommended（型情報を要さない基本ルールセット）と`eslint-plugin-react-hooks`のrecommendedをベースにする
 2. error扱いにするルールは「バグに直結するもの」（未定義変数・react-hooksのルール違反等）に限定する。大量の既存修正を伴うルール（未使用変数・`any`禁止など）は初期導入時は`warn`または`off`にとどめ、どのルールをどちらに分類したかの一覧をPR説明に記載する
-3. `package.json`に`"lint": "eslint ."`を追加する
+3. `package.json`に`"lint": "eslint ."`を追加する。あわせて、人が読む出力とは別に機械可読な出力を作る`"lint:json": "eslint . -f json -o eslint-report.json"`を追加する（将来の自動テスト管理アプリでの取り込みに備えるための追加で、CIでの実行・成果物アップロードは今回は行わない）
 
 ### B. カバレッジ計測導入
-4. `@vitest/coverage-v8`をdevDependencyとして追加する（インストール済みの`vitest`（`^4.1.10`）と対応するメジャーバージョンを選ぶ）。`vite.config.ts`の`test`設定（L14-16付近）に`coverage`ブロック（`provider: "v8"`、`reporter: ["text", "html"]`、`e2e/**`・`*.test.ts`自体は計測対象から除外）を追加する
+4. `@vitest/coverage-v8`をdevDependencyとして追加する（インストール済みの`vitest`（`^4.1.10`）と対応するメジャーバージョンを選ぶ）。`vite.config.ts`の`test`設定（L14-16付近）に`coverage`ブロック（`provider: "v8"`、`reporter: ["text", "html", "json-summary"]`、`e2e/**`・`*.test.ts`自体は計測対象から除外）を追加する。`json-summary`は数値を機械的に読み取れるようにするための追加で、CIでの実行・成果物アップロードは今回は行わない
 5. `package.json`に`"test:coverage": "vitest run --coverage"`を追加する
 
 ### C. ドキュメント・CI反映
@@ -54,7 +58,8 @@ ESLintと`@vitest/coverage-v8`を新規導入し、`npm run lint`・`npm run tes
 ## 受け入れ条件
 
 - [ ] `npm run lint`をリポジトリルートで実行すると終了コード0で完了する（`src/`配下の既存コードに対するerror扱いの検出が0件。warn扱いの検出が残る場合はその一覧を本Issueまたはフォローアップコメントに記録する）
-- [ ] `npm run test:coverage`を実行すると`coverage/`配下にレポート（`coverage/index.html`を含む）が生成され、既存の`npm test`と同じテスト件数・pass件数になる
+- [ ] `npm run lint:json`を実行すると`eslint-report.json`が生成される
+- [ ] `npm run test:coverage`を実行すると`coverage/`配下にレポート（`coverage/index.html`・`coverage/coverage-summary.json`を含む）が生成され、既存の`npm test`と同じテスト件数・pass件数になる
 - [ ] `CLAUDE.md`「コマンド」節に`npm run lint`・`npm run test:coverage`の1行説明が追記されている
 - [ ] `.github/workflows/test.yml`の`test`ジョブに`npm run lint`のステップが追加されており、CI上で実行される
 - [ ] 追加後も既存の`npm test`・`npm run build`・`npm run test:a11y`が変更前と同じ結果（pass件数・終了コード）で成功する
@@ -67,8 +72,8 @@ ESLintと`@vitest/coverage-v8`を新規導入し、`npm run lint`・`npm run tes
 - `.github/workflows/test.yml`（`test`ジョブ）
 - Issue #63・#72（アクセシビリティ自動テスト化の際に採った「検出された既存の指摘は個別Issue化する」という方針）
 
-## レビュー時の確認事項
+## レビュー時の確認事項（解決済み）
 
-- 背景説明にある「自動テスト管理アプリ（PoC）とこのリポジトリを接続する準備」は、本リポジトリの`docs/`配下に現時点で記載の無い外部の取り組みです。本下書きは本リポジトリ内で完結する効果（PRレビューコスト低減・テスト網羅状況の可視化）だけで実施判断できる内容にしましたが、外部PoCとの接続を前提とした追加要件（特定フォーマットでのレポート出力、外部ツールが読む固定パス等）が別途あるなら、要件への反映要否をユーザーに確認してください。
-- ESLint導入（A）とカバレッジ導入（B）は技術的に独立した変更です。本下書きでは1 Issueにまとめていますが、実装時にESLintのルールチューニングが想定より重くなる場合は、Bだけ先に別Issue/別PRとして切り出すことも検討してください。
-- `test.yml`の`test`ジョブへの`npm run lint`追加（要件7）はレビュー側の提案です。「導入だけして誰も実行しない」状態を避け、CIによるリグレッション検知という効果を確実にする狙いですが、CI実行時間の増加を許容するかはユーザー判断としてください。
+- 外部PoCとの接続を前提とした追加要件の要否 → **解決**。カバレッジに`json-summary`、lintに`lint:json`という機械可読な出力先をそれぞれ追加する決定を得た（CIでの実行・成果物アップロードは対象範囲外のまま）。上記「要件」に反映済み
+- ESLint導入（A）とカバレッジ導入（B）の分割要否 → **解決**。分割せず1 Issueのまま進める
+- `test.yml`の`test`ジョブへの`npm run lint`追加（要件7）のCI実行時間増加許容 → 明示的な異論が無かったため、下書きどおり実施する
