@@ -119,18 +119,27 @@
 
 ---
 
-## Issue案A〜Dの下書き作成状況
+## Issue案A〜Dの下書き作成状況（着手後に更新）
 
-`issue-workflow`（`.claude/skills/issue-workflow/SKILL.md`）の手順1（Issue下書き作成）・3（`issue-spec-reviewer`によるレビュー）まで実施した。手順4（GitHub Issueとしての実際の起票）は本タスクの制約により行っていない。
+`issue-workflow`（`.claude/skills/issue-workflow/SKILL.md`）の手順1（Issue下書き作成）・3（`issue-spec-reviewer`によるレビュー）まで実施したのち、ユーザーの承認を得て手順4（GitHub Issueとしての実際の起票）〜8（PR作成）まで完了した。当初4件だった下書きは、レビュー・ユーザー決定を経て、目的が異なる変更の分割（B→B1/B2）とスコープ確定作業の分離（A→A/A2）により最終的に6件のIssue・PRとなった。
 
-| Issue案 | 下書きを作成したか | ファイルパス | 作成しなかった場合の理由 |
-|---|---|---|---|
-| A：テストへの要件ID・工程タグの付与 | 作成した | `docs/issue-drafts/issue-a-test-tagging.md` | — |
-| B：CI結果のJUnit XML出力とワークフロー起動条件の見直し | 作成した | `docs/issue-drafts/issue-b-ci-junit-triggers.md` | — |
-| C：ESLintとカバレッジ計測の導入 | 作成した | `docs/issue-drafts/issue-c-eslint-coverage.md` | — |
-| D：業務シナリオの自動E2Eテストの新設 | 作成した（縮小版スコープに絞って提案） | `docs/issue-drafts/issue-d-e2e-scenario.md` | — |
+| 下書き | 内容 | 状態 | Issue | PR |
+|---|---|---|---|---|
+| A | テストへの要件ID・工程タグ付与の**書式策定**（`docs/test-tagging.md`新設） | マージ待ち（実装済み・レビュー中） | [#84](https://github.com/yoheitaniguchi/production_system_sim/issues/84) | [#85](https://github.com/yoheitaniguchi/production_system_sim/pull/85) |
+| A2 | 確定した書式の**実適用**（対象10ファイル・18箇所へタグ付与） | マージ待ち（実装済み・レビュー中） | [#86](https://github.com/yoheitaniguchi/production_system_sim/issues/86) | [#87](https://github.com/yoheitaniguchi/production_system_sim/pull/87) |
+| B1 | CI結果のJUnit XML出力・`test.yml`起動条件見直し | マージ待ち（実装済み・レビュー中） | [#80](https://github.com/yoheitaniguchi/production_system_sim/issues/80) | [#81](https://github.com/yoheitaniguchi/production_system_sim/pull/81) |
+| B2 | フレーキーテスト検出ワークフローの新設 | マージ待ち（実装済み・レビュー中） | [#88](https://github.com/yoheitaniguchi/production_system_sim/issues/88) | [#89](https://github.com/yoheitaniguchi/production_system_sim/pull/89) |
+| C | ESLintとカバレッジ計測（@vitest/coverage-v8）の導入 | マージ待ち（実装済み・レビュー中） | [#82](https://github.com/yoheitaniguchi/production_system_sim/issues/82) | [#83](https://github.com/yoheitaniguchi/production_system_sim/pull/83) |
+| D | 業務シナリオの自動E2Eテストの新設（縮小版スコープ） | マージ待ち（実装済み・レビュー中） | [#90](https://github.com/yoheitaniguchi/production_system_sim/issues/90) | [#91](https://github.com/yoheitaniguchi/production_system_sim/pull/91) |
 
-上記4件はいずれも、調査で確認した不足点（テスト・タグ／CI成果物／静的解析・カバレッジ／業務シナリオE2E）に対応しており、見送るべき理由（既に存在する、対応不要と判断できる等）は見つからなかったため全件を下書きした。各ファイルは`issue-spec-reviewer`によるレビュー後の改善版であり、レビュー時の指摘サマリを冒頭に、レビューでも解決できない論点があれば「レビュー時の確認事項」として本文末尾に記載している。**いずれも下書きの段階であり、GitHub上への実際の起票は行っていない。着手の要否・優先順位はユーザーの判断を仰ぐ。**
+分割・追加の経緯：
+- **B→B1/B2**：ユーザーから「目的が異なるため分割する」との決定を得て、`docs/issue-drafts/issue-b-ci-junit-triggers.md`を`issue-b1-ci-junit-triggers.md`（外部PoC連携が目的）と`issue-b2-flaky-check.md`（テストの不安定性検知が目的）に分割した
+- **A→A2の追加**：Issue Aのスコープを「書式策定のみ」に確定したことに伴い、実際のタグ付与作業を担う後続Issue（A2）を新規に下書きした
+- 各下書きの最終版は`docs/issue-drafts/`配下に残している（`issue-b-ci-junit-triggers.md`は分割により削除し、`issue-b1-*`・`issue-b2-*`・`issue-a2-*`を追加した）
+
+いずれのPRも、実装後にローカルで`npm test`（184件全件pass）・`npm run build`・関連する追加コマンド（`npm run lint`／`npm run test:coverage`／`npm run test:e2e:scenario`等、該当するもの）を実行して動作確認済み。CI（`test`ジョブ）もgreenであることを確認済み。マージ判断はユーザーに委ねる。
+
+当初の4件はいずれも、調査で確認した不足点（テスト・タグ／CI成果物／静的解析・カバレッジ／業務シナリオE2E）に対応しており、見送るべき理由（既に存在する、対応不要と判断できる等）は見つからなかったため全件を下書きした。各ファイルは`issue-spec-reviewer`によるレビュー後の改善版であり、レビュー時の指摘サマリを冒頭に記載している。その後ユーザーから分割・書式の確定（4タグ形式化・記録先確定）・スコープ確定（Dの縮小版化）などの決定を得て、上表のとおり6件のIssue・PRとして起票・実装まで完了した。
 
 レビュー時に判明した主な指摘（詳細は各下書きファイル冒頭の「issue-spec-reviewerによる指摘サマリ」参照）：
 - **Issue案A**：TC-07（`schedule.test.ts`/`procurement.test.ts`）・TC-E1〜E3（`schedule.test.ts`/`production.test.ts`）は、実際のテスト内容を確認すると検証している操作が異なり、同じTC番号でも一律に同じUC番号を割り当てるのは誤りであることが判明した（下書き内で個別方針に修正済み）。また工程区分（単体/結合/総合）・UCタグの決定基準が当初未定義だったため、判定基準を追加した。
@@ -146,6 +155,7 @@
 既に存在するためである。CLAUDE.md「アクセシビリティの自動テスト化（Issue #63）」の節に「マスタタブの
 label／select-name違反（critical）はIssue #63の対象範囲外として残っており、`a11y`ジョブは当面red（failure）
 になる想定」と明記されているとおりの既知の状態であり、実際に本PRと無関係な別の直近PR（docsのみの変更）でも
-同一ジョブが同様に失敗していることを、GitHub Actionsの実行履歴で確認した。本タスクはソースコード変更を
-禁止されているため、この既存の未修正違反自体への対応は行っていない（Issue案A〜Dのいずれの対象でもない、
-別の既知の課題である）。
+同一ジョブが同様に失敗していることを、GitHub Actionsの実行履歴で確認した。本調査タスク自体（本報告書・
+下書き作成の段階）ではソースコード変更を禁止されていたため対応していなかったが、この既存の未修正違反は
+起票したA〜D（A2・B1・B2含む）のいずれの対象でもない、別の既知の課題のままである（マスタタブのlabel／
+select-name違反はIssue #63の対象範囲外として個別Issue化する方針のまま、本タスクでは着手していない）。
