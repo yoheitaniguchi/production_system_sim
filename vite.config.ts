@@ -13,6 +13,13 @@ export default defineConfig(({ command, isPreview }) => ({
   // デフォルトincludeと衝突するので明示的に除外する
   test: {
     exclude: [...configDefaults.exclude, "e2e/**"],
+    // 自動テスト管理アプリ（PoC）等の外部ツールがCI結果を機械的に取り込めるよう、JUnit XMLも
+    // 併せて出力する（vitestに標準搭載のreporterで追加devDependencyは不要）。出力先はPlaywright用の
+    // test-results/と共有するが、ファイル名を分けて衝突を避ける
+    reporters: ["default", "junit"],
+    outputFile: {
+      junit: "test-results/junit.xml",
+    },
     coverage: {
       provider: "v8",
       // 人が読むレポート（text/html）に加え、外部ツールが数値を機械的に読み取れる
