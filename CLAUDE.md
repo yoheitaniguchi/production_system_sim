@@ -125,6 +125,8 @@ npx tsc --noEmit     # 型チェックのみ実行
 npm test             # vitestによる自動テスト全件実行（v5-spec.md §9 TC-01〜18・TC-E1〜3・複数受注演習・
                      # マスタCRUDのガード・4階層BOMの通し演習を含む）
 npx vitest run <path> # 特定テストのみ実行（例: npx vitest run src/domain/capacity.test.ts）
+npm run test:coverage # vitestのカバレッジ計測（@vitest/coverage-v8。coverage/配下にレポート出力）
+npm run lint         # ESLint（eslint.config.js）。CIのtestジョブにも組み込み済み
 npm run preview      # build成果物をGitHub Pages相当のbaseパスで動作確認
 npm run test:a11y    # Playwright＋axe-coreによるアクセシビリティ自動検査（ライト・ダーク2テーマ×15タブ。
                      # npm run devのdevサーバーを自動起動して実行。初回は npx playwright install --with-deps chromium が必要）

@@ -13,5 +13,12 @@ export default defineConfig(({ command, isPreview }) => ({
   // デフォルトincludeと衝突するので明示的に除外する
   test: {
     exclude: [...configDefaults.exclude, "e2e/**"],
+    coverage: {
+      provider: "v8",
+      // 人が読むレポート（text/html）に加え、外部ツールが数値を機械的に読み取れる
+      // json-summaryも出力する。CIでの実行・成果物アップロードは今回は行わない
+      reporter: ["text", "html", "json-summary"],
+      exclude: [...configDefaults.exclude, "e2e/**", "src/**/*.test.ts", "src/main.tsx"],
+    },
   },
 }));
