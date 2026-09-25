@@ -12,7 +12,7 @@ describe("allocateShipment / shipOut（v5-spec.md §7.2）", () => {
     expect(() => allocateShipment(state, soNo, 1, 15)).toThrow(ShipmentError);
   });
 
-  it("TC-15〜16: 受注残(10)に出荷可能量(9)が満たない場合、出荷可能な分だけ一部出荷として引き当てる（design.md DEV-3）", () => {
+  it("[UC-18/UC-19][単体][機能テスト][境界] TC-15〜16: 受注残(10)に出荷可能量(9)が満たない場合、出荷可能な分だけ一部出荷として引き当てる（design.md DEV-3）", () => {
     const state = createTestState(0);
     const soNo = createSalesOrder(state, { customerId: "CUST-A", itemId: ITEM_IDS.FG_CHAIR, qty: 10, requestDay: 15 }, 0);
     confirmDelivery(state, soNo, 15);

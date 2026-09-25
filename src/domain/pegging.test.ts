@@ -6,7 +6,7 @@ import { pegKey, traceFromOrder } from "./pegging";
 import { createTestState } from "./testUtils";
 
 describe("traceFromOrder（v5-spec.md §7.4）", () => {
-  it("TC-18: 受注確定後、全階層の確定オーダ（MFG_ORDER2件・PURCHASE_ORDER3件）を辿れる", () => {
+  it("[UC-21][単体][機能テスト][正常] TC-18: 受注確定後、全階層の確定オーダ（MFG_ORDER2件・PURCHASE_ORDER3件）を辿れる", () => {
     const state = createTestState(0);
     const soNo = createSalesOrder(state, { customerId: "CUST-A", itemId: ITEM_IDS.FG_CHAIR, qty: 10, requestDay: 15 }, 0);
     confirmDelivery(state, soNo, 15);

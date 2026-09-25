@@ -16,7 +16,7 @@ function doneTcs(state: SimulationState): string[] {
 }
 
 describe("演習ガイド（v5-spec.md §9.3のTC-01〜TC-18を自動判定する、design.md DEV-4）", () => {
-  it("初期状態ではTC-01のみ完了している", () => {
+  it("[単体][機能テスト][正常] 初期状態ではTC-01のみ完了している", () => {
     const state = createTestState(0);
     expect(doneTcs(state)).toEqual(["TC-01"]);
     expect(currentGuideStep(state)?.tc).toBe("TC-02");
