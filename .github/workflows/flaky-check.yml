@@ -1,0 +1,34 @@
+name: Flaky Check
+
+# 同一コミットに対してnpm testを複数回実行し、結果が毎回一致するかを確認する。
+# 既存のtest.ymlとは別ファイルとし、既存ワークフローの動作には影響しない
+# （Issue #88。JUnit出力・test.ymlの起動条件見直しはIssue #80で別途対応済み）。
+on:
+  schedule:
+    # 平日1日1回、日本時間06:00（UTC 21:00の前日）に実行する。頻度は初期値であり、
+    # 運用開始後に見直すことを妨げない
+    - cron: "0 21 * * 1-5"
+  workflow_dispatch:
+
+jobs:
+  flaky-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests (1st)
+        run: npm test
+
+      - name: Run tests (2nd)
+        run: npm test
+
+      - name: Run tests (3rd)
+        run: npm test
