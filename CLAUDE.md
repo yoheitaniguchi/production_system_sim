@@ -3,7 +3,8 @@
 このファイルはClaude Codeがこのプロジェクトで作業する際に毎回読み込む。簡潔さを優先しているので、
 設計判断の根拠や検討の経緯を確認したいときは `docs/design.md`（v5仕様書との差分・追加決定）と
 `docs/v5-spec.md`（業務仕様の一次資料）、`docs/architecture-flow.html`（全体アーキテクチャ・データフローの可視化）、
-および `docs/issue-workflow.md`（Issue駆動開発プロセスの手順）を参照すること。
+`docs/issue-workflow.md`（Issue駆動開発プロセスの手順）、および `docs/test-tagging.md`
+（`domain/*.test.ts`への要件ID・工程・テストの種類・観点タグの付与書式）を参照すること。
 
 ## プロジェクト概要
 

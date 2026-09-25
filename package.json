@@ -9,7 +9,8 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
-    "test:a11y": "playwright test",
+    "test:a11y": "playwright test e2e/a11y.spec.ts",
+    "test:e2e:scenario": "PLAYWRIGHT_JUNIT_OUTPUT_NAME=test-results/e2e-scenario-junit.xml playwright test e2e/scenario.spec.ts --reporter=list,junit",
     "lint": "eslint .",
     "lint:json": "eslint . -f json -o eslint-report.json"
   },
