@@ -8,8 +8,11 @@
     "build": "tsc && vite build",
     "preview": "vite preview",
     "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
     "test:a11y": "playwright test e2e/a11y.spec.ts",
-    "test:e2e:scenario": "PLAYWRIGHT_JUNIT_OUTPUT_NAME=test-results/e2e-scenario-junit.xml playwright test e2e/scenario.spec.ts --reporter=list,junit"
+    "test:e2e:scenario": "PLAYWRIGHT_JUNIT_OUTPUT_NAME=test-results/e2e-scenario-junit.xml playwright test e2e/scenario.spec.ts --reporter=list,junit",
+    "lint": "eslint .",
+    "lint:json": "eslint . -f json -o eslint-report.json"
   },
   "dependencies": {
     "react": "^18.3.1",
@@ -17,12 +20,18 @@
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.13.0",
+    "@eslint/js": "^10.0.1",
     "@playwright/test": "^1.62.1",
     "@types/node": "^26.2.0",
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",
     "@vitejs/plugin-react": "^4.3.3",
+    "@vitest/coverage-v8": "^4.1.10",
+    "eslint": "^10.11.0",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "globals": "^17.12.0",
     "typescript": "^5.6.3",
+    "typescript-eslint": "^8.70.1",
     "vite": "^5.4.10",
     "vitest": "^4.1.10"
   }
