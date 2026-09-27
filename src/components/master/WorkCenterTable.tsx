@@ -50,6 +50,7 @@ function WorkCenterTable({ state, dispatch }: Props) {
                 <EditableNumberField
                   value={wc.ratePerHour}
                   min={0}
+                  ariaLabel={`賃率（円/時）（${wc.workCenter}）`}
                   onCommit={(ratePerHour) =>
                     dispatch({
                       type: "MASTER_UPDATE_WORK_CENTER",
@@ -62,6 +63,7 @@ function WorkCenterTable({ state, dispatch }: Props) {
                 <EditableNumberField
                   value={wc.capacityMinPerDay}
                   min={0}
+                  ariaLabel={`能力（分/日）（${wc.workCenter}）`}
                   onCommit={(capacityMinPerDay) =>
                     dispatch({
                       type: "MASTER_UPDATE_WORK_CENTER",
@@ -86,6 +88,7 @@ function WorkCenterTable({ state, dispatch }: Props) {
                 type="text"
                 value={draft.workCenter}
                 placeholder="WC-PNT"
+                aria-label="作業区（新規行）"
                 onChange={(e) => setDraft({ ...draft, workCenter: e.target.value })}
               />
             </td>
@@ -94,6 +97,7 @@ function WorkCenterTable({ state, dispatch }: Props) {
                 type="number"
                 min={0}
                 value={draft.ratePerHour}
+                aria-label="賃率（円/時）（新規行）"
                 onChange={(e) => setDraft({ ...draft, ratePerHour: Number(e.target.value) })}
               />
             </td>
@@ -102,6 +106,7 @@ function WorkCenterTable({ state, dispatch }: Props) {
                 type="number"
                 min={0}
                 value={draft.capacityMinPerDay}
+                aria-label="能力（分/日）（新規行）"
                 onChange={(e) => setDraft({ ...draft, capacityMinPerDay: Number(e.target.value) })}
               />
             </td>

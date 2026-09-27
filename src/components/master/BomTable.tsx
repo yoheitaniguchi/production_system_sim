@@ -107,6 +107,7 @@ function BomTable({ state, dispatch }: Props) {
                 <EditableNumberField
                   value={line.qtyPer}
                   min={1}
+                  ariaLabel={`員数（${line.parentItemId} -> ${line.childItemId}）`}
                   onCommit={(qtyPer) =>
                     dispatch({
                       type: "MASTER_UPDATE_BOM_LINE",
@@ -136,6 +137,7 @@ function BomTable({ state, dispatch }: Props) {
             <td>
               <select
                 value={draft.parentItemId}
+                aria-label="親品目（新規行）"
                 onChange={(e) => setDraft({ ...draft, parentItemId: e.target.value })}
               >
                 <option value="">（内製品目を選択）</option>
@@ -147,7 +149,11 @@ function BomTable({ state, dispatch }: Props) {
               </select>
             </td>
             <td>
-              <select value={draft.childItemId} onChange={(e) => setDraft({ ...draft, childItemId: e.target.value })}>
+              <select
+                value={draft.childItemId}
+                aria-label="子品目（新規行）"
+                onChange={(e) => setDraft({ ...draft, childItemId: e.target.value })}
+              >
                 <option value="">（子品目を選択）</option>
                 {state.items
                   .filter((i) => i.itemId !== draft.parentItemId)
@@ -163,6 +169,7 @@ function BomTable({ state, dispatch }: Props) {
                 type="number"
                 min={1}
                 value={draft.qtyPer}
+                aria-label="員数（新規行）"
                 onChange={(e) => setDraft({ ...draft, qtyPer: Number(e.target.value) })}
               />
             </td>

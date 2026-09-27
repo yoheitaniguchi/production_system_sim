@@ -5,6 +5,8 @@ interface NumberFieldProps {
   value: number;
   min?: number;
   onCommit: (value: number) => void;
+  /** スクリーンリーダー向けのアクセシブルな名前（例：「購入単価（円）（FG-100）」） */
+  ariaLabel: string;
 }
 
 /**
@@ -12,7 +14,7 @@ interface NumberFieldProps {
  * （キー入力のたびにdispatchすると、入力途中の空文字などが弾かれて勝手に元の値へ戻ってしまうため）。
  * min未満・非数値の場合はコミットせず、表示を確定済みの値へ戻す。
  */
-export function EditableNumberField({ value, min = 1, onCommit }: NumberFieldProps) {
+export function EditableNumberField({ value, min = 1, onCommit, ariaLabel }: NumberFieldProps) {
   const [draft, setDraft] = useState(String(value));
   useEffect(() => setDraft(String(value)), [value]);
 
@@ -21,6 +23,7 @@ export function EditableNumberField({ value, min = 1, onCommit }: NumberFieldPro
       type="number"
       min={min}
       value={draft}
+      aria-label={ariaLabel}
       onChange={(e) => setDraft(e.target.value)}
       onBlur={() => {
         const num = Number(draft);
@@ -38,22 +41,27 @@ export function EditableNumberField({ value, min = 1, onCommit }: NumberFieldPro
 interface TextFieldProps {
   value: string;
   onCommit: (value: string) => void;
+  /** スクリーンリーダー向けのアクセシブルな名前（例：「品目名（FG-100）」） */
+  ariaLabel: string;
 }
 
 interface SelectFieldProps {
   value: string;
   options: Array<{ value: string; label: string }>;
   onCommit: (value: string) => void;
+  /** スクリーンリーダー向けのアクセシブルな名前（例：「区分（FG-100）」） */
+  ariaLabel: string;
 }
 
 /**
  * 選択式の編集可能フィールド（区分・既定仕入先・作業区）。選択の確定は1操作で終わるため、
  * 数値・テキストと違いドラフト状態を持たずchangeで即コミットする。
  */
-export function EditableSelectField({ value, options, onCommit }: SelectFieldProps) {
+export function EditableSelectField({ value, options, onCommit, ariaLabel }: SelectFieldProps) {
   return (
     <select
       value={value}
+      aria-label={ariaLabel}
       onChange={(e) => {
         if (e.target.value !== value) onCommit(e.target.value);
       }}
@@ -70,7 +78,7 @@ export function EditableSelectField({ value, options, onCommit }: SelectFieldPro
   );
 }
 
-export function EditableTextField({ value, onCommit }: TextFieldProps) {
+export function EditableTextField({ value, onCommit, ariaLabel }: TextFieldProps) {
   const [draft, setDraft] = useState(value);
   useEffect(() => setDraft(value), [value]);
 
@@ -78,6 +86,7 @@ export function EditableTextField({ value, onCommit }: TextFieldProps) {
     <input
       type="text"
       value={draft}
+      aria-label={ariaLabel}
       onChange={(e) => setDraft(e.target.value)}
       onBlur={() => {
         if (draft.trim()) {
