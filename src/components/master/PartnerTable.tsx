@@ -54,6 +54,7 @@ function PartnerTable({ state, dispatch, partnerType }: Props) {
               <td>
                 <EditableTextField
                   value={row.name}
+                  ariaLabel={`${nameLabel}（${row.partnerId}）`}
                   onCommit={(name) =>
                     dispatch({ type: "MASTER_UPDATE_PARTNER_NAME", payload: { partnerType, partnerId: row.partnerId, name } })
                   }
@@ -77,6 +78,7 @@ function PartnerTable({ state, dispatch, partnerType }: Props) {
                 type="text"
                 value={draft.partnerId}
                 placeholder={isCustomer ? "CUST-C" : "SUP-XXX"}
+                aria-label={`${idLabel}（新規行）`}
                 onChange={(e) => setDraft({ ...draft, partnerId: e.target.value })}
               />
             </td>
@@ -85,6 +87,7 @@ function PartnerTable({ state, dispatch, partnerType }: Props) {
                 type="text"
                 value={draft.name}
                 placeholder={nameLabel}
+                aria-label={`${nameLabel}（新規行）`}
                 onChange={(e) => setDraft({ ...draft, name: e.target.value })}
               />
             </td>

@@ -70,6 +70,7 @@ function ItemMasterTable({ state, dispatch }: Props) {
               <td>
                 <EditableTextField
                   value={item.name}
+                  ariaLabel={`品目名（${item.itemId}）`}
                   onCommit={(name) => dispatch({ type: "MASTER_UPDATE_ITEM", payload: { itemId: item.itemId, patch: { name } } })}
                 />
               </td>
@@ -77,6 +78,7 @@ function ItemMasterTable({ state, dispatch }: Props) {
                 <EditableSelectField
                   value={item.makeBuy}
                   options={MAKE_BUY_OPTIONS}
+                  ariaLabel={`区分（${item.itemId}）`}
                   onCommit={(makeBuy) =>
                     dispatch({
                       type: "MASTER_UPDATE_ITEM",
@@ -101,6 +103,7 @@ function ItemMasterTable({ state, dispatch }: Props) {
                 <EditableNumberField
                   value={item.leadTimeDays}
                   min={0}
+                  ariaLabel={`標準リードタイム（日）（${item.itemId}）`}
                   onCommit={(leadTimeDays) =>
                     dispatch({ type: "MASTER_UPDATE_ITEM", payload: { itemId: item.itemId, patch: { leadTimeDays } } })
                   }
@@ -111,6 +114,7 @@ function ItemMasterTable({ state, dispatch }: Props) {
                   <EditableSelectField
                     value={item.defaultSupplierId ?? ""}
                     options={supplierOptions}
+                    ariaLabel={`既定仕入先（${item.itemId}）`}
                     onCommit={(defaultSupplierId) =>
                       dispatch({
                         type: "MASTER_UPDATE_ITEM",
@@ -127,6 +131,7 @@ function ItemMasterTable({ state, dispatch }: Props) {
                   <EditableNumberField
                     value={item.purchasePrice ?? 0}
                     min={0}
+                    ariaLabel={`購入単価（円）（${item.itemId}）`}
                     onCommit={(purchasePrice) =>
                       dispatch({ type: "MASTER_UPDATE_ITEM", payload: { itemId: item.itemId, patch: { purchasePrice } } })
                     }
@@ -139,6 +144,7 @@ function ItemMasterTable({ state, dispatch }: Props) {
                 <EditableNumberField
                   value={item.salesPrice ?? 0}
                   min={0}
+                  ariaLabel={`売価（円）（${item.itemId}）`}
                   onCommit={(salesPrice) =>
                     dispatch({ type: "MASTER_UPDATE_ITEM", payload: { itemId: item.itemId, patch: { salesPrice } } })
                   }
@@ -160,6 +166,7 @@ function ItemMasterTable({ state, dispatch }: Props) {
                 type="text"
                 value={draft.itemId}
                 placeholder="FG-200"
+                aria-label="品目コード（新規行）"
                 onChange={(e) => setDraft({ ...draft, itemId: e.target.value })}
               />
             </td>
@@ -168,12 +175,14 @@ function ItemMasterTable({ state, dispatch }: Props) {
                 type="text"
                 value={draft.name}
                 placeholder="品目名"
+                aria-label="品目名（新規行）"
                 onChange={(e) => setDraft({ ...draft, name: e.target.value })}
               />
             </td>
             <td>
               <select
                 value={draft.makeBuy}
+                aria-label="区分（新規行）"
                 onChange={(e) => setDraft({ ...draft, makeBuy: e.target.value as MakeBuy })}
               >
                 {MAKE_BUY_OPTIONS.map((o) => (
@@ -188,6 +197,7 @@ function ItemMasterTable({ state, dispatch }: Props) {
                 type="number"
                 min={0}
                 value={draft.leadTimeDays}
+                aria-label="標準リードタイム（日）（新規行）"
                 onChange={(e) => setDraft({ ...draft, leadTimeDays: Number(e.target.value) })}
               />
             </td>
@@ -195,6 +205,7 @@ function ItemMasterTable({ state, dispatch }: Props) {
               {draft.makeBuy === "BUY" ? (
                 <select
                   value={draft.defaultSupplierId}
+                  aria-label="既定仕入先（新規行）"
                   onChange={(e) => setDraft({ ...draft, defaultSupplierId: e.target.value })}
                 >
                   <option value="">（選択）</option>
@@ -214,6 +225,7 @@ function ItemMasterTable({ state, dispatch }: Props) {
                   type="number"
                   min={0}
                   value={draft.purchasePrice}
+                  aria-label="購入単価（円）（新規行）"
                   onChange={(e) => setDraft({ ...draft, purchasePrice: Number(e.target.value) })}
                 />
               ) : (
@@ -225,6 +237,7 @@ function ItemMasterTable({ state, dispatch }: Props) {
                 type="number"
                 min={0}
                 value={draft.salesPrice}
+                aria-label="売価（円）（新規行）"
                 onChange={(e) => setDraft({ ...draft, salesPrice: Number(e.target.value) })}
               />
             </td>

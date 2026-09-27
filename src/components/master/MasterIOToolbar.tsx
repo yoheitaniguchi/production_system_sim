@@ -107,6 +107,7 @@ function MasterIOToolbar({ state, dispatch }: Props) {
         type="file"
         accept="application/json,.json"
         className="master__file-input"
+        aria-label="マスタJSONファイルを選択"
         onChange={(e) => {
           const file = e.target.files?.[0];
           // 同じファイルを続けて選び直せるように値をクリアしておく

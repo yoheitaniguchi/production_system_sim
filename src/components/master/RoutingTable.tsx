@@ -66,6 +66,7 @@ function RoutingTable({ state, dispatch }: Props) {
                 <EditableSelectField
                   value={step.workCenter}
                   options={workCenterOptions}
+                  ariaLabel={`作業区（${itemName(step.itemId)}（${step.itemId}） 工程${step.stepNo}）`}
                   onCommit={(workCenter) =>
                     dispatch({
                       type: "MASTER_UPDATE_ROUTING_STEP",
@@ -78,6 +79,7 @@ function RoutingTable({ state, dispatch }: Props) {
                 <EditableNumberField
                   value={step.stdTimeMin}
                   min={0}
+                  ariaLabel={`標準時間（分）（${itemName(step.itemId)}（${step.itemId}） 工程${step.stepNo}）`}
                   onCommit={(stdTimeMin) =>
                     dispatch({
                       type: "MASTER_UPDATE_ROUTING_STEP",
@@ -103,7 +105,11 @@ function RoutingTable({ state, dispatch }: Props) {
 
           <tr className="master__new-row">
             <td>
-              <select value={draft.itemId} onChange={(e) => setDraft({ ...draft, itemId: e.target.value })}>
+              <select
+                value={draft.itemId}
+                aria-label="品目（新規行）"
+                onChange={(e) => setDraft({ ...draft, itemId: e.target.value })}
+              >
                 <option value="">（内製品目を選択）</option>
                 {makeItems.map((i) => (
                   <option key={i.itemId} value={i.itemId}>
@@ -117,11 +123,16 @@ function RoutingTable({ state, dispatch }: Props) {
                 type="number"
                 min={1}
                 value={draft.stepNo}
+                aria-label="工程（新規行）"
                 onChange={(e) => setDraft({ ...draft, stepNo: Number(e.target.value) })}
               />
             </td>
             <td>
-              <select value={draft.workCenter} onChange={(e) => setDraft({ ...draft, workCenter: e.target.value })}>
+              <select
+                value={draft.workCenter}
+                aria-label="作業区（新規行）"
+                onChange={(e) => setDraft({ ...draft, workCenter: e.target.value })}
+              >
                 <option value="">（作業区を選択）</option>
                 {workCenterOptions.map((o) => (
                   <option key={o.value} value={o.value}>
@@ -135,6 +146,7 @@ function RoutingTable({ state, dispatch }: Props) {
                 type="number"
                 min={0}
                 value={draft.stdTimeMin}
+                aria-label="標準時間（分）（新規行）"
                 onChange={(e) => setDraft({ ...draft, stdTimeMin: Number(e.target.value) })}
               />
             </td>

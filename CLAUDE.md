@@ -286,15 +286,33 @@ JUnit XML（`test-results/junit.xml`）のパースには`fast-xml-parser`を新
 ドメインロジックのカバレッジ計測・集計対象に含めないようにした。自動テスト管理アプリ本体の実装、
 過去の実行履歴のバックフィル、静的解析結果の書き出しは本Issueの対象外（別Issueとする方針）
 
+マスタタブのアクセシビリティ違反（label/select-name、critical）の解消（Issue #100）も完了した。
+Issue #63実装時の`npm run test:a11y`で検出されたcritical違反（label 43件・select-name 16件）のうち、
+Issue #72（color-contrast）とは別種の残課題として起票されたもの。原因は`EditableField.tsx`の3コンポーネント
+（`EditableNumberField`・`EditableTextField`・`EditableSelectField`）が`<input>`/`<select>`にアクセシブルな
+名前を持たず、また各マスタテーブル（`ItemMasterTable`・`BomTable`・`RoutingTable`・`WorkCenterTable`・
+`PartnerTable`）の「新規行追加」フォームが同コンポーネントを介さない素の`<input>`/`<select>`を直接記述して
+いたこと。対応として、`EditableField.tsx`の3コンポーネントのProps型に必須prop`ariaLabel: string`を追加し
+（オプショナルにすると呼び出し漏れを`tsc`で機械的に検出できなくなるため必須にした）、全呼び出し箇所と
+「新規行追加」フォームの素のinput/selectに、列見出し＋行を一意に識別する情報を組み合わせた`aria-label`を
+付与した。識別子は`ItemMasterTable`・`WorkCenterTable`・`PartnerTable`では可視セルと同じ品目コード／
+作業区コード／取引先番号を使い、`BomTable`・`RoutingTable`は可視セルが品目名を表示しているため
+品目名＋品目コードの組み合わせ（design.mdでも使っている既存の`名前（コード）`という表記慣習を踏襲）にして、
+視覚情報と読み上げ情報を一致させた（`ux-reviewer`レビューで可視セルとの不一致を指摘され修正）。
+`MasterIOToolbar.tsx`のJSONインポート用`<input type="file">`にも`aria-label`を追加した（同要素はCSSで
+`display: none`のため実際にはアクセシビリティツリーから除外されており支援技術に届く機会は無いが、
+Issue #100の要件どおり追加し、追加自体に害は無いため残した）。`npm run test:a11y`を実行し、ライト・ダーク
+両テーマで全タブ（マスタタブ含む）のcritical/serious相当の違反が0件になったことを確認済み。これにより
+Issue #63・#72から続いた`a11y`ジョブのフォローアップは全て完了し、`a11y`ジョブは全面的にgreenになる見込み
+
 ## 次にやるべきこと（優先順）
 
 `docs/implementation-plan.md` §5「Phase 7（先送り事項）」・マスタ自由登録・§6「Phase 8：能力計画（CRP）」・
 ダッシュボード機能（残高バーンダウン・KPI/アラート件数の可視化）・在庫モデルの厳密化検討（旧②、
 design.md EXT-18追記。STOCKの主キー変更は見送りと結論）・アクセシビリティの自動テスト化（Issue #63、
 CI基盤の新設。検出された実違反の修正は個別Issue化して別途対応）・ほぼ全タブのcolor-contrast違反の解消
-（Issue #72）は全項目完了した。次の一手は特に決まっていないため、着手前にユーザーに優先順位を確認すること。
-なお`a11y`ジョブはマスタタブのlabel／select-name違反（critical、Issue #63で個別Issue化する方針とした
-別問題）が未着手のため引き続きredである（別途Issue化して対応する候補になる）。
+（Issue #72）・マスタタブのlabel/select-name違反の解消（Issue #100）は全項目完了した。次の一手は特に
+決まっていないため、着手前にユーザーに優先順位を確認すること。
 
 以下は既存の先送り事項（マスタ自由登録・CRP・v5-spec.md §11ロードマップ・ダッシュボード）に費用対効果を
 付記した候補と、現状の実装（20ドメインモジュール・15画面）を踏まえて新規に提案する候補を、
