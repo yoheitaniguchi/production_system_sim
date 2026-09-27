@@ -66,7 +66,7 @@ function RoutingTable({ state, dispatch }: Props) {
                 <EditableSelectField
                   value={step.workCenter}
                   options={workCenterOptions}
-                  ariaLabel={`作業区（${step.itemId} 工程${step.stepNo}）`}
+                  ariaLabel={`作業区（${itemName(step.itemId)}（${step.itemId}） 工程${step.stepNo}）`}
                   onCommit={(workCenter) =>
                     dispatch({
                       type: "MASTER_UPDATE_ROUTING_STEP",
@@ -79,7 +79,7 @@ function RoutingTable({ state, dispatch }: Props) {
                 <EditableNumberField
                   value={step.stdTimeMin}
                   min={0}
-                  ariaLabel={`標準時間（分）（${step.itemId} 工程${step.stepNo}）`}
+                  ariaLabel={`標準時間（分）（${itemName(step.itemId)}（${step.itemId}） 工程${step.stepNo}）`}
                   onCommit={(stdTimeMin) =>
                     dispatch({
                       type: "MASTER_UPDATE_ROUTING_STEP",

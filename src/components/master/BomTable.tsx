@@ -107,7 +107,7 @@ function BomTable({ state, dispatch }: Props) {
                 <EditableNumberField
                   value={line.qtyPer}
                   min={1}
-                  ariaLabel={`員数（${line.parentItemId} -> ${line.childItemId}）`}
+                  ariaLabel={`員数（${itemName(line.parentItemId)}（${line.parentItemId}） → ${itemName(line.childItemId)}（${line.childItemId}））`}
                   onCommit={(qtyPer) =>
                     dispatch({
                       type: "MASTER_UPDATE_BOM_LINE",
