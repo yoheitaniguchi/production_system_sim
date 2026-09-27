@@ -125,19 +125,21 @@
 
 | 下書き | 内容 | 状態 | Issue | PR |
 |---|---|---|---|---|
-| A | テストへの要件ID・工程タグ付与の**書式策定**（`docs/test-tagging.md`新設） | マージ待ち（実装済み・レビュー中） | [#84](https://github.com/yoheitaniguchi/production_system_sim/issues/84) | [#85](https://github.com/yoheitaniguchi/production_system_sim/pull/85) |
-| A2 | 確定した書式の**実適用**（対象10ファイル・18箇所へタグ付与） | マージ待ち（実装済み・レビュー中） | [#86](https://github.com/yoheitaniguchi/production_system_sim/issues/86) | [#87](https://github.com/yoheitaniguchi/production_system_sim/pull/87) |
-| B1 | CI結果のJUnit XML出力・`test.yml`起動条件見直し | マージ待ち（実装済み・レビュー中） | [#80](https://github.com/yoheitaniguchi/production_system_sim/issues/80) | [#81](https://github.com/yoheitaniguchi/production_system_sim/pull/81) |
-| B2 | フレーキーテスト検出ワークフローの新設 | マージ待ち（実装済み・レビュー中） | [#88](https://github.com/yoheitaniguchi/production_system_sim/issues/88) | [#89](https://github.com/yoheitaniguchi/production_system_sim/pull/89) |
-| C | ESLintとカバレッジ計測（@vitest/coverage-v8）の導入 | マージ待ち（実装済み・レビュー中） | [#82](https://github.com/yoheitaniguchi/production_system_sim/issues/82) | [#83](https://github.com/yoheitaniguchi/production_system_sim/pull/83) |
-| D | 業務シナリオの自動E2Eテストの新設（縮小版スコープ） | マージ待ち（実装済み・レビュー中） | [#90](https://github.com/yoheitaniguchi/production_system_sim/issues/90) | [#91](https://github.com/yoheitaniguchi/production_system_sim/pull/91) |
+| A | テストへの要件ID・工程タグ付与の**書式策定**（`docs/test-tagging.md`新設） | マージ済み | [#84](https://github.com/yoheitaniguchi/production_system_sim/issues/84) | [#85](https://github.com/yoheitaniguchi/production_system_sim/pull/85) |
+| A2 | 確定した書式の**実適用**（対象10ファイル・18箇所へタグ付与） | マージ済み | [#86](https://github.com/yoheitaniguchi/production_system_sim/issues/86) | [#87](https://github.com/yoheitaniguchi/production_system_sim/pull/87) |
+| B1 | CI結果のJUnit XML出力・`test.yml`起動条件見直し | マージ済み | [#80](https://github.com/yoheitaniguchi/production_system_sim/issues/80) | [#81](https://github.com/yoheitaniguchi/production_system_sim/pull/81) |
+| B2 | フレーキーテスト検出ワークフローの新設 | マージ済み | [#88](https://github.com/yoheitaniguchi/production_system_sim/issues/88) | [#89](https://github.com/yoheitaniguchi/production_system_sim/pull/89) |
+| C | ESLintとカバレッジ計測（@vitest/coverage-v8）の導入 | マージ済み | [#82](https://github.com/yoheitaniguchi/production_system_sim/issues/82) | [#83](https://github.com/yoheitaniguchi/production_system_sim/pull/83) |
+| D | 業務シナリオの自動E2Eテストの新設（縮小版スコープ） | マージ済み | [#90](https://github.com/yoheitaniguchi/production_system_sim/issues/90) | [#91](https://github.com/yoheitaniguchi/production_system_sim/pull/91) |
+
+6件全てのPRが`main`へマージ済み（マージコミット: #81→`beb5b83`、#85→`7d4ecd8`、#91→`f2c5ce9`、#87→`a9649ff`、#89→`1e63e80`、#83→`dd689d8`。`git log`でmainのコミット履歴を確認済み）。
 
 分割・追加の経緯：
 - **B→B1/B2**：ユーザーから「目的が異なるため分割する」との決定を得て、`docs/issue-drafts/issue-b-ci-junit-triggers.md`を`issue-b1-ci-junit-triggers.md`（外部PoC連携が目的）と`issue-b2-flaky-check.md`（テストの不安定性検知が目的）に分割した
 - **A→A2の追加**：Issue Aのスコープを「書式策定のみ」に確定したことに伴い、実際のタグ付与作業を担う後続Issue（A2）を新規に下書きした
 - 各下書きの最終版は`docs/issue-drafts/`配下に残している（`issue-b-ci-junit-triggers.md`は分割により削除し、`issue-b1-*`・`issue-b2-*`・`issue-a2-*`を追加した）
 
-いずれのPRも、実装後にローカルで`npm test`（184件全件pass）・`npm run build`・関連する追加コマンド（`npm run lint`／`npm run test:coverage`／`npm run test:e2e:scenario`等、該当するもの）を実行して動作確認済み。CI（`test`ジョブ）もgreenであることを確認済み。マージ判断はユーザーに委ねる。
+いずれのPRも、実装後にローカルで`npm test`（184件全件pass）・`npm run build`・関連する追加コマンド（`npm run lint`／`npm run test:coverage`／`npm run test:e2e:scenario`等、該当するもの）を実行して動作確認済み。CI（`test`ジョブ）もgreenであることを確認済み。6件全てユーザー確認のうえマージ済み（2026-09-25）。
 
 当初の4件はいずれも、調査で確認した不足点（テスト・タグ／CI成果物／静的解析・カバレッジ／業務シナリオE2E）に対応しており、見送るべき理由（既に存在する、対応不要と判断できる等）は見つからなかったため全件を下書きした。各ファイルは`issue-spec-reviewer`によるレビュー後の改善版であり、レビュー時の指摘サマリを冒頭に記載している。その後ユーザーから分割・書式の確定（4タグ形式化・記録先確定）・スコープ確定（Dの縮小版化）などの決定を得て、上表のとおり6件のIssue・PRとして起票・実装まで完了した。
 
@@ -157,5 +159,38 @@ label／select-name違反（critical）はIssue #63の対象範囲外として�
 になる想定」と明記されているとおりの既知の状態であり、実際に本PRと無関係な別の直近PR（docsのみの変更）でも
 同一ジョブが同様に失敗していることを、GitHub Actionsの実行履歴で確認した。本調査タスク自体（本報告書・
 下書き作成の段階）ではソースコード変更を禁止されていたため対応していなかったが、この既存の未修正違反は
-起票したA〜D（A2・B1・B2含む）のいずれの対象でもない、別の既知の課題のままである（マスタタブのlabel／
-select-name違反はIssue #63の対象範囲外として個別Issue化する方針のまま、本タスクでは着手していない）。
+起票したA〜D（A2・B1・B2含む）のいずれの対象でもない、別の既知の課題のままである。マスタタブのlabel／
+select-name違反は個別Issue化する方針どおり、既に[#73](https://github.com/yoheitaniguchi/production_system_sim/issues/73)・
+[#77](https://github.com/yoheitaniguchi/production_system_sim/issues/77)としてOpen状態で起票済みであることを確認した
+（ただし両者は同一の違反内容を対象としており実質的に重複している。統合または一方のクローズをユーザーに確認することを推奨する）。
+
+---
+
+## 6. 追記：全PRマージ後の確認（2026-09-27）
+
+6件のPRがすべて`main`にマージされたのち、ユーザーの依頼により以下3点を実機で再確認した。
+
+### 6.1 本報告書の表の更新
+
+上記「Issue案A〜Dの下書き作成状況」の表・関連する記述を、実際にマージ済みであることを反映した内容に更新した
+（本追記を含むこの更新自体が対応）。前回の指示（手順F）で依頼されていたが未実施のままだったことを確認し、本追記と併せて反映した。
+
+### 6.2 `main`のCI状況・a11y既知不具合の追跡状況
+
+`main`最新コミット（`dd689d8`、PR #83マージ後）のGitHub Actions実行結果を確認した。
+
+- `test.yml`の`test`ジョブ（lint・型チェック・build・vitest）：**success**
+- `test.yml`の`e2e-scenario`ジョブ（業務シナリオE2E）：**success**
+- `test.yml`の`a11y`ジョブ：**failure**（既知の事象。原因はマスタタブのlabel／select-name違反で、A〜D・A2・B1・B2のいずれの変更とも無関係。上記「付記」節のとおり[#73](https://github.com/yoheitaniguchi/production_system_sim/issues/73)・[#77](https://github.com/yoheitaniguchi/production_system_sim/issues/77)で個別Issue化済み〈ただし重複あり〉）
+- `flaky-check.yml`：1回実行（2026-09-25のスケジュール実行）で**success**
+
+CIの3ジョブのうち2つはgreen、`a11y`のみ既知の理由でredという状態は想定どおりであり、新規のリグレッションは無い。
+
+### 6.3 タグ付けの実効性確認（JUnit XML出力）
+
+`main`のチェックアウト状態でローカル`npm test`を実行し、`test-results/junit.xml`（vitest標準搭載のJUnitレポーター出力）を直接確認した。
+
+- 184件中、要件ID・工程タグを付与した18件すべてで、`<testcase name="...">`属性の中に`[UC-xx][工程][テストの種類][観点]`形式のタグがそのまま（XMLエスケープ以外の変形無しで）出力されていることを確認した。
+- 例：`name="createSalesOrder / confirmDelivery / cancelSalesOrder（v5-spec.md §6.1） &gt; [UC-04/UC-05][単体][機能テスト][正常] TC-02〜03: 受注登録すると..."`
+- **1点、外部ツール連携時に留意すべき点がある**：vitestの標準JUnitレポーターは`name`属性を`describe名 &gt; it名`の形式で連結して出力するため、タグはフィールドの先頭ではなく`&gt; `の直後（`describe`ブロック名の後）に来る。外部の自動テスト管理アプリ側で`[UC-xx]`等のタグを抽出する場合、`name`属性の**先頭一致**ではなく、属性値全体に対する正規表現（例：`\[UC-\d+.*?\]\[.*?\]\[.*?\](\[.*?\])?`）での**部分一致検索**を行う実装にする必要がある。
+- `main`のGitHub Actions実行（run ID 36115647641、`test`ジョブ）でも`vitest-junit-report`アーティファクト（10,558 bytes）が生成・アップロードされていることを確認しており、ローカル確認と同一内容がCI経由でも再現されることを確認済み。
