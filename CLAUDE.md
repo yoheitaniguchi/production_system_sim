@@ -262,6 +262,30 @@ deep-gray/true-black/midnight-blue: #ffca28）、上記5箇所を置き換えた
 起票時に個別Issue化する方針とした別問題）として残っており、`a11y`ジョブは当面その分のみでred（failure）
 のままになる想定
 
+CIテスト結果のJSON集約とデータ用ブランチへの書き込み（Issue #98）も完了した。
+`docs/test-management-app-requirements.md`（U-05：ブラウザがGitHub Actionsの成果物ZIPを直接取得できないと
+試作で確認済み。U-01：データ保存先はGitHubリポジトリのJSON、専用データ用ブランチに決定済み）を受け、
+将来別Issueで実装する自動テスト管理アプリがブラウザから読み込めるよう、CI側（`test`ジョブ）で結果を
+集約する仕組みを新設した。`test`ジョブのテスト実行コマンドを`npm run test:coverage`
+（`vitest run --coverage`。カバレッジのjson-summaryも出力）に変更し、テスト実行の前後に開始・終了時刻を
+記録するステップを追加した。変換処理は`scripts/aggregate-test-results.mjs`（Node.js、ESM）に実装し、
+JUnit XML（`test-results/junit.xml`）のパースには`fast-xml-parser`を新規devDependencyとして追加した
+（実体参照・エンティティのエスケープを自前の正規表現で扱う不安を避けるため）。パース・スキーマ変換・
+印（タグ）抽出・`index.json`のマージという純粋関数群（`parseJUnitXml`・`buildCoverageSummary`・
+`buildRunRecord`・`buildIndexEntry`・`mergeIndex`・`extractTag`）と、dataブランチへのgit操作
+（`main()`内、`child_process.spawnSync`によるgit worktree操作）を明確に分離し、前者のみ
+`scripts/aggregate-test-results.test.mjs`でvitest単体テストする設計とした（後者はローカルの一時bare
+リポジトリを使った手動シナリオ確認で、非fast-forward時の再取得→再構築→再push（最大5回）の
+リトライが実際に機能することを確認済み。5回失敗時はジョブを失敗させず`::warning::`を出す）。
+`index.json`・`runs/<runId>.json`の書き込みは、テスト実行に使ったチェックアウトとは別の一時ディレクトリに
+作る専用のgit worktreeで行い、メインの作業ツリーには影響を与えない。`pull_request`トリガーではJSON変換の
+み行い、dataブランチへの書き込みはスクリプト内の判定でスキップする（フォークPRでの`GITHUB_TOKEN`権限
+制限を踏まえた設計）。`data`ブランチへの書き込み権限（`permissions.contents: write`）は`test`ジョブのみに
+付与し、`a11y`・`e2e-scenario`ジョブや`deploy.yml`・`pr-preview.yml`には追加していない。カバレッジ計測の
+対象（`vite.config.ts`の`coverage.exclude`）に`scripts/**`を追加し、CI連携用スクリプト自身はアプリの
+ドメインロジックのカバレッジ計測・集計対象に含めないようにした。自動テスト管理アプリ本体の実装、
+過去の実行履歴のバックフィル、静的解析結果の書き出しは本Issueの対象外（別Issueとする方針）
+
 ## 次にやるべきこと（優先順）
 
 `docs/implementation-plan.md` §5「Phase 7（先送り事項）」・マスタ自由登録・§6「Phase 8：能力計画（CRP）」・

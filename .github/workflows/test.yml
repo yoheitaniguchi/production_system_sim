@@ -9,6 +9,10 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    # dataブランチ（Issue #98）へのテスト結果集約結果の書き込みに使う。他ジョブ・deploy.yml・
+    # pr-preview.ymlには付与しない（読み取りのみで書き込み権限は不要なため）
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v7
 
@@ -26,8 +30,30 @@ jobs:
       - name: Type check & build
         run: npm run build
 
+      # 次の「Aggregate test results」ステップが実行の開始時刻として記録する（Issue #98）
+      - name: Record test run start time
+        id: run_meta
+        run: echo "started_at=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$GITHUB_OUTPUT"
+
+      # 自動テスト管理アプリ（別Issueで実装予定）が結果を取り込めるよう、カバレッジのjson-summaryも
+      # 併せて出力する（test:coverage = vitest run --coverage。Issue #98）
       - name: Run tests
-        run: npm test
+        id: run_tests
+        run: npm run test:coverage
+
+      # JUnit XML・カバレッジをJSON形式（runs/<runId>.json・index.json）へ変換し、dataブランチへ
+      # コミット・push する（Issue #98）。テスト失敗時も実行するため、テストが失敗した場合の記録も残す。
+      # pull_requestトリガーではJSON変換のみ行い、dataブランチへの書き込みはスクリプト内でスキップする
+      - name: Aggregate test results and publish to data branch
+        if: always()
+        run: node scripts/aggregate-test-results.mjs
+        env:
+          RUN_ID: ${{ github.run_id }}
+          TRIGGER: ${{ github.event_name }}
+          COMMIT_SHA: ${{ github.sha }}
+          BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
+          STARTED_AT: ${{ steps.run_meta.outputs.started_at }}
+          RUN_CONCLUSION: ${{ steps.run_tests.outcome }}
 
       - name: Upload vitest JUnit report
         if: always()

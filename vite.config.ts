@@ -25,7 +25,9 @@ export default defineConfig(({ command, isPreview }) => ({
       // 人が読むレポート（text/html）に加え、外部ツールが数値を機械的に読み取れる
       // json-summaryも出力する。CIでの実行・成果物アップロードは今回は行わない
       reporter: ["text", "html", "json-summary"],
-      exclude: [...configDefaults.exclude, "e2e/**", "src/**/*.test.ts", "src/main.tsx"],
+      // scripts/配下はCI連携用のNode.jsスクリプト（Issue #98）であり、アプリのドメインロジックの
+      // カバレッジ計測対象ではないため除外する
+      exclude: [...configDefaults.exclude, "e2e/**", "scripts/**", "src/**/*.test.ts", "src/main.tsx"],
     },
   },
 }));
