@@ -23,9 +23,10 @@ issue-workflow（.claude/skills/issue-workflow/SKILL.md）の手順1〜3（下�
 2. `test`ジョブの末尾に、JUnit XML（`test-results/junit.xml`）とカバレッジのjson-summary（`coverage/coverage-summary.json`）を読み取り、下記スキーマのJSONへ変換するステップを追加する。変換処理はNode.jsスクリプトとして`scripts/`配下（新設）に置き、依存パッケージが必要な場合はvitest本体が依存する軽量なXMLパーサ（例：`fast-xml-parser`。新規devDependency追加は最小限にする）を検討する
 3. 変換したJSONを、データ用ブランチ`test-results-data`（本Issueで新設。空コミットで作成する）の`runs/<runId>.json`（`runId`はGitHub Actionsの`github.run_id`）へコミットする。書き込みには`test`ジョブに付与する`permissions: contents: write`を使う
 4. 上記と同じステップで、一覧・索引用ファイル`index.json`（実行ID・コミット・ブランチ・トリガー種別・開始/終了日時・合否件数・カバレッジの概算値のみを持つ軽量な配列）に今回の実行のエントリを追記し、同じコミットでデータ用ブランチへ書き込む（N-105対策：アプリが実行一覧を`runs/`配下の全件走査ではなく`index.json`1ファイルの取得で把握できるようにする）
-5. 複数のワークフロー実行が同時にデータ用ブランチへ書き込もうとする競合への対処として、`runs/<runId>.json`は実行ごとに異なるファイル名のため競合しないが、`index.json`は共有ファイルのため書き込み前にデータ用ブランチを`git pull --rebase`し、pushが`non-fast-forward`で失敗した場合は最大5回まで再試行（都度pullし直して`index.json`への追記を再適用）する。全て失敗した場合はジョブを失敗させ、次回の実行やリトライで解消されるようにする
-6. JSONのスキーマは、ユーザーの依頼メッセージに記載された案をもとに以下に確定する（変更点は末尾の表を参照）
-7. 上記の変更が、既存の`test`ジョブのテスト実行結果（pass/fail）自体・`a11y`/`e2e-scenario`ジョブ・`deploy.yml`・`pr-preview.yml`の動作に影響しないことを確認する
+5. フォークからのpull_requestで実行された場合はデータ用ブランチへの書き込みステップをスキップする（`if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository`等の条件で判定）。GitHubの仕様上、フォーク発pull_requestの`GITHUB_TOKEN`はワークフロー側の`permissions`設定に関わらず読み取り専用に制限されるため、書き込みを試みると必ず失敗する。スキップした場合は、その旨をジョブのログに出力するのみとし、ジョブ自体は失敗させない（`test`ジョブ本来のpass/fail判定と分離する）
+6. 複数のワークフロー実行が同時にデータ用ブランチへ書き込もうとする競合への対処として、`runs/<runId>.json`は実行ごとに異なるファイル名のため競合しないが、`index.json`は共有ファイルのため書き込み前にデータ用ブランチを`git pull --rebase`し、pushが`non-fast-forward`で失敗した場合は最大5回まで再試行（都度pullし直して`index.json`への追記を再適用）する。全て失敗した場合はジョブを失敗させ、次回の実行やリトライで解消されるようにする（要件5でスキップした場合はこの競合処理自体が発生しない）
+7. JSONのスキーマは、以下に確定する（変更点は末尾の表を参照）
+8. 上記の変更が、既存の`test`ジョブのテスト実行結果（pass/fail）自体・`a11y`/`e2e-scenario`ジョブ・`deploy.yml`・`pr-preview.yml`の動作に影響しないことを確認する
 
 ### JSONスキーマ（確定案）
 
@@ -79,7 +80,7 @@ issue-workflow（.claude/skills/issue-workflow/SKILL.md）の手順1〜3（下�
 ```
 
 - 配列は`completedAt`降順（新しい実行が先頭）で保持する
-- 件数の上限は設けない（教材規模のリポジトリであり件数増加の速度が遅いため）。将来的に肥大化が問題になった場合は別Issueで古いエントリの間引きを検討する
+- 件数の上限は設けない。`docs/test-management-app-requirements.md` U-01が「30万件規模のデータを継続コミットすることによるリポジトリの肥大化は既知のリスクとして残し、PoC前半で実際のデータ量を見たうえで必要なら見直す」と方針を示しているため、本Issueでも同じ方針に従い、間引きは別Issueとする
 
 ## 対象範囲外
 
@@ -88,6 +89,7 @@ issue-workflow（.claude/skills/issue-workflow/SKILL.md）の手順1〜3（下�
 - 静的解析結果（型チェック・ESLint）の書き出し（U-06、別途検討）
 - Playwright（`a11y`・`e2e-scenario`ジョブ）の結果を同じJSONへ集約すること（本Issueは`test`ジョブのVitest結果・カバレッジのみを対象とする。Playwright結果の集約は別Issueとする）
 - カバレッジの4指標（statements/branches/functions/lines）のうちlines以外を`coverage`に含めること
+- フォーク発pull_requestからのデータ収集そのものを可能にすること（要件5によりスキップする方針とし、フォークPRのCI結果もアプリに取り込みたい場合の代替手段の検討は別Issueとする）
 
 ## 受け入れ条件
 
@@ -97,10 +99,11 @@ issue-workflow（.claude/skills/issue-workflow/SKILL.md）の手順1〜3（下�
 - [ ] 既存のPRチェック・デプロイ（`deploy.yml`・`pr-preview.yml`）の動作に影響しないこと（ジョブ構成・`on:`条件に差分が無いこと）
 - [ ] `test`ジョブ自体のpass/fail判定が、カバレッジ計測込みの実行に変更した後も従来どおり機能すること
 - [ ] 短時間に複数のワークフロー実行が完了した場合でも、リトライにより`index.json`への追記が両方とも反映されること（一方が失われないこと）
+- [ ] フォークからのpull_requestで実行した場合、データ用ブランチへの書き込みステップがスキップされ、かつ`test`ジョブ自体は失敗しないこと（同一リポジトリ内のブランチからのpull_requestでは通常どおり書き込まれること）
 
 ## 参考資料
 
-- `docs/test-management-app-requirements.md` 11.1（技術的制約）・11.2（外部連携の概要、I-04、シミュレータのリポジトリ側で必要な準備#4'）・11.5（U-05）
+- `docs/test-management-app-requirements.md` 11.1（技術的制約・構成の選択肢の決定）・11.2（外部連携の概要、I-04、シミュレータのリポジトリ側で必要な準備#4'）・11.5（U-01・U-05）
 - `docs/browser-fetch-spike-report.md`（ブラウザからのGitHub Actions成果物直接取得が技術的にできないことの検証結果）
 - `.github/workflows/test.yml`（`test`ジョブ、JUnit XML出力ステップは`docs/issue-drafts/issue-b1-ci-junit-triggers.md`で対応済み）
 - `vite.config.ts`（`coverage.reporter`に`json-summary`は設定済みだが、CIの`npm test`ではカバレッジ計測自体を実行していない）
@@ -108,6 +111,7 @@ issue-workflow（.claude/skills/issue-workflow/SKILL.md）の手順1〜3（下�
 
 ## レビュー時の確認事項
 
-- データ用ブランチ名を`test-results-data`と仮置きした（ユーザーの依頼メッセージの例示は`data`）。短すぎて用途が分かりにくいと判断したための変更だが、命名はユーザー承認時に確定させたい
+- データ用ブランチ名を`test-results-data`と仮置きした（初期案の例示は`data`）。短すぎて用途が分かりにくいと判断したための変更だが、命名はユーザー承認時に確定させたい
 - カバレッジ計測をCIの`test`ジョブに常時組み込む（`npm test`→`--coverage`付き実行への変更）ことで、testジョブの実行時間がわずかに増加する見込み。既存の`test`ジョブの合否判定への影響は無い想定だが、許容できるか確認したい
 - `index.json`の競合対策をgitのpull-rebase-retryで実装する案としたが、実行頻度が低い教材規模のリポジトリであれば十分と判断した。将来的に実行頻度が増える場合はGitHub Contents APIのSHA突き合わせ方式への切り替えを検討する
+- 要件5（フォーク発pull_requestでの書き込みスキップ）を今回のレビューで追加した。本リポジトリは現状フォークからのPRを想定していない可能性が高く、実運用上は発火しない分岐かもしれないが、将来フォークPRが来た際にジョブが原因不明で失敗する事態を避けるため、念のため要件に含めることを提案する。「フォークPRのCI結果も将来的にアプリへ取り込みたいか」は本Issueのスコープ外の判断のため、ユーザーの意向を確認したい
