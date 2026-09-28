@@ -52,7 +52,7 @@ describe("sortAlertsByDelay（ダッシュボード：遅延ランキング）",
     expect(sortAlertsByDelay(alerts).map((a) => a.source)).toEqual(["PO-A", "PO-B", "PO-C"]);
   });
 
-  it("[単体][機能テスト][異常] 空配列を渡すと空配列を返す", () => {
+  it("[単体][機能テスト][境界] 空配列を渡すと空配列を返す", () => {
     expect(sortAlertsByDelay([])).toEqual([]);
   });
 

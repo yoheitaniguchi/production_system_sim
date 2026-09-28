@@ -2,8 +2,11 @@
 // KPIサマリーカード・アラート件数を1画面に俯瞰する（design.md ダッシュボード機能）。
 // 個々の指標の算出方法まで確認したいときはKPIタブ・原価タブ・能力タブを見る、という役割分担にする
 // （このタブは「今どうなっているか」を一目で把握するための俯瞰画面に留める）。
-// 日次推移はreducer.tsがADVANCE_DAY等の操作のたびに記録するstate.dashboardHistoryをそのまま使い、
-// ここでBOM階層やオーダ状態を独自に辿り直すことはしない。
+// 日次推移（バーンダウンチャート・KPIサマリー・アラート件数）はreducer.tsがADVANCE_DAY等の操作のたびに
+// 記録するstate.dashboardHistoryをそのまま使い、ここでBOM階層やオーダ状態を独自に辿り直すことはしない。
+// 一方、遅延ランキングは「今どの遅延が最も深刻か」という現在時点の状態を見る欄のため、AlertBar.tsxと同様に
+// checkSchedule(state)をその都度直接呼んで計算する（履歴化はしない。アラート件数バッジの件数だけが
+// dashboardHistory由来で、内訳の一覧はAlertBar同様に常時再計算という2つの鮮度モデルが混在する点に注意）。
 import { useMemo, useState } from "react";
 import { checkSchedule, sortAlertsByDelay } from "../domain/schedule";
 import type { DashboardSnapshot, SimulationState } from "../types";
@@ -135,6 +138,8 @@ function DashboardPanel({ state }: DashboardPanelProps) {
         受注残・計画残・発注残・製造残・出荷残・在庫の残高推移（バーンダウン）と、主要KPI・アラート件数を1画面で
         俯瞰する。個々の指標の算出方法はKPI／原価／能力タブを、警告への対応は画面上部の警告バーを参照。
         推移は「次の日へ進む」等の操作のたびに当日分を記録して積み上げる（ページを開き直すと消える）。
+        遅延ランキングは、警告バーが常時表示する日程遅延のうちどれから対処すべきかを判断しやすくするため、
+        遅延日数が大きい順に並べ替えて一覧にしたものである。
       </p>
 
       <h3>KPIサマリー</h3>
@@ -164,9 +169,9 @@ function DashboardPanel({ state }: DashboardPanelProps) {
         ))}
       </div>
 
-      <h3>遅延ランキング</h3>
+      <h3>日程遅延ランキング</h3>
       {delayRanking.length === 0 ? (
-        <p className="panel__empty">遅延はありません。</p>
+        <p className="panel__empty">日程遅延はありません。</p>
       ) : (
         <table className="panel__table">
           <thead>
