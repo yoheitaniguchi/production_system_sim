@@ -80,5 +80,39 @@ for (const theme of THEMES) {
       // minor/moderateはCIを失敗させない（上のattachでレポートのみ行う）。
       expect(blockingMessages, blockingMessages.join("\n")).toEqual([]);
     });
+
+    // Issue #67：初期状態では作業指示が無く、能力タブは山積みバーグラフを描画せず空メッセージを出すだけなので、
+    // 上のテストではグラフが一度も検査されない。TC-04〜05相当の操作（受注→MRP→計画オーダ確定）で負荷を作って
+    // からグラフ付きの能力タブを検査する。狭い幅ではグラフが横スクロールし、フォーカスできないスクロール領域
+    // （axeのscrollable-region-focusable）が生じうるため、通常幅と狭い幅の両方で確認する。
+    for (const viewport of [
+      { label: "通常幅", width: 1280, height: 900 },
+      { label: "狭い幅", width: 375, height: 800 },
+    ]) {
+      test(`山積みバーグラフのある能力タブでcritical/serious相当の違反がないこと（${viewport.label}）`, async ({ page }) => {
+        await page.setViewportSize({ width: viewport.width, height: viewport.height });
+        const main = page.locator("main.app__main");
+        const tabs = page.locator("nav.app__tabs");
+        const gotoTab = (label: string) => tabs.getByRole("button", { name: new RegExp(`^${label}`) }).click();
+
+        await gotoTab("受注");
+        await main.getByLabel("数量").fill("10");
+        await main.getByLabel("希望納期（D+）").fill("15");
+        await main.getByRole("button", { name: "受注登録", exact: true }).click();
+        await main.getByLabel("回答納期（D+）").fill("15");
+        await main.getByRole("button", { name: "納期回答", exact: true }).click();
+        await gotoTab("計画");
+        await main.getByRole("button", { name: "MRPを実行", exact: true }).click();
+        await main.getByRole("button", { name: /^計画オーダを確定/ }).click();
+        await gotoTab("能力");
+        await expect(page.locator(".capacity-chart__svg")).toBeVisible();
+
+        const results = await new AxeBuilder({ page }).analyze();
+        const blocking = results.violations
+          .filter((v) => v.impact && BLOCKING_IMPACTS.has(v.impact))
+          .map((v) => `${v.id} (${v.impact}): ${v.help} — ${v.nodes.length}件`);
+        expect(blocking, blocking.join("\n")).toEqual([]);
+      });
+    }
   });
 }

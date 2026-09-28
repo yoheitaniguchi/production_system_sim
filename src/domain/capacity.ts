@@ -191,3 +191,76 @@ export function computePlannedOrderLoad(state: SimulationState): PlannedOrderLoa
 
   return entries.sort((a, b) => a.day - b.day || a.workCenter.localeCompare(b.workCenter));
 }
+
+export interface CapacityChartCell {
+  day: number;
+  plannedMin: number;
+  actualMin: number;
+  /** 計画負荷・実績負荷のうち大きい方が能力を超えた分（分）。超過していなければ0（表の「超過（N分）」と同じ定義） */
+  overloadMin: number;
+  /** 計画負荷が能力を超えているか（棒ごとの警告色の判定。比較ロジックを描画側に持たせないためモデルで確定する） */
+  plannedOverloaded: boolean;
+  /** 実績負荷が能力を超えているか */
+  actualOverloaded: boolean;
+}
+
+export interface CapacityChartRow {
+  workCenter: string;
+  /** 1日あたり能力（分）。作業区内で一定（computeCapacityLoad()は作業区単位で同一値を返す）なので最初のエントリの値を使う */
+  capacityMin: number;
+  /** この作業区で負荷のある日だけ（日昇順） */
+  cells: CapacityChartCell[];
+}
+
+export interface CapacityChartModel {
+  /** どれかの作業区に負荷のある日の和集合（昇順）。全作業区で共通の横軸になる */
+  days: number[];
+  /** 作業区の並び（引数で渡したマスタ順を優先し、無指定・未掲載の作業区はコード順） */
+  rows: CapacityChartRow[];
+  /**
+   * 縦軸の上限（分）。全作業区で共通の目盛りにして作業区間を比較できるよう、能力・計画・実績の最大値をとる。
+   * 空のモデルは0、作業区が1つでもあれば1以上を保証する（能力0・負荷0の行だけでも縦軸の縮尺がゼロ除算にならない）
+   */
+  maxMin: number;
+}
+
+/**
+ * 山積みバーグラフ（Issue #67、design.md EXT-42）用の表示データを、computeCapacityLoad()の結果から整形する。
+ * 状態を持たない導出値で、表（CapacityPanel.tsx）と同じ元データ・同じ超過の定義を使うため、
+ * グラフと表の判定が食い違うことはない。負荷が1件も無ければ空のモデル（rows/daysとも空、maxMin=0）を返す。
+ */
+export function buildCapacityChartModel(entries: CapacityLoadEntry[], workCenterOrder: string[] = []): CapacityChartModel {
+  const byWorkCenter = new Map<string, CapacityChartRow>();
+  const daySet = new Set<number>();
+  let maxMin = 0;
+
+  for (const entry of entries) {
+    let row = byWorkCenter.get(entry.workCenter);
+    if (!row) {
+      row = { workCenter: entry.workCenter, capacityMin: entry.capacityMin, cells: [] };
+      byWorkCenter.set(entry.workCenter, row);
+    }
+    const required = Math.max(entry.plannedMin, entry.actualMin);
+    row.cells.push({
+      day: entry.day,
+      plannedMin: entry.plannedMin,
+      actualMin: entry.actualMin,
+      overloadMin: Math.max(0, required - entry.capacityMin),
+      plannedOverloaded: entry.plannedMin > entry.capacityMin,
+      actualOverloaded: entry.actualMin > entry.capacityMin,
+    });
+    daySet.add(entry.day);
+    maxMin = Math.max(maxMin, entry.capacityMin, required);
+  }
+
+  // 作業区の並びはマスタ順（工程の流れ）を優先し、掲載の無い作業区はその後ろへコード順で置く
+  const rank = (workCenter: string): number => {
+    const i = workCenterOrder.indexOf(workCenter);
+    return i === -1 ? workCenterOrder.length : i;
+  };
+  const rows = [...byWorkCenter.values()].sort(
+    (a, b) => rank(a.workCenter) - rank(b.workCenter) || a.workCenter.localeCompare(b.workCenter),
+  );
+  for (const row of rows) row.cells.sort((a, b) => a.day - b.day);
+  return { days: [...daySet].sort((a, b) => a - b), rows, maxMin: rows.length > 0 ? Math.max(1, maxMin) : 0 };
+}

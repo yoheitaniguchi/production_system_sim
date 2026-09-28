@@ -45,7 +45,7 @@ export function CostCompositionChart({ rows }: { rows: CostCompositionRow[] }) {
           加工費
         </span>
       </div>
-      <div className="cost-chart__scroll">
+      <div className="cost-chart__scroll" tabIndex={0} role="region" aria-label="品目別標準原価の構成比グラフ（横スクロールできます）">
         <svg
           className="cost-chart__svg"
           width={WIDTH}
@@ -130,7 +130,7 @@ export function MfgOrderVarianceChart({ rows }: { rows: MfgOrderVarianceRow[] })
           未完了オーダの暫定値（投入額）
         </span>
       </div>
-      <div className="cost-chart__scroll">
+      <div className="cost-chart__scroll" tabIndex={0} role="region" aria-label="製造オーダ別原価差異グラフ（横スクロールできます）">
         <svg
           className="cost-chart__svg"
           width={WIDTH}

@@ -2,9 +2,11 @@
 //
 // 作業区×日で計画負荷・実績負荷・能力を一覧し、超過をハイライトする。有限能力スケジューリング
 // （山崩し・自動リスケジュール）は行わない、あくまで可視化のみの画面（design.md §9.2）。
+// 確定済みの負荷は、バーグラフ（CapacityLoadChart.tsx、Issue #67）と表を併記する。
 import { downloadCsv, todayDateStamp } from "../csvExport";
 import { computeCapacityLoad, computePlannedOrderLoad } from "../domain/capacity";
 import type { SimulationState } from "../types";
+import { CapacityLoadChart } from "./CapacityLoadChart";
 
 interface CapacityPanelProps {
   state: SimulationState;
@@ -56,6 +58,7 @@ function CapacityPanel({ state }: CapacityPanelProps) {
         </p>
       ) : (
         <>
+          <CapacityLoadChart entries={load} workCenterOrder={state.workCenters.map((w) => w.workCenter)} />
           <div className="panel__toolbar">
             <button type="button" aria-label="山積み表をCSVでエクスポート" onClick={downloadLoadCsv}>
               CSVでエクスポート
