@@ -1074,6 +1074,56 @@ textarea {
   font-weight: bold;
 }
 
+/* シナリオの書き出し・取り込み（BurgerMenu.tsx。Issue #61） */
+.burger-menu__action {
+  width: 100%;
+  padding: 0.4rem 0.6rem;
+  border: none;
+  background: none;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  text-align: left;
+  color: var(--color-text);
+}
+
+.burger-menu__action:hover {
+  background: var(--bg-subtle);
+}
+
+.burger-menu__hint {
+  margin: 0.3rem 0.4rem 0;
+  max-width: 16rem;
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}
+
+.burger-menu__notice {
+  margin-top: 0.2rem;
+  padding: 0.4rem 0.6rem;
+  max-width: 22rem;
+  max-height: 14rem;
+  overflow: auto;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.burger-menu__notice--ok {
+  background: var(--ok-bg);
+  color: var(--color-text);
+}
+
+.burger-menu__notice--error {
+  background: var(--warn-bg);
+  color: var(--color-text);
+  border: 1px solid var(--warn-border);
+}
+
+.burger-menu__file-input {
+  display: none;
+}
+
 /* 進捗ガント（GanttChartPanel.tsx）。既存の状態表現トークン（--color-accent, --pf-active,
    --warn-bg, --warn-border, --color-text-muted）をそのまま流用し、6テーマ全てで配色が破綻しないようにする */
 .gantt__toolbar {

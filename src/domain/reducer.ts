@@ -93,7 +93,9 @@ export type SimulationAction =
   | { type: "MASTER_DELETE_PARTNER"; payload: { partnerType: PartnerType; partnerId: string } }
   | { type: "MASTER_UPDATE_CUSTOMER_PRIORITY_RANK"; payload: { customerId: string; priorityRank: number } }
   | { type: "MASTER_IMPORT"; payload: { snapshot: MasterSnapshot } }
-  | { type: "MASTER_RESET_TO_PRESET"; payload?: { presetId?: string } };
+  | { type: "MASTER_RESET_TO_PRESET"; payload?: { presetId?: string } }
+  // シナリオ（SimulationState全体）の取り込み（design.md EXT-40）。検証はscenarioIO.parseScenario()側で済んでいる前提
+  | { type: "SCENARIO_IMPORT"; payload: { state: SimulationState } };
 
 /** データ増分ログ（design.md EXT-8）の対象テーブル。行の追加・削除のみを見る（値の更新は対象外） */
 const TABLE_LABELS = {
@@ -407,6 +409,11 @@ export function simulationReducer(state: SimulationState, action: SimulationActi
       // 二重括弧で読みにくくならないよう鉤括弧で囲む
       return applyMasterSnapshot(state, preset.snapshot, `マスタをプリセット「${preset.label}」に戻した`);
     }
+
+    case "SCENARIO_IMPORT":
+      // 現在の状態を丸ごと置き換える（部分マージはしない）。エクスポート時点の状態を値のまま復元するため、
+      // イベントログへの追記もしない（取り込み結果は呼び出し側のUIで通知する）
+      return structuredClone(action.payload.state);
 
     default:
       return state;
