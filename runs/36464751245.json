@@ -1,0 +1,1450 @@
+{
+  "runId": "36464751245",
+  "workflow": "test.yml",
+  "trigger": "push",
+  "commit": "b4ad7aedfc255b510f8732dbe32f668b87ef5535",
+  "branch": "main",
+  "startedAt": "2026-09-28T18:23:01Z",
+  "completedAt": "2026-09-28T18:23:04.838Z",
+  "conclusion": "success",
+  "tests": [
+    {
+      "file": "scripts/aggregate-test-results.test.mjs",
+      "name": "parseJUnitXml > passed/failed/skippedの3件を、ファイル・名前・所要時間(ms)とともに読み取る",
+      "status": "passed",
+      "durationMs": 12
+    },
+    {
+      "file": "scripts/aggregate-test-results.test.mjs",
+      "name": "parseJUnitXml > failure要素からfailureMessageと、テキスト中の「ファイルパス:行番号」をlocationとして抽出する",
+      "status": "passed",
+      "durationMs": 1
+    },
+    {
+      "file": "scripts/aggregate-test-results.test.mjs",
+      "name": "parseJUnitXml > failure/error要素が無い場合、location・failureMessageのフィールド自体を持たない",
+      "status": "passed",
+      "durationMs": 1
+    },
+    {
+      "file": "scripts/aggregate-test-results.test.mjs",
+      "name": "parseJUnitXml > testsuite・testcaseが1件だけの場合でも配列として扱える(fast-xml-parserは単数要素をオブジェクトのまま返す)",
+      "status": "passed",
+      "durationMs": 1
+    },
+    {
+      "file": "scripts/aggregate-test-results.test.mjs",
+      "name": "extractTag > docs/test-tagging.mdが定める[UC-xx][工程][テストの種類][観点]形式の印を抽出する",
+      "status": "passed",
+      "durationMs": 0
+    },
+    {
+      "file": "scripts/aggregate-test-results.test.mjs",
+      "name": "extractTag > describeとitの連結で印が先頭に来ない場合でも、部分一致で抽出する(先頭一致を仮定しない)",
+      "status": "passed",
+      "durationMs": 0
+    },
+    {
+      "file": "scripts/aggregate-test-results.test.mjs",
+      "name": "extractTag > 観点タグを省略した3要素の印も抽出できる",
+      "status": "passed",
+      "durationMs": 0
+    },
+    {
+      "file": "scripts/aggregate-test-results.test.mjs",
+      "name": "extractTag > UC番号が無い(UCタグ自体を持たない)テスト名は抽出対象外でnullを返す",
+      "status": "passed",
+      "durationMs": 0
+    },
+    {
+      "file": "scripts/aggregate-test-results.test.mjs",
+      "name": "extractTag > 印が全く無いテスト名はnullを返す",
+      "status": "passed",
+      "durationMs": 0
+    },
+    {
+      "file": "scripts/aggregate-test-results.test.mjs",
+      "name": "buildCoverageSummary > \"total\"キーをfiles配列から除外し、lines.pctをoverallPercentの算出元に使う",
+      "status": "passed",
+      "durationMs": 1
+    },
+    {
+      "file": "scripts/aggregate-test-results.test.mjs",
+      "name": "buildCoverageSummary > coverage-summary.jsonの絶対パスを、リポジトリルートからの相対パス(/区切り)へ変換する",
+      "status": "passed",
+      "durationMs": 0
+    },
+    {
+      "file": "scripts/aggregate-test-results.test.mjs",
+      "name": "buildRunRecord / buildIndexEntry > JUnit XMLとcoverage-summary.jsonから、runs/<runId>.jsonのスキーマ通りのオブジェクトを組み立てる",
+      "status": "passed",
+      "durationMs": 1
+    },
+    {
+      "file": "scripts/aggregate-test-results.test.mjs",
+      "name": "mergeIndex > 空のindex.jsonへ新規エントリを追記する",
+      "status": "passed",
+      "durationMs": 0
+    },
+    {
+      "file": "scripts/aggregate-test-results.test.mjs",
+      "name": "mergeIndex > runsキーが無いindex.jsonにも新規エントリを追記できる",
+      "status": "passed",
+      "durationMs": 0
+    },
+    {
+      "file": "scripts/aggregate-test-results.test.mjs",
+      "name": "mergeIndex > 同一runIdが既に存在する場合は上書きし、他のエントリは保持する",
+      "status": "passed",
+      "durationMs": 0
+    },
+    {
+      "file": "scripts/aggregate-test-results.test.mjs",
+      "name": "mergeIndex > 新しいrunIdの場合は末尾に追記する(既存エントリの順序を変えない)",
+      "status": "passed",
+      "durationMs": 0
+    },
+    {
+      "file": "src/csvExport.test.ts",
+      "name": "buildCsv（Issue #54：CSVエクスポート） > [単体][機能テスト][正常] headers・rowsをカンマ区切り・CRLF改行のCSV文字列に変換する",
+      "status": "passed",
+      "durationMs": 3
+    },
+    {
+      "file": "src/csvExport.test.ts",
+      "name": "buildCsv（Issue #54：CSVエクスポート） > [単体][機能テスト][境界] rowsが空の場合はヘッダー行のみを返す",
+      "status": "passed",
+      "durationMs": 2
+    },
+    {
+      "file": "src/csvExport.test.ts",
+      "name": "buildCsv（Issue #54：CSVエクスポート） > [単体][機能テスト][異常] フィールドにカンマが含まれる場合は引用符で囲む",
+      "status": "passed",
+      "durationMs": 0
+    },
+    {
+      "file": "src/csvExport.test.ts",
+      "name": "buildCsv（Issue #54：CSVエクスポート） > [単体][機能テスト][異常] フィールドに引用符が含まれる場合は二重化して引用符で囲む",
+      "status": "passed",
+      "durationMs": 0
+    },
+    {
+      "file": "src/csvExport.test.ts",
+      "name": "buildCsv（Issue #54：CSVエクスポート） > [単体][機能テスト][異常] フィールドに改行が含まれる場合は引用符で囲む",
+      "status": "passed",
+      "durationMs": 0
+    },
+    {
+      "file": "src/csvExport.test.ts",
+      "name": "buildCsv（Issue #54：CSVエクスポート） > [単体][機能テスト][正常] 数値フィールドはそのまま出力する（引用符で囲まない）",
+      "status": "passed",
+      "durationMs": 0
+    },
+    {
+      "file": "src/csvExport.test.ts",
+      "name": "todayDateStamp（Issue #54：CSVファイル名の日付） > [単体][機能テスト][正常] 指定した日付をYYYY-MM-DD形式にする",
+      "status": "passed",
+      "durationMs": 0
+    },
+    {
+      "file": "src/csvExport.test.ts",
+      "name": "todayDateStamp（Issue #54：CSVファイル名の日付） > [単体][機能テスト][正常] 引数を省略すると現在日時を使う",
+      "status": "passed",
+      "durationMs": 0
+    },
+    {
+      "file": "src/data/masterData.test.ts",
+      "name": "初期マスタデータ（v5-spec.md §1.1：木製イス） > TC-01: 品目5・BOM行4・工順3行。取引先は顧客2件+仕入先3件（design.md DEV-1によりPARTNER3行ではなく分離）",
+      "status": "passed",
+      "durationMs": 4
+    },
+    {
+      "file": "src/data/masterData.test.ts",
+      "name": "初期マスタデータ（v5-spec.md §1.1：木製イス） > BOMの親子はすべて実在する品目を参照する",
+      "status": "passed",
+      "durationMs": 1
+    },
+    {
+      "file": "src/data/masterData.test.ts",
+      "name": "初期マスタデータ（v5-spec.md §1.1：木製イス） > BOMに循環参照が無い（v5-spec.md §3.7）",
+      "status": "passed",
+      "durationMs": 1
+    },
+    {
+      "file": "src/data/masterData.test.ts",
+      "name": "初期マスタデータ（v5-spec.md §1.1：木製イス） > 工順を持つのはMAKE品目（FG-100・SA-200）のみ",
+      "status": "passed",
+      "durationMs": 0
+    },
+    {
+      "file": "src/data/masterData.test.ts",
+      "name": "初期マスタデータ（v5-spec.md §1.1：木製イス） > 木製イスの完成には座面ASSY x1・脚 x4・ネジ x8・木板(座面経由) x1が必要",
+      "status": "passed",
+      "durationMs": 0
+    },
+    {
+      "file": "src/data/masterData.test.ts",
+      "name": "resolveActivePresetId（design.md EXT-34：現在のマスタがどのプリセットと一致するか） > 木製イスの品目集合はCHAIRと一致する",
+      "status": "passed",
+      "durationMs": 0
+    },
+    {
+      "file": "src/data/masterData.test.ts",
+      "name": "resolveActivePresetId（design.md EXT-34：現在のマスタがどのプリセットと一致するか） > 自転車の品目集合はBICYCLEと一致する",
+      "status": "passed",
+      "durationMs": 0
+    },
+    {
+      "file": "src/data/masterData.test.ts",
+      "name": "resolveActivePresetId（design.md EXT-34：現在のマスタがどのプリセットと一致するか） > どのプリセットとも一致しない品目集合はnullを返す（マスタCRUD編集後の状態を想定）",
+      "status": "passed",
+      "durationMs": 0
+    },
+    {
+      "file": "src/domain/bicyclePreset.test.ts",
+      "name": "自転車プリセット（BICYCLE_PRESET）へ切り替える > 品目・BOM・工順・作業区・取引先がすべて自転車プリセットの内容に置き換わる",
+      "status": "passed",
+      "durationMs": 6
+    },
+    {
+      "file": "src/domain/bicyclePreset.test.ts",
+      "name": "自転車プリセットで4階層BOMのMRPを展開する > 数量・BOMレベル・日程が階層どおりに逆算される",
+      "status": "passed",
+      "durationMs": 4
+    },
+    {
+      "file": "src/domain/bicyclePreset.test.ts",
+      "name": "自転車プリセットで標準原価を4階層にわたって積み上げる > EXT-34が売価の仮置き根拠として引用する原価内訳と一致する",
+      "status": "passed",
+      "durationMs": 1
+    },
+    {
+      "file": "src/domain/bicyclePreset.test.ts",
+      "name": "自転車プリセットで受注から出荷までを通す > 在庫・ペギング・受注状態が整合したまま出荷まで完了する",
+      "status": "passed",
+      "durationMs": 18
+    },
+    {
+      "file": "src/domain/capacity.test.ts",
+      "name": "computeCapacityLoad（design.md §9.5の計算例） > TC-04〜05の確定結果だけで、WC-CUT/WC-INSは能力内・WC-ASMのみ山積み超過になる",
+      "status": "passed",
+      "durationMs": 24
+    },
+    {
+      "file": "src/domain/capacity.test.ts",
+      "name": "computeCapacityLoad（design.md §9.5の計算例） > design.md C2-1の回帰：未着手の後工程（inputQtyがまだ0）でも計画負荷はmo.planQty基準で計上される",
+      "status": "passed",
+      "durationMs": 1
+    },
+    {
+      "file": "src/domain/capacity.test.ts",
+      "name": "computeCapacityLoad（design.md §9.5の計算例） > 着手した工程は計画負荷ではなく実績負荷（実着手日）へ移り、二重計上されない",
+      "status": "passed",
+      "durationMs": 1
+    },
+    {
+      "file": "src/domain/capacity.test.ts",
+      "name": "computeCapacityLoad（design.md §9.5の計算例） > 完了（DONE）後も実績負荷は実着手日に残り続ける",
+      "status": "passed",
+      "durationMs": 2
+    },
+    {
+      "file": "src/domain/capacity.test.ts",
+      "name": "computeCapacityLoad（design.md §9.5の計算例） > 取消（CANCELED）された製造オーダは計画負荷に算入されない",
+      "status": "passed",
+      "durationMs": 1
+    },
+    {
+      "file": "src/domain/capacity.test.ts",
+      "name": "computeCapacityLoad（design.md §9.5の計算例） > 山積み超過のオーダを分割して別日へ振り分けると、超過が解消される",
+      "status": "passed",
+      "durationMs": 1
+    },
+    {
+      "file": "src/domain/capacity.test.ts",
+      "name": "computePlannedOrderLoad（Issue #57：計画オーダ段階での山積みプレビュー） > [単体][機能テスト][正常] 確定前の計画オーダだけでも、design.md §9.5と同じWC-ASM超過が見込み負荷として検知される",
+      "status": "passed",
+      "durationMs": 1
+    },
+    {
+      "file": "src/domain/capacity.test.ts",
+      "name": "computePlannedOrderLoad（Issue #57：計画オーダ段階での山積みプレビュー） > [単体][機能テスト][境界] orderType===BUYの計画オーダは工程を持たないため見込み負荷に計上されない",
+      "status": "passed",
+      "durationMs": 0
+    },
+    {
+      "file": "src/domain/capacity.test.ts",
+      "name": "computePlannedOrderLoad（Issue #57：計画オーダ段階での山積みプレビュー） > [結合][機能テスト][境界] 確定済みオーダと未確定の計画オーダが混在しても二重計上されない",
+      "status": "passed",
+      "durationMs": 1
+    },
+    {
+      "file": "src/domain/capacity.test.ts",
+      "name": "computeChronicBottlenecks（Issue #59：慢性的なボトルネック作業区の検知） > [結合][機能テスト][正常] WC-ASMが3日連続（D+13〜D+15）で山積み超過している状態をボトルネックとして検知する",
+      "status": "passed",
+      "durationMs": 1
+    },
+    {
+      "file": "src/domain/capacity.test.ts",
+      "name": "computeChronicBottlenecks（Issue #59：慢性的なボトルネック作業区の検知） > [単体][機能テスト][境界] 連続超過が2日（閾値未満）ではボトルネックとして検知されない",
+      "status": "passed",
+      "durationMs": 1
+    },
+    {
+      "file": "src/domain/capacity.test.ts",
+      "name": "computeChronicBottlenecks（Issue #59：慢性的なボトルネック作業区の検知） > [単体][機能テスト][境界] 閾値を明示的に2へ引き下げると、2日連続の超過も検知される",
+      "status": "passed",
+      "durationMs": 0
+    },
+    {
+      "file": "src/domain/capacity.test.ts",
+      "name": "computeChronicBottlenecks（Issue #59：慢性的なボトルネック作業区の検知） > [単体][機能テスト][正常] 既定の閾値定数はdesign.md §9.5のシナリオに合わせて3である",
+      "status": "passed",
+      "durationMs": 0
+    },
+    {
+      "file": "src/domain/cost.test.ts",
+      "name": "rollupCost（v5-spec.md §11.2の計算例どおりの標準原価積上げ） > BUY品目は購入単価がそのまま材料費・標準原価になる",
+      "status": "passed",
+      "durationMs": 6
+    },
+    {
+      "file": "src/domain/cost.test.ts",
+      "name": "rollupCost（v5-spec.md §11.2の計算例どおりの標準原価積上げ） > MAKE品目はBOM×子品目原価が材料費、工順×賃率が加工費になる（座面ASSY）",
+      "status": "passed",
+      "durationMs": 1
+    },
+    {
+      "file": "src/domain/cost.test.ts",
+      "name": "rollupCost（v5-spec.md §11.2の計算例どおりの標準原価積上げ） > 木製イスは §11.2 の例のとおり材料費2,560・加工費1,400・標準原価3,960になる",
+      "status": "passed",
+      "durationMs": 0
+    },
+    {
+      "file": "src/domain/cost.test.ts",
+      "name": "rollupCost（v5-spec.md §11.2の計算例どおりの標準原価積上げ） > computeAllItemCostsは全品目分をitemId付きで返す",
+      "status": "passed",
+      "durationMs": 2
+    },
+    {
+      "file": "src/domain/cost.test.ts",
+      "name": "computeMfgOrderCost（v5-spec.md §11.2「原価差異の可視化」の不良1個の例） > 第1工程完了直後は投入額のみ計上され、完成振替は0（未完了）",
+      "status": "passed",
+      "durationMs": 3
+    },
+    {
+      "file": "src/domain/cost.test.ts",
+      "name": "computeMfgOrderCost（v5-spec.md §11.2「原価差異の可視化」の不良1個の例） > 最終工程で不良1個が出ると、原価差異は3,960円（＝標準原価×不良数）になる",
+      "status": "passed",
+      "durationMs": 1
+    },
+    {
+      "file": "src/domain/cost.test.ts",
+      "name": "inventoryValue / backlogValue / scrapLossValue > 在庫が無ければ在庫金額は0",
+      "status": "passed",
+      "durationMs": 0
+    },
+    {
+      "file": "src/domain/cost.test.ts",
+      "name": "inventoryValue / backlogValue / scrapLossValue > 在庫金額は現在庫数量×標準原価の合計になる",
+      "status": "passed",
+      "durationMs": 0
+    },
+    {
+      "file": "src/domain/cost.test.ts",
+      "name": "inventoryValue / backlogValue / scrapLossValue > 受注残高（金額）は未出荷の受注残数量×売価の合計になる（RECEIVEDは含めない）",
+      "status": "passed",
+      "durationMs": 1
+    },
+    {
+      "file": "src/domain/cost.test.ts",
+      "name": "inventoryValue / backlogValue / scrapLossValue > 不良損失額は製造オーダの不良数量×標準原価の合計になる",
+      "status": "passed",
+      "durationMs": 1
+    },
+    {
+      "file": "src/domain/dashboard.test.ts",
+      "name": "computeDashboardSnapshot > 受注も操作もない初期状態では全ての残高が0、KPIハイライトはnull",
+      "status": "passed",
+      "durationMs": 7
+    },
+    {
+      "file": "src/domain/dashboard.test.ts",
+      "name": "computeDashboardSnapshot > MRP実行直後は計画残に正味所要量が乗り、確定後は発注残・製造残へ振り替わる",
+      "status": "passed",
+      "durationMs": 16
+    },
+    {
+      "file": "src/domain/dashboard.test.ts",
+      "name": "computeDashboardSnapshot > 入荷計上すると発注残が減り、在庫金額（inventoryValue相当）が増える",
+      "status": "passed",
+      "durationMs": 2
+    },
+    {
+      "file": "src/domain/exerciseGuide.test.ts",
+      "name": "演習ガイド（v5-spec.md §9.3のTC-01〜TC-18を自動判定する、design.md DEV-4） > [単体][機能テスト][正常] 初期状態ではTC-01のみ完了している",
+      "status": "passed",
+      "durationMs": 6
+    },
+    {
+      "file": "src/domain/exerciseGuide.test.ts",
+      "name": "演習ガイド（v5-spec.md §9.3のTC-01〜TC-18を自動判定する、design.md DEV-4） > [総合][機能テスト][正常] v5-spec.md §9.1の正常系シーケンスをreducer経由で一通り流すと全ステップが完了する",
+      "status": "passed",
+      "durationMs": 30
+    },
+    {
+      "file": "src/domain/exerciseGuide.test.ts",
+      "name": "computeGuideSummary（Issue #53：演習完了レポート） > [総合][機能テスト][正常] TC-01〜18完了後、所要日数・警告件数（延べ）・KPI最終値が期待どおり算出される",
+      "status": "passed",
+      "durationMs": 8
+    },
+    {
+      "file": "src/domain/gantt.test.ts",
+      "name": "computeGanttRows（受注ごとの進捗ガントチャート） > 受注登録直後は計画のみで、実績は受注日から今日までの進行中として表示される",
+      "status": "passed",
+      "durationMs": 12
+    },
+    {
+      "file": "src/domain/gantt.test.ts",
+      "name": "computeGanttRows（受注ごとの進捗ガントチャート） > 納期回答後は計画終了日が回答納期に更新される",
+      "status": "passed",
+      "durationMs": 1
+    },
+    {
+      "file": "src/domain/gantt.test.ts",
+      "name": "computeGanttRows（受注ごとの進捗ガントチャート） > 回答納期を過ぎても出荷できていなければDELAYEDになる",
+      "status": "passed",
+      "durationMs": 0
+    },
+    {
+      "file": "src/domain/gantt.test.ts",
+      "name": "computeGanttRows（受注ごとの進捗ガントチャート） > design.md EXT-2/3：MRP未実行のまま取消した受注はCANCELED表示になり、子タスクも無い（計画オーダが1件も無いため）",
+      "status": "passed",
+      "durationMs": 1
+    },
+    {
+      "file": "src/domain/gantt.test.ts",
+      "name": "computeGanttRows（受注ごとの進捗ガントチャート） > design.md EXT-2：計画オーダ確定後に取消した受注は、カスケードでCANCELEDになった購買/製造オーダが子タスクとして残る",
+      "status": "passed",
+      "durationMs": 13
+    },
+    {
+      "file": "src/domain/gantt.test.ts",
+      "name": "computeGanttRows（受注ごとの進捗ガントチャート） > v5-spec.md §9.3 TC-01〜16を通しで進めると、購買/製造/出荷の子タスクが計画・実績どおりになる",
+      "status": "passed",
+      "durationMs": 4
+    },
+    {
+      "file": "src/domain/gantt.test.ts",
+      "name": "ganttDayRange > 表示対象の計画・実績・今日を包含する範囲を返す",
+      "status": "passed",
+      "durationMs": 1
+    },
+    {
+      "file": "src/domain/gantt.test.ts",
+      "name": "ganttDayRange > 受注が1件も無ければnullを返す",
+      "status": "passed",
+      "durationMs": 1
+    },
+    {
+      "file": "src/domain/inventory.test.ts",
+      "name": "adjustStock（v5-spec.md UC-17） > 在庫が無い品目でも新規に計上でき、ADJトランザクションが起票される",
+      "status": "passed",
+      "durationMs": 5
+    },
+    {
+      "file": "src/domain/inventory.test.ts",
+      "name": "adjustStock（v5-spec.md UC-17） > マイナス方向の調整もできる",
+      "status": "passed",
+      "durationMs": 1
+    },
+    {
+      "file": "src/domain/kpi.test.ts",
+      "name": "computeKpi（v5-spec.md §10） > [UC-20][単体][機能テスト][正常] TC-17: 不良1個を含む通し演習の結果、期待どおりのKPIになる",
+      "status": "passed",
+      "durationMs": 9
+    },
+    {
+      "file": "src/domain/kpi.test.ts",
+      "name": "computeKpi（v5-spec.md §10） > design.md EXT-13: 在庫回転は現在の総在庫数量を分母とした近似値になる",
+      "status": "passed",
+      "durationMs": 1
+    },
+    {
+      "file": "src/domain/kpi.test.ts",
+      "name": "computeKpi（v5-spec.md §10） > 何も起きていない初期状態では大半のKPIがnullまたは0になる",
+      "status": "passed",
+      "durationMs": 1
+    },
+    {
+      "file": "src/domain/lot.test.ts",
+      "name": "createLot / consumeFifo（v5-spec.md §11.3 Phase 2-B） > ロットが無い品目を消費しても、lotNo未設定の1件としてエラーにならない（design.md EXT-18）",
+      "status": "passed",
+      "durationMs": 4
+    },
+    {
+      "file": "src/domain/lot.test.ts",
+      "name": "createLot / consumeFifo（v5-spec.md §11.3 Phase 2-B） > 複数ロットにまたがる場合、作成日が古い順（FIFO）に分割して消費する",
+      "status": "passed",
+      "durationMs": 1
+    },
+    {
+      "file": "src/domain/lot.test.ts",
+      "name": "createLot / consumeFifo（v5-spec.md §11.3 Phase 2-B） > ロット台帳の残数量で不足する分はlotNo未設定として扱う（不足分もエラーにしない）",
+      "status": "passed",
+      "durationMs": 0
+    },
+    {
+      "file": "src/domain/lot.test.ts",
+      "name": "adjustStock経由のロット生成・FIFO消費・分割TXN起票 > プラス調整はロットを1件生成し、マイナス調整はFIFOで消費して複数ロットにまたがればTXNを分割する",
+      "status": "passed",
+      "durationMs": 2
+    },
+    {
+      "file": "src/domain/lot.test.ts",
+      "name": "生産・出荷を通したロット系譜の記録と追跡（v5-spec.md §11.3の後方/前方追跡） > 入荷→製造→出荷の一連の流れで、後方追跡は消費した部品ロットを、前方追跡は生成した製品ロットを返す",
+      "status": "passed",
+      "durationMs": 19
+    },
+    {
+      "file": "src/domain/lot.test.ts",
+      "name": "STOCK.onHandとLOT残数量合計の整合性（在庫モデルの厳密化検討、design.md EXT-18追記） > v5-spec.md §9.1のTC-01〜18を一通り流しても、各チェックポイントで品目ごとのonHandとロット残数量合計が一致する",
+      "status": "passed",
+      "durationMs": 7
+    },
+    {
+      "file": "src/domain/lot.test.ts",
+      "name": "STOCK.onHandとLOT残数量合計の整合性（在庫モデルの厳密化検討、design.md EXT-18追記） > 部品消費が複数ロットにまたがる場合、生成ロットの系譜に消費した全ロットが記録される",
+      "status": "passed",
+      "durationMs": 5
+    },
+    {
+      "file": "src/domain/masterData.test.ts",
+      "name": "品目のCRUD > 内製品目を追加でき、工順が必要な旨が業務メッセージに出る",
+      "status": "passed",
+      "durationMs": 6
+    },
+    {
+      "file": "src/domain/masterData.test.ts",
+      "name": "品目のCRUD > 品目コードの重複・空文字は拒否する",
+      "status": "passed",
+      "durationMs": 1
+    },
+    {
+      "file": "src/domain/masterData.test.ts",
+      "name": "品目のCRUD > 購買品目は既定仕入先が必須（v5仕様書がITEM-PARTNERの対応を欠く点への追加決定 EXT-9の帰結）",
+      "status": "passed",
+      "durationMs": 1
+    },
+    {
+      "file": "src/domain/masterData.test.ts",
+      "name": "品目のCRUD > スカラー値はpatchで部分更新できる",
+      "status": "passed",
+      "durationMs": 1
+    },
+    {
+      "file": "src/domain/masterData.test.ts",
+      "name": "品目のCRUD > 内製品目に購入単価・既定仕入先は設定できない",
+      "status": "passed",
+      "durationMs": 0
+    },
+    {
+      "file": "src/domain/masterData.test.ts",
+      "name": "品目のCRUD > 区分の変更はBOM子行・工順が残っている間は拒否する（design.md EXT-20）",
+      "status": "passed",
+      "durationMs": 1
+    },
+    {
+      "file": "src/domain/masterData.test.ts",
+      "name": "品目のCRUD > 既定仕入先を指定せずに購買へ変更しようとすると、何も変更せずに拒否する",
+      "status": "passed",
+      "durationMs": 1
+    },
+    {
+      "file": "src/domain/masterData.test.ts",
+      "name": "品目のCRUD > 未完了の製造オーダがある品目は区分を変更できない",
+      "status": "passed",
+      "durationMs": 0
+    },
+    {
+      "file": "src/domain/masterData.test.ts",
+      "name": "品目のCRUD > 参照されている品目は削除できず、参照が無くなれば削除できる",
+      "status": "passed",
+      "durationMs": 1
+    },
+    {
+      "file": "src/domain/masterData.test.ts",
+      "name": "BOMのCRUD > 循環する構成は登録時に拒否する（v5-spec.md §3.7 最小機能5）",
+      "status": "passed",
+      "durationMs": 1
+    },
+    {
+      "file": "src/domain/masterData.test.ts",
+      "name": "BOMのCRUD > BOMの親にできるのは内製品目だけ",
+      "status": "passed",
+      "durationMs": 0
+    },
+    {
+      "file": "src/domain/masterData.test.ts",
+      "name": "BOMのCRUD > 同じ親子の重複行・員数0は拒否する",
+      "status": "passed",
+      "durationMs": 0
+    },
+    {
+      "file": "src/domain/masterData.test.ts",
+      "name": "BOMのCRUD > 仕掛中オーダがある品目のBOM編集は禁止せず警告する（design.md EXT-23）",
+      "status": "passed",
+      "durationMs": 0
+    },
+    {
+      "file": "src/domain/masterData.test.ts",
+      "name": "工順（BOP）のCRUD > 内製品目にのみ工順を持てる",
+      "status": "passed",
+      "durationMs": 0
+    },
+    {
+      "file": "src/domain/masterData.test.ts",
+      "name": "工順（BOP）のCRUD > 存在しない作業区・重複する工程順序は拒否する",
+      "status": "passed",
+      "durationMs": 1
+    },
+    {
+      "file": "src/domain/masterData.test.ts",
+      "name": "工順（BOP）のCRUD > 未完了オーダがある品目は工順の構造変更を禁止し、標準時間・作業区の変更は許可する（design.md EXT-20）",
+      "status": "passed",
+      "durationMs": 1
+    },
+    {
+      "file": "src/domain/masterData.test.ts",
+      "name": "工順（BOP）のCRUD > 最後の1行を消すと、完了できなくなる旨を業務メッセージで知らせる",
+      "status": "passed",
+      "durationMs": 0
+    },
+    {
+      "file": "src/domain/masterData.test.ts",
+      "name": "作業区・取引先のCRUD > 作業区を追加でき、工順から参照されている作業区は削除できない",
+      "status": "passed",
+      "durationMs": 2
+    },
+    {
+      "file": "src/domain/masterData.test.ts",
+      "name": "作業区・取引先のCRUD > 負の賃率・負の稼働能力は作業区追加時に拒否する",
+      "status": "passed",
+      "durationMs": 0
+    },
+    {
+      "file": "src/domain/masterData.test.ts",
+      "name": "作業区・取引先のCRUD > 作業区の賃率・稼働能力をそれぞれ個別に更新できる",
+      "status": "passed",
+      "durationMs": 1
+    },
+    {
+      "file": "src/domain/masterData.test.ts",
+      "name": "作業区・取引先のCRUD > 得意先・仕入先を追加でき、参照中は削除できない",
+      "status": "passed",
+      "durationMs": 1
+    },
+    {
+      "file": "src/domain/masterData.test.ts",
+      "name": "作業区・取引先のCRUD > 取引先番号の重複は拒否する",
+      "status": "passed",
+      "durationMs": 0
+    },
+    {
+      "file": "src/domain/masterIO.test.ts",
+      "name": "エクスポート／インポートの往復 > プリセットを書き出して読み直すと同じ内容になる",
+      "status": "passed",
+      "durationMs": 8
+    },
+    {
+      "file": "src/domain/masterIO.test.ts",
+      "name": "エクスポート／インポートの往復 > エクスポートは現在の状態のコピーであり、後の編集に影響されない",
+      "status": "passed",
+      "durationMs": 1
+    },
+    {
+      "file": "src/domain/masterIO.test.ts",
+      "name": "スキーマ検証 > JSONとして壊れている入力を拒否する",
+      "status": "passed",
+      "durationMs": 1
+    },
+    {
+      "file": "src/domain/masterIO.test.ts",
+      "name": "スキーマ検証 > versionが異なる入力を拒否する",
+      "status": "passed",
+      "durationMs": 0
+    },
+    {
+      "file": "src/domain/masterIO.test.ts",
+      "name": "スキーマ検証 > 必須フィールドが欠けた行を、位置を示して拒否する",
+      "status": "passed",
+      "durationMs": 0
+    },
+    {
+      "file": "src/domain/masterIO.test.ts",
+      "name": "スキーマ検証 > makeBuyが不正な値の行を拒否する",
+      "status": "passed",
+      "durationMs": 0
+    },
+    {
+      "file": "src/domain/masterIO.test.ts",
+      "name": "数値の範囲検証（CRUD側と同じ強さで課す） > 負の員数（qtyPer）を拒否する",
+      "status": "passed",
+      "durationMs": 0
+    },
+    {
+      "file": "src/domain/masterIO.test.ts",
+      "name": "数値の範囲検証（CRUD側と同じ強さで課す） > qtyPer=0を拒否する",
+      "status": "passed",
+      "durationMs": 0
+    },
+    {
+      "file": "src/domain/masterIO.test.ts",
+      "name": "数値の範囲検証（CRUD側と同じ強さで課す） > 負の標準リードタイムを拒否する",
+      "status": "passed",
+      "durationMs": 0
+    },
+    {
+      "file": "src/domain/masterIO.test.ts",
+      "name": "数値の範囲検証（CRUD側と同じ強さで課す） > 非整数の標準リードタイムを拒否する",
+      "status": "passed",
+      "durationMs": 0
+    },
+    {
+      "file": "src/domain/masterIO.test.ts",
+      "name": "数値の範囲検証（CRUD側と同じ強さで課す） > 負の購入単価・売価を拒否する",
+      "status": "passed",
+      "durationMs": 1
+    },
+    {
+      "file": "src/domain/masterIO.test.ts",
+      "name": "数値の範囲検証（CRUD側と同じ強さで課す） > 工程順序（stepNo）が0以下・非整数の行を拒否する",
+      "status": "passed",
+      "durationMs": 1
+    },
+    {
+      "file": "src/domain/masterIO.test.ts",
+      "name": "数値の範囲検証（CRUD側と同じ強さで課す） > 負の標準時間・賃率を拒否する",
+      "status": "passed",
+      "durationMs": 1
+    },
+    {
+      "file": "src/domain/masterIO.test.ts",
+      "name": "数値の範囲検証（CRUD側と同じ強さで課す） > 負の稼働能力（capacityMinPerDay）を拒否する",
+      "status": "passed",
+      "durationMs": 5
+    },
+    {
+      "file": "src/domain/masterIO.test.ts",
+      "name": "数値の範囲検証（CRUD側と同じ強さで課す） > 稼働能力（capacityMinPerDay）が欠落した作業区を拒否する（design.md EXT-32：欠落時の既定補完はしない）",
+      "status": "passed",
+      "durationMs": 1
+    },
+    {
+      "file": "src/domain/masterIO.test.ts",
+      "name": "業務的な整合性検証（all-or-nothing） > 主キーが重複する入力を拒否する",
+      "status": "passed",
+      "durationMs": 0
+    },
+    {
+      "file": "src/domain/masterIO.test.ts",
+      "name": "業務的な整合性検証（all-or-nothing） > 循環したBOMを含む入力を拒否する（登録時チェックの抜け道を塞ぐ）",
+      "status": "passed",
+      "durationMs": 0
+    },
+    {
+      "file": "src/domain/masterIO.test.ts",
+      "name": "業務的な整合性検証（all-or-nothing） > 工順が0行の内製品目を含む入力を拒否する",
+      "status": "passed",
+      "durationMs": 1
+    },
+    {
+      "file": "src/domain/masterIO.test.ts",
+      "name": "業務的な整合性検証（all-or-nothing） > MasterIOErrorとして投げる（呼び出し側が画面に出せる）",
+      "status": "passed",
+      "durationMs": 0
+    },
+    {
+      "file": "src/domain/masterIO.test.ts",
+      "name": "reducer経由の取り込み > MASTER_IMPORTはマスタを差し替え、全トランザクションを初期化する",
+      "status": "passed",
+      "durationMs": 4
+    },
+    {
+      "file": "src/domain/masterIO.test.ts",
+      "name": "reducer経由の取り込み > MASTER_RESET_TO_PRESETで木製イスへ戻せる（ペイロード省略時は既定プリセット）",
+      "status": "passed",
+      "durationMs": 2
+    },
+    {
+      "file": "src/domain/masterIO.test.ts",
+      "name": "reducer経由の取り込み > MASTER_RESET_TO_PRESETはpresetIdでプリセットを選べる（design.md EXT-34）",
+      "status": "passed",
+      "durationMs": 2
+    },
+    {
+      "file": "src/domain/masterIO.test.ts",
+      "name": "reducer経由の取り込み > 未知のpresetIdは既定プリセット（木製イス）へフォールバックする",
+      "status": "passed",
+      "durationMs": 1
+    },
+    {
+      "file": "src/domain/masterIO.test.ts",
+      "name": "reducer経由の取り込み > 取り込めないスナップショットはエラーログに残り、状態は変わらない",
+      "status": "passed",
+      "durationMs": 1
+    },
+    {
+      "file": "src/domain/masterIntegrity.test.ts",
+      "name": "BOM循環参照チェック（v5-spec.md §3.7 最小機能5） > 自己参照（A -> A）は循環と判定する",
+      "status": "passed",
+      "durationMs": 3
+    },
+    {
+      "file": "src/domain/masterIntegrity.test.ts",
+      "name": "BOM循環参照チェック（v5-spec.md §3.7 最小機能5） > 祖先を子にする（C -> A）と循環になる",
+      "status": "passed",
+      "durationMs": 0
+    },
+    {
+      "file": "src/domain/masterIntegrity.test.ts",
+      "name": "BOM循環参照チェック（v5-spec.md §3.7 最小機能5） > 孫を直接の子にする（A -> C）のは循環ではない（重複構成だが閉路にはならない）",
+      "status": "passed",
+      "durationMs": 0
+    },
+    {
+      "file": "src/domain/masterIntegrity.test.ts",
+      "name": "BOM循環参照チェック（v5-spec.md §3.7 最小機能5） > 無関係な品目の追加は循環にならない",
+      "status": "passed",
+      "durationMs": 0
+    },
+    {
+      "file": "src/domain/masterIntegrity.test.ts",
+      "name": "BOM循環参照チェック（v5-spec.md §3.7 最小機能5） > reachesDownwardは既存BOMが循環していても停止する",
+      "status": "passed",
+      "durationMs": 0
+    },
+    {
+      "file": "src/domain/masterIntegrity.test.ts",
+      "name": "BOM循環参照チェック（v5-spec.md §3.7 最小機能5） > findBomCyclesは循環している品目を列挙する（インポートの一括検査用）",
+      "status": "passed",
+      "durationMs": 1
+    },
+    {
+      "file": "src/domain/masterIntegrity.test.ts",
+      "name": "削除ガード（design.md EXT-21：参照中は削除禁止） > プリセットの品目はBOM・工順から参照されているため削除できない",
+      "status": "passed",
+      "durationMs": 3
+    },
+    {
+      "file": "src/domain/masterIntegrity.test.ts",
+      "name": "削除ガード（design.md EXT-21：参照中は削除禁止） > どこからも参照されていない品目は削除できる",
+      "status": "passed",
+      "durationMs": 0
+    },
+    {
+      "file": "src/domain/masterIntegrity.test.ts",
+      "name": "削除ガード（design.md EXT-21：参照中は削除禁止） > 残高0・引当0のSTOCK空行は削除の妨げにならない",
+      "status": "passed",
+      "durationMs": 1
+    },
+    {
+      "file": "src/domain/masterIntegrity.test.ts",
+      "name": "削除ガード（design.md EXT-21：参照中は削除禁止） > 作業区・仕入先・得意先の参照も検出する",
+      "status": "passed",
+      "durationMs": 1
+    },
+    {
+      "file": "src/domain/masterIntegrity.test.ts",
+      "name": "削除ガード（design.md EXT-21：参照中は削除禁止） > openMfgOrdersOfは未完了（DONE/CANCELED以外）の製造オーダのみ返す",
+      "status": "passed",
+      "durationMs": 1
+    },
+    {
+      "file": "src/domain/masterIntegrity.test.ts",
+      "name": "マスタ健全性チェック（design.md EXT-22） > プリセットは不整合ゼロ",
+      "status": "passed",
+      "durationMs": 0
+    },
+    {
+      "file": "src/domain/masterIntegrity.test.ts",
+      "name": "マスタ健全性チェック（design.md EXT-22） > 工順が0行の内製品目をエラーとして検出する",
+      "status": "passed",
+      "durationMs": 1
+    },
+    {
+      "file": "src/domain/masterIntegrity.test.ts",
+      "name": "マスタ健全性チェック（design.md EXT-22） > 既定仕入先が未設定の購買品目をエラーとして検出する",
+      "status": "passed",
+      "durationMs": 0
+    },
+    {
+      "file": "src/domain/masterIntegrity.test.ts",
+      "name": "マスタ健全性チェック（design.md EXT-22） > 存在しない作業区を参照する工順をエラーとして検出する",
+      "status": "passed",
+      "durationMs": 0
+    },
+    {
+      "file": "src/domain/masterIntegrity.test.ts",
+      "name": "マスタ健全性チェック（design.md EXT-22） > 購入単価の無い購買品目は警告（エラーではない）",
+      "status": "passed",
+      "durationMs": 0
+    },
+    {
+      "file": "src/domain/mrp.test.ts",
+      "name": "runMRP / firmAllPlannedOrders > [UC-06][単体][機能テスト][正常] TC-04: 受注 FG-100 x10 / 回答納期 D+15 を展開すると5件の計画オーダが期待どおりの値で生成される",
+      "status": "passed",
+      "durationMs": 11
+    },
+    {
+      "file": "src/domain/mrp.test.ts",
+      "name": "runMRP / firmAllPlannedOrders > [UC-06/UC-07][単体][機能テスト][正常] TC-05〜06: 確定するとPLANNED_ORDERは実体化し、再実行しても確定オーダの分は再計画されない",
+      "status": "passed",
+      "durationMs": 2
+    },
+    {
+      "file": "src/domain/mrp.test.ts",
+      "name": "runMRP / firmAllPlannedOrders > 木製イスの工順どおりWORK_INSTRUCTIONが生成される（第1工程の投入数のみ確定済み）",
+      "status": "passed",
+      "durationMs": 1
+    },
+    {
+      "file": "src/domain/mrp.test.ts",
+      "name": "runMRP / firmAllPlannedOrders > [UC-06][単体][機能テスト][異常] TC-14: 不良1個の発生後にMRPを再実行すると、不足1個分の計画オーダ5件が再生成される",
+      "status": "passed",
+      "durationMs": 2
+    },
+    {
+      "file": "src/domain/mrp.test.ts",
+      "name": "runMRP / firmAllPlannedOrders > 仕掛品（SA-200）の工程で不良が出た場合も、MRP再実行でその分の補充オーダが生成される",
+      "status": "passed",
+      "durationMs": 3
+    },
+    {
+      "file": "src/domain/mrp.test.ts",
+      "name": "runMRP：得意先の優先度ランクによる優先順位付け（design.md EXT-36） > [単体][機能テスト][正常] 優先度ランクが高い得意先の需要は、納期が遅くても先に手元在庫を使う",
+      "status": "passed",
+      "durationMs": 1
+    },
+    {
+      "file": "src/domain/mrp.test.ts",
+      "name": "runMRP：得意先の優先度ランクによる優先順位付け（design.md EXT-36） > [単体][機能テスト][境界] 優先度ランク未設定の既存受注同士では、従来どおり納期昇順・同着は受注番号昇順のまま変わらない",
+      "status": "passed",
+      "durationMs": 1
+    },
+    {
+      "file": "src/domain/multiLevelBom.test.ts",
+      "name": "4階層BOMをマスタ操作だけで組み立てて通す > MRPは4階層すべてを展開し、BOMレベルと日程を階層どおりに逆算する",
+      "status": "passed",
+      "durationMs": 22
+    },
+    {
+      "file": "src/domain/multiLevelBom.test.ts",
+      "name": "4階層BOMをマスタ操作だけで組み立てて通す > 標準原価を4階層にわたって積み上げる",
+      "status": "passed",
+      "durationMs": 6
+    },
+    {
+      "file": "src/domain/multiLevelBom.test.ts",
+      "name": "4階層BOMをマスタ操作だけで組み立てて通す > 受注から出荷までを通し、在庫・ペギング・受注状態が整合する",
+      "status": "passed",
+      "durationMs": 12
+    },
+    {
+      "file": "src/domain/multiLevelBom.test.ts",
+      "name": "マスタが壊れているときエンジンが黙って壊れない（design.md EXT-19・EXT-22） > 循環BOMを直接注入してMRPを実行すると、無限再帰ではなく例外になる",
+      "status": "passed",
+      "durationMs": 5
+    },
+    {
+      "file": "src/domain/multiLevelBom.test.ts",
+      "name": "マスタが壊れているときエンジンが黙って壊れない（design.md EXT-19・EXT-22） > 工順が0行の内製品目は計画オーダを確定できない（完了不能な製造オーダを作らない）",
+      "status": "passed",
+      "durationMs": 4
+    },
+    {
+      "file": "src/domain/multiOrderExercise.test.ts",
+      "name": "複数受注の資源競合演習（design.md §6 TC-M1） > [結合][機能テスト][境界] TC-M1: 納期が早いZが手元在庫（木板1枚）を優先的に使い、Yは全量を新規発注する",
+      "status": "passed",
+      "durationMs": 7
+    },
+    {
+      "file": "src/domain/multiOrderExercise.test.ts",
+      "name": "複数受注の資源競合演習（design.md §6 TC-M1） > 受注登録順ではなく納期昇順で展開されることを確認する（design.md EXT-1）",
+      "status": "passed",
+      "durationMs": 1
+    },
+    {
+      "file": "src/domain/pegging.test.ts",
+      "name": "traceFromOrder（v5-spec.md §7.4） > [UC-21][単体][機能テスト][正常] TC-18: 受注確定後、全階層の確定オーダ（MFG_ORDER2件・PURCHASE_ORDER3件）を辿れる",
+      "status": "passed",
+      "durationMs": 6
+    },
+    {
+      "file": "src/domain/pegging.test.ts",
+      "name": "traceFromOrder（v5-spec.md §7.4） > pegKeyは'SO番号-明細番号'形式",
+      "status": "passed",
+      "durationMs": 0
+    },
+    {
+      "file": "src/domain/pegging.test.ts",
+      "name": "traceFromOrder（v5-spec.md §7.4） > 何もペグされていない受注はtraceFromOrderが空を返す",
+      "status": "passed",
+      "durationMs": 1
+    },
+    {
+      "file": "src/domain/processFlow.test.ts",
+      "name": "computeActiveFlows > まだ何も操作していなければ何もハイライトしない",
+      "status": "passed",
+      "durationMs": 4
+    },
+    {
+      "file": "src/domain/processFlow.test.ts",
+      "name": "computeActiveFlows > 受注登録は受注ドメインのみをハイライトする",
+      "status": "passed",
+      "durationMs": 2
+    },
+    {
+      "file": "src/domain/processFlow.test.ts",
+      "name": "computeActiveFlows > MRP実行は受注・在庫・発注・工程から計画への4本をハイライトする",
+      "status": "passed",
+      "durationMs": 1
+    },
+    {
+      "file": "src/domain/processFlow.test.ts",
+      "name": "computeActiveFlows > 計画オーダ確定は実際に生成されたテーブルに応じて計画→発注／計画→工程をハイライトする",
+      "status": "passed",
+      "durationMs": 12
+    },
+    {
+      "file": "src/domain/processFlow.test.ts",
+      "name": "computeActiveFlows > 入荷計上は発注→在庫をハイライトする",
+      "status": "passed",
+      "durationMs": 8
+    },
+    {
+      "file": "src/domain/processFlow.test.ts",
+      "name": "computeActiveFlows > 工程完了は工程→在庫をハイライトする",
+      "status": "passed",
+      "durationMs": 8
+    },
+    {
+      "file": "src/domain/processFlow.test.ts",
+      "name": "computeActiveFlows > マスタ変更はマスタドメインのみをハイライトし、フローは動かさない",
+      "status": "passed",
+      "durationMs": 1
+    },
+    {
+      "file": "src/domain/processFlow.test.ts",
+      "name": "computeActiveFlows > indexを指定すると、その時点の操作のフローを返す（戻る/進むボタン用）",
+      "status": "passed",
+      "durationMs": 1
+    },
+    {
+      "file": "src/domain/processFlow.test.ts",
+      "name": "computeActiveFlows > エラーログはハイライトしない",
+      "status": "passed",
+      "durationMs": 1
+    },
+    {
+      "file": "src/domain/procurement.test.ts",
+      "name": "ackPurchaseOrder / receivePurchaseOrder（v5-spec.md §6.5） > [UC-10][単体][機能テスト][正常] TC-07: 納期回答を登録するとACKEDになる",
+      "status": "passed",
+      "durationMs": 5
+    },
+    {
+      "file": "src/domain/procurement.test.ts",
+      "name": "ackPurchaseOrder / receivePurchaseOrder（v5-spec.md §6.5） > design.md EXT-4: 入荷予定日より前は入荷計上できない",
+      "status": "passed",
+      "durationMs": 1
+    },
+    {
+      "file": "src/domain/procurement.test.ts",
+      "name": "ackPurchaseOrder / receivePurchaseOrder（v5-spec.md §6.5） > [UC-11][単体][機能テスト][正常] TC-08: 入荷予定日以降に入荷計上するとRCVトランザクションが起票され在庫が増える",
+      "status": "passed",
+      "durationMs": 1
+    },
+    {
+      "file": "src/domain/procurement.test.ts",
+      "name": "ackPurchaseOrder / receivePurchaseOrder（v5-spec.md §6.5） > 納期回答前（ORDERED状態）は入荷計上できない",
+      "status": "passed",
+      "durationMs": 0
+    },
+    {
+      "file": "src/domain/procurement.test.ts",
+      "name": "ackPurchaseOrder / receivePurchaseOrder（v5-spec.md §6.5） > [UC-11][単体][機能テスト][正常] TC-10: PT-400・PT-500の入荷予定日にまとめて入荷計上すると、STOCK_TXNが2件（RCV +40 / +80）起票される",
+      "status": "passed",
+      "durationMs": 2
+    },
+    {
+      "file": "src/domain/production.test.ts",
+      "name": "startStep / completeStep（v5-spec.md §7.3） > リリース前の製造オーダは第1工程を着手できない",
+      "status": "passed",
+      "durationMs": 7
+    },
+    {
+      "file": "src/domain/production.test.ts",
+      "name": "startStep / completeStep（v5-spec.md §7.3） > [UC-13/UC-14][単体][機能テスト][正常] TC-09: 部品が十分ならバックフラッシュで消費し完成入庫する（良品のみ）",
+      "status": "passed",
+      "durationMs": 3
+    },
+    {
+      "file": "src/domain/production.test.ts",
+      "name": "startStep / completeStep（v5-spec.md §7.3） > 部品不足時はHOLDになり、部品充足後に同じ操作を再実行すると復帰する（design.md EXT-10）",
+      "status": "passed",
+      "durationMs": 1
+    },
+    {
+      "file": "src/domain/production.test.ts",
+      "name": "startStep / completeStep（v5-spec.md §7.3） > [UC-13/UC-14][単体][機能テスト][正常] TC-11〜12: 良品数と不良数を分けて登録し、不良分は完成入庫されない。次工程の投入数は前工程の良品数",
+      "status": "passed",
+      "durationMs": 2
+    },
+    {
+      "file": "src/domain/production.test.ts",
+      "name": "startStep / completeStep（v5-spec.md §7.3） > 良品数＋不良数が投入数と一致しない場合は完了できない",
+      "status": "passed",
+      "durationMs": 1
+    },
+    {
+      "file": "src/domain/production.test.ts",
+      "name": "startStep / completeStep（v5-spec.md §7.3） > 前工程が完了していないと次工程には着手できない（未完了のまま投入数0で完成入庫されるのを防ぐ）",
+      "status": "passed",
+      "durationMs": 1
+    },
+    {
+      "file": "src/domain/production.test.ts",
+      "name": "startStep / completeStep（v5-spec.md §7.3） > [UC-08/UC-13/UC-14][結合][機能テスト][異常] TC-E1〜E3: 木板の納期回答が遅れて警告が出たまま製造着手を試みると、部品が無いためHOLDになる",
+      "status": "passed",
+      "durationMs": 2
+    },
+    {
+      "file": "src/domain/production.test.ts",
+      "name": "splitMfgOrder（design.md EXT-33：能力超過解消のための分割） > FIRMのオーダを数量で分割し、元オーダの残数量・第1工程投入数を減らし、新オーダを別日で新設する",
+      "status": "passed",
+      "durationMs": 1
+    },
+    {
+      "file": "src/domain/production.test.ts",
+      "name": "splitMfgOrder（design.md EXT-33：能力超過解消のための分割） > FIRM以外（リリース済み）は分割できない",
+      "status": "passed",
+      "durationMs": 2
+    },
+    {
+      "file": "src/domain/production.test.ts",
+      "name": "splitMfgOrder（design.md EXT-33：能力超過解消のための分割） > 分割数量が0以下・元数量以上は拒否される",
+      "status": "passed",
+      "durationMs": 1
+    },
+    {
+      "file": "src/domain/production.test.ts",
+      "name": "splitMfgOrder（design.md EXT-33：能力超過解消のための分割） > 分割先の完了予定日が着手日より前は拒否される",
+      "status": "passed",
+      "durationMs": 0
+    },
+    {
+      "file": "src/domain/reducer.test.ts",
+      "name": "simulationReducer > 元のstateを書き換えず、新しいstateを返す",
+      "status": "passed",
+      "durationMs": 8
+    },
+    {
+      "file": "src/domain/reducer.test.ts",
+      "name": "simulationReducer > 未知のactionはstateをそのまま返す",
+      "status": "passed",
+      "durationMs": 0
+    },
+    {
+      "file": "src/domain/reducer.test.ts",
+      "name": "simulationReducer > ADVANCE_DAYは日付だけを進める",
+      "status": "passed",
+      "durationMs": 1
+    },
+    {
+      "file": "src/domain/reducer.test.ts",
+      "name": "simulationReducer > dashboardHistoryは初期状態でday0の1件を持ち、同日の操作は上書き・ADVANCE_DAYで追記する",
+      "status": "passed",
+      "durationMs": 3
+    },
+    {
+      "file": "src/domain/reducer.test.ts",
+      "name": "simulationReducer > SO_CREATE〜SHIPMENT_SHIPまで、一連のactionが対応するドメイン関数へ正しく委譲される",
+      "status": "passed",
+      "durationMs": 35
+    },
+    {
+      "file": "src/domain/reducer.test.ts",
+      "name": "simulationReducer > SO_CANCELは実績の無い受注のペグ先オーダを連鎖的に取消する（design.md EXT-2）",
+      "status": "passed",
+      "durationMs": 5
+    },
+    {
+      "file": "src/domain/reducer.test.ts",
+      "name": "simulationReducer > ガード違反はエラーログに記録され、stateはクラッシュせずに返る",
+      "status": "passed",
+      "durationMs": 1
+    },
+    {
+      "file": "src/domain/reducer.test.ts",
+      "name": "simulationReducer > RESETはマスタの編集を保持したままトランザクションのみ初期化する",
+      "status": "passed",
+      "durationMs": 2
+    },
+    {
+      "file": "src/domain/reducer.test.ts",
+      "name": "simulationReducer > MASTER_UPDATE系はBOM員数・工順標準時間・取引先名称を更新できる",
+      "status": "passed",
+      "durationMs": 2
+    },
+    {
+      "file": "src/domain/salesOrder.test.ts",
+      "name": "createSalesOrder / confirmDelivery / cancelSalesOrder（v5-spec.md §6.1） > [UC-04/UC-05][単体][機能テスト][正常] TC-02〜03: 受注登録すると1受注1明細（RECEIVED）が作られ、納期回答するとCONFIRMEDになる",
+      "status": "passed",
+      "durationMs": 8
+    },
+    {
+      "file": "src/domain/salesOrder.test.ts",
+      "name": "createSalesOrder / confirmDelivery / cancelSalesOrder（v5-spec.md §6.1） > 着手実績・入荷実績が無ければ取消でき、ペグ先のオーダも連鎖的にCANCELEDになる（design.md EXT-2）",
+      "status": "passed",
+      "durationMs": 3
+    },
+    {
+      "file": "src/domain/salesOrder.test.ts",
+      "name": "createSalesOrder / confirmDelivery / cancelSalesOrder（v5-spec.md §6.1） > design.md EXT-3: 1件でも着手実績があれば取消できない",
+      "status": "passed",
+      "durationMs": 1
+    },
+    {
+      "file": "src/domain/salesOrder.test.ts",
+      "name": "createSalesOrder / confirmDelivery / cancelSalesOrder（v5-spec.md §6.1） > 受付（RECEIVED）以外は納期回答できない",
+      "status": "passed",
+      "durationMs": 0
+    },
+    {
+      "file": "src/domain/schedule.test.ts",
+      "name": "checkSchedule（v5-spec.md §7.5） > [UC-08][単体][機能テスト][正常] TC-07: 希望どおりの納期回答なら警告は出ない",
+      "status": "passed",
+      "durationMs": 5
+    },
+    {
+      "file": "src/domain/schedule.test.ts",
+      "name": "checkSchedule（v5-spec.md §7.5） > [UC-08/UC-21][単体][機能テスト][異常] TC-E1〜E2: 木板の納期回答が遅れると、親（座面ASSY）の着手日に対する遅延警告が出て受注まで辿れる",
+      "status": "passed",
+      "durationMs": 2
+    },
+    {
+      "file": "src/domain/schedule.test.ts",
+      "name": "sortAlertsByDelay（ダッシュボード：遅延ランキング） > [単体][機能テスト][正常] 遅延日数の降順（8→5→2）に並べ替える",
+      "status": "passed",
+      "durationMs": 1
+    },
+    {
+      "file": "src/domain/schedule.test.ts",
+      "name": "sortAlertsByDelay（ダッシュボード：遅延ランキング） > [単体][機能テスト][境界] 遅延日数が同値の場合は元の順序を保つ",
+      "status": "passed",
+      "durationMs": 0
+    },
+    {
+      "file": "src/domain/schedule.test.ts",
+      "name": "sortAlertsByDelay（ダッシュボード：遅延ランキング） > [単体][機能テスト][境界] 空配列を渡すと空配列を返す",
+      "status": "passed",
+      "durationMs": 0
+    },
+    {
+      "file": "src/domain/schedule.test.ts",
+      "name": "sortAlertsByDelay（ダッシュボード：遅延ランキング） > [単体][機能テスト] 引数の配列を破壊的に変更しない",
+      "status": "passed",
+      "durationMs": 0
+    },
+    {
+      "file": "src/domain/schedule.test.ts",
+      "name": "unmetDemand（v5-spec.md §7.5） > [UC-09][単体][機能テスト][異常] TC-13: 完成数が受注数量に満たない場合、不足数量を返す",
+      "status": "passed",
+      "durationMs": 0
+    },
+    {
+      "file": "src/domain/schedule.test.ts",
+      "name": "unmetDemand（v5-spec.md §7.5） > 需要を満たしていれば空配列を返す",
+      "status": "passed",
+      "durationMs": 0
+    },
+    {
+      "file": "src/domain/shipment.test.ts",
+      "name": "allocateShipment / shipOut（v5-spec.md §7.2） > 出荷可能量が無ければ引当できない",
+      "status": "passed",
+      "durationMs": 6
+    },
+    {
+      "file": "src/domain/shipment.test.ts",
+      "name": "allocateShipment / shipOut（v5-spec.md §7.2） > [UC-18/UC-19][単体][機能テスト][境界] TC-15〜16: 受注残(10)に出荷可能量(9)が満たない場合、出荷可能な分だけ一部出荷として引き当てる（design.md DEV-3）",
+      "status": "passed",
+      "durationMs": 3
+    },
+    {
+      "file": "src/domain/shipment.test.ts",
+      "name": "allocateShipment / shipOut（v5-spec.md §7.2） > 受注残と出荷可能量が一致すればCLOSEDになる",
+      "status": "passed",
+      "durationMs": 1
+    },
+    {
+      "file": "src/domain/shipment.test.ts",
+      "name": "allocateShipment / shipOut（v5-spec.md §7.2） > 引当を解除すると引当済数量が戻る",
+      "status": "passed",
+      "durationMs": 1
+    },
+    {
+      "file": "src/domain/todayActions.test.ts",
+      "name": "computeTodayActions（design.md DEV-2：自動再生の軽量代替案） > 初期状態では実行可能な操作は無い",
+      "status": "passed",
+      "durationMs": 7
+    },
+    {
+      "file": "src/domain/todayActions.test.ts",
+      "name": "computeTodayActions（design.md DEV-2：自動再生の軽量代替案） > 受注登録直後は「納期回答待ちの受注」のみ",
+      "status": "passed",
+      "durationMs": 2
+    },
+    {
+      "file": "src/domain/todayActions.test.ts",
+      "name": "computeTodayActions（design.md DEV-2：自動再生の軽量代替案） > 納期回答後、MRP実行前は「計画オーダ確定待ち」が出ない（計画オーダが無いため）",
+      "status": "passed",
+      "durationMs": 1
+    },
+    {
+      "file": "src/domain/todayActions.test.ts",
+      "name": "computeTodayActions（design.md DEV-2：自動再生の軽量代替案） > MRP実行後は「計画オーダ確定待ち」、確定後は購買・製造の着手系操作が並ぶ",
+      "status": "passed",
+      "durationMs": 3
+    },
+    {
+      "file": "src/domain/todayActions.test.ts",
+      "name": "computeTodayActions（design.md DEV-2：自動再生の軽量代替案） > 購買オーダの回答納期に達するまでは「入荷計上可能」に数えない",
+      "status": "passed",
+      "durationMs": 1
+    },
+    {
+      "file": "src/domain/todayActions.test.ts",
+      "name": "computeTodayActions（design.md DEV-2：自動再生の軽量代替案） > 製造オーダをリリースすると第1工程が「着手可能な工程」に、着手するとその工程が「完了入力待ち」に移る",
+      "status": "passed",
+      "durationMs": 1
+    },
+    {
+      "file": "src/domain/todayActions.test.ts",
+      "name": "computeTodayActions（design.md DEV-2：自動再生の軽量代替案） > 完成品が入庫し受注残があれば「引当可能な受注」、引当後は「出荷実績登録待ちの出荷指示」になる",
+      "status": "passed",
+      "durationMs": 1
+    },
+    {
+      "file": "src/domain/todayActions.test.ts",
+      "name": "computeTodayActions（design.md DEV-2：自動再生の軽量代替案） > receivePurchaseOrder後は当該購買オーダがCLOSEDになり入荷計上対象から外れる",
+      "status": "passed",
+      "durationMs": 1
+    }
+  ],
+  "coverage": {
+    "overallPercent": 93.72,
+    "overallPercentMetric": "lines",
+    "files": [
+      {
+        "path": "src/csvExport.ts",
+        "percent": 40
+      },
+      {
+        "path": "src/statusLabels.ts",
+        "percent": 100
+      },
+      {
+        "path": "src/data/masterData.ts",
+        "percent": 100
+      },
+      {
+        "path": "src/domain/capacity.ts",
+        "percent": 100
+      },
+      {
+        "path": "src/domain/cost.ts",
+        "percent": 98.03
+      },
+      {
+        "path": "src/domain/dashboard.ts",
+        "percent": 100
+      },
+      {
+        "path": "src/domain/exerciseGuide.ts",
+        "percent": 91.17
+      },
+      {
+        "path": "src/domain/gantt.ts",
+        "percent": 95
+      },
+      {
+        "path": "src/domain/inventory.ts",
+        "percent": 100
+      },
+      {
+        "path": "src/domain/kpi.ts",
+        "percent": 100
+      },
+      {
+        "path": "src/domain/lot.ts",
+        "percent": 100
+      },
+      {
+        "path": "src/domain/masterData.ts",
+        "percent": 89.75
+      },
+      {
+        "path": "src/domain/masterIO.ts",
+        "percent": 100
+      },
+      {
+        "path": "src/domain/masterIntegrity.ts",
+        "percent": 91.81
+      },
+      {
+        "path": "src/domain/mrp.ts",
+        "percent": 96.2
+      },
+      {
+        "path": "src/domain/pegging.ts",
+        "percent": 89.65
+      },
+      {
+        "path": "src/domain/processFlow.ts",
+        "percent": 74
+      },
+      {
+        "path": "src/domain/procurement.ts",
+        "percent": 95.65
+      },
+      {
+        "path": "src/domain/production.ts",
+        "percent": 100
+      },
+      {
+        "path": "src/domain/reducer.ts",
+        "percent": 92.24
+      },
+      {
+        "path": "src/domain/salesOrder.ts",
+        "percent": 87.87
+      },
+      {
+        "path": "src/domain/schedule.ts",
+        "percent": 96.55
+      },
+      {
+        "path": "src/domain/shipment.ts",
+        "percent": 92.68
+      },
+      {
+        "path": "src/domain/testUtils.ts",
+        "percent": 100
+      },
+      {
+        "path": "src/domain/todayActions.ts",
+        "percent": 100
+      }
+    ]
+  }
+}
