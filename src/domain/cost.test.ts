@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { ITEM_IDS } from "../data/masterData";
-import { confirmDelivery, createSalesOrder } from "./salesOrder";
+import { cancelSalesOrder, confirmDelivery, createSalesOrder } from "./salesOrder";
 import { firmAllPlannedOrders, runMRP } from "./mrp";
 import { completeStep, releaseMfgOrder, startStep } from "./production";
 import {
@@ -155,6 +155,41 @@ describe("computeMfgOrderVarianceSeries（Issue #62）", () => {
     // 不良1個の完了オーダは標準原価×不良数（3,960円）。未着手の座面ASSYは投入も振替も無く0
     expect(series.find((p) => p.moNo === fgOrder.moNo)).toMatchObject({ status: "DONE", variance: 3960 });
     expect(series.find((p) => p.itemId === ITEM_IDS.SA_SEAT)).toMatchObject({ variance: 0 });
+  });
+
+  it("[結合][機能テスト][境界] 第1工程だけ完了した仕掛中オーダは、投入額（39,600円）がそのまま差異として現れる", () => {
+    const state = createTestState(0);
+    const soNo = createSalesOrder(state, { customerId: "CUST-A", itemId: ITEM_IDS.FG_CHAIR, qty: 10, requestDay: 15 }, 0);
+    confirmDelivery(state, soNo, 15);
+    runMRP(state);
+    firmAllPlannedOrders(state, 0);
+    state.stocks.push(
+      { itemId: ITEM_IDS.SA_SEAT, onHand: 10, allocated: 0 },
+      { itemId: ITEM_IDS.PT_LEG, onHand: 40, allocated: 0 },
+      { itemId: ITEM_IDS.PT_SCREW, onHand: 80, allocated: 0 },
+    );
+    const fgOrder = state.mfgOrders.find((mo) => mo.itemId === ITEM_IDS.FG_CHAIR)!;
+    releaseMfgOrder(state, fgOrder.moNo);
+    startStep(state, fgOrder.moNo, 10, 13);
+    completeStep(state, fgOrder.moNo, 10, 10, 0, 13);
+
+    expect(computeMfgOrderVarianceSeries(state).find((p) => p.moNo === fgOrder.moNo)).toMatchObject({
+      status: "WIP",
+      variance: 39600,
+    });
+  });
+
+  it("[結合][機能テスト][境界] 取消（CANCELED）されたオーダも表と同様に系列へ含まれ、差異は0になる", () => {
+    const state = createTestState(0);
+    const soNo = createSalesOrder(state, { customerId: "CUST-A", itemId: ITEM_IDS.FG_CHAIR, qty: 10, requestDay: 15 }, 0);
+    confirmDelivery(state, soNo, 15);
+    runMRP(state);
+    firmAllPlannedOrders(state, 0);
+    cancelSalesOrder(state, soNo);
+
+    const series = computeMfgOrderVarianceSeries(state);
+    expect(series).toHaveLength(state.mfgOrders.length);
+    expect(series.every((p) => p.status === "CANCELED" && p.variance === 0)).toBe(true);
   });
 });
 

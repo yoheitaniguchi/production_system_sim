@@ -91,7 +91,7 @@ function CostPanel({ state }: CostPanelProps) {
 
       <h3>品目別標準原価</h3>
       <p className="panel__hint">
-        グラフの棒の長さは標準原価（金額）で、材料費と加工費を積み上げている。数値の正本は下の表。
+        グラフの棒は標準原価を100%とした材料費・加工費の構成比で、金額は棒の右に表示する。数値の正本は下の表。
       </p>
       <CostCompositionChart rows={itemCosts.map((c) => ({ ...c, name: itemName(c.itemId) }))} />
       <div className="panel__toolbar">

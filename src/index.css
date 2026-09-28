@@ -36,6 +36,11 @@
   /* 警告色（--warn-border）を背景（--warn-bg／--color-surface）の上でテキストとして使う箇所専用の
      コントラスト確保用トークン（Issue #72）。--warn-borderは枠線用途では引き続きそのまま使う */
   --warn-text: #8a6100;
+  /* 原価パネルのグラフ専用（CostCharts.tsx、Issue #62）。材料費は--color-accentを使う。
+     ダッシュボードの--chart-purchase（発注残）・--chart-shipment（出荷残）とは色の意味が違うため流用しない。
+     ライト系3テーマは:rootの値を継承し、ダーク系4ブロックだけ上書きする */
+  --chart-cost-labor: #00897b;
+  --chart-cost-variance: #c62828;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -68,6 +73,8 @@
     --chart-shipment: #ff6b9d;
     --chart-inventory: #66d9e8;
     --warn-text: #ffca28;
+    --chart-cost-labor: #ffb74d;
+    --chart-cost-variance: #ff8a80;
   }
 }
 
@@ -197,6 +204,8 @@
   --chart-shipment: #ff6b9d;
   --chart-inventory: #66d9e8;
   --warn-text: #ffca28;
+  --chart-cost-labor: #ffb74d;
+  --chart-cost-variance: #ff8a80;
 }
 
 /* 5. トゥルーブラック（AMOLED向けダーク） */
@@ -229,6 +238,8 @@
   --chart-shipment: #ff5d8f;
   --chart-inventory: #ffd60a;
   --warn-text: #ffca28;
+  --chart-cost-labor: #ffb74d;
+  --chart-cost-variance: #ff8a80;
 }
 
 /* 6. ダークネイビー・ミッドナイト */
@@ -261,6 +272,8 @@
   --chart-shipment: #ff7aa8;
   --chart-inventory: #5cd6e8;
   --warn-text: #ffca28;
+  --chart-cost-labor: #ffb74d;
+  --chart-cost-variance: #ff8a80;
 }
 
 body {
@@ -1509,8 +1522,8 @@ textarea {
   fill: var(--chart-inventory);
 }
 
-/* 横棒グラフ共通（原価パネルのCostCharts.tsx。Issue #62）。系列色はダッシュボードと同じ--chart-*トークンを使う */
-.chart-legend {
+/* 原価パネルの横棒グラフ（CostCharts.tsx。Issue #62）。文字サイズを保つためSVGは拡縮せず、狭い画面では横スクロールにする */
+.cost-chart__legend {
   display: flex;
   flex-wrap: wrap;
   gap: 0.9rem;
@@ -1519,28 +1532,37 @@ textarea {
   color: var(--color-text-muted);
 }
 
-.chart-legend__item {
+.cost-chart__legend-item {
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
 }
 
-.chart-swatch {
-  width: 10px;
-  height: 10px;
+.cost-chart__swatch {
+  width: 12px;
+  height: 12px;
   border-radius: 2px;
   display: inline-block;
 }
 
-.chart-swatch--material {
+.cost-chart__swatch--material {
   background: var(--color-accent);
 }
 
-.chart-swatch--labor {
-  background: var(--chart-purchase);
+.cost-chart__swatch--labor {
+  background: var(--chart-cost-labor);
 }
 
-.chart-scroll {
+.cost-chart__swatch--variance {
+  background: var(--chart-cost-variance);
+}
+
+.cost-chart__swatch--provisional {
+  background: transparent;
+  border: 2px dashed var(--chart-cost-variance);
+}
+
+.cost-chart__scroll {
   overflow-x: auto;
   border: 1px solid var(--border);
   border-radius: var(--radius);
@@ -1548,32 +1570,39 @@ textarea {
   margin-bottom: 1rem;
 }
 
-/* 狭い画面では縮小して文字が潰れるより、最小幅を確保して横スクロールさせる */
-.chart-svg {
+.cost-chart__svg {
   display: block;
-  width: 100%;
-  min-width: 560px;
-  height: auto;
 }
 
-.chart-label {
+.cost-chart__label,
+.cost-chart__value {
   font-size: 12px;
   fill: var(--color-text);
 }
 
-.chart-value {
-  font-size: 12px;
-  fill: var(--color-text-muted);
+.cost-chart__track {
+  fill: var(--bg-subtle);
 }
 
-.chart-bar--material {
+.cost-chart__bar--material {
   fill: var(--color-accent);
+  stroke: var(--color-surface);
 }
 
-.chart-bar--labor {
-  fill: var(--chart-purchase);
+.cost-chart__bar--labor {
+  fill: var(--chart-cost-labor);
+  stroke: var(--color-surface);
 }
 
-.chart-bar--variance {
-  fill: var(--chart-shipment);
+.cost-chart__bar--variance {
+  fill: var(--chart-cost-variance);
+}
+
+/* 未完了オーダの差異は投入額そのままの暫定値。完了オーダの確定した差異と、色だけでなく線種でも区別する */
+.cost-chart__bar--provisional {
+  fill: var(--chart-cost-variance);
+  fill-opacity: 0.3;
+  stroke: var(--chart-cost-variance);
+  stroke-width: 1.5;
+  stroke-dasharray: 4 3;
 }
