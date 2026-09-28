@@ -27,7 +27,7 @@ export default defineConfig(({ command, isPreview }) => ({
       reporter: ["text", "html", "json-summary"],
       // scripts/配下はCI連携用のNode.jsスクリプト（Issue #98）であり、アプリのドメインロジックの
       // カバレッジ計測対象ではないため除外する
-      exclude: [...configDefaults.exclude, "e2e/**", "scripts/**", "src/**/*.test.ts", "src/main.tsx"],
+      exclude: [...configDefaults.exclude, "e2e/**", "scripts/**", "src/**/*.test.{ts,tsx}", "src/main.tsx"],
     },
   },
 }));

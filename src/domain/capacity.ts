@@ -191,3 +191,59 @@ export function computePlannedOrderLoad(state: SimulationState): PlannedOrderLoa
 
   return entries.sort((a, b) => a.day - b.day || a.workCenter.localeCompare(b.workCenter));
 }
+
+export interface CapacityChartCell {
+  day: number;
+  plannedMin: number;
+  actualMin: number;
+  /** 計画負荷・実績負荷のうち大きい方が能力を超えた分（分）。超過していなければ0（表の「超過（N分）」と同じ定義） */
+  overloadMin: number;
+}
+
+export interface CapacityChartRow {
+  workCenter: string;
+  capacityMin: number;
+  /** この作業区で負荷のある日だけ（日昇順） */
+  cells: CapacityChartCell[];
+}
+
+export interface CapacityChartModel {
+  /** どれかの作業区に負荷のある日の和集合（昇順）。全作業区で共通の横軸になる */
+  days: number[];
+  /** 作業区コード順 */
+  rows: CapacityChartRow[];
+  /** 縦軸の上限（分）。全作業区で共通の目盛りにして作業区間を比較できるよう、能力・計画・実績の最大値をとる */
+  maxMin: number;
+}
+
+/**
+ * 山積みバーグラフ（Issue #67、design.md EXT-42）用の表示データを、computeCapacityLoad()の結果から整形する。
+ * 状態を持たない導出値で、表（CapacityPanel.tsx）と同じ元データ・同じ超過の定義を使うため、
+ * グラフと表の判定が食い違うことはない。負荷が1件も無ければ空のモデル（rows/daysとも空、maxMin=0）を返す。
+ */
+export function buildCapacityChartModel(entries: CapacityLoadEntry[]): CapacityChartModel {
+  const byWorkCenter = new Map<string, CapacityChartRow>();
+  const daySet = new Set<number>();
+  let maxMin = 0;
+
+  for (const entry of entries) {
+    let row = byWorkCenter.get(entry.workCenter);
+    if (!row) {
+      row = { workCenter: entry.workCenter, capacityMin: entry.capacityMin, cells: [] };
+      byWorkCenter.set(entry.workCenter, row);
+    }
+    const required = Math.max(entry.plannedMin, entry.actualMin);
+    row.cells.push({
+      day: entry.day,
+      plannedMin: entry.plannedMin,
+      actualMin: entry.actualMin,
+      overloadMin: Math.max(0, required - entry.capacityMin),
+    });
+    daySet.add(entry.day);
+    maxMin = Math.max(maxMin, entry.capacityMin, required);
+  }
+
+  const rows = [...byWorkCenter.values()].sort((a, b) => a.workCenter.localeCompare(b.workCenter));
+  for (const row of rows) row.cells.sort((a, b) => a.day - b.day);
+  return { days: [...daySet].sort((a, b) => a - b), rows, maxMin };
+}

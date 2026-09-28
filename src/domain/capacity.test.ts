@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { ITEM_IDS, WORK_CENTERS } from "../data/masterData";
 import {
   CHRONIC_BOTTLENECK_THRESHOLD_DAYS,
+  buildCapacityChartModel,
   capacityOverloads,
   computeCapacityLoad,
   computeChronicBottlenecks,
@@ -373,6 +374,53 @@ describe("段取り時間の山積みへの反映（Issue #66）", () => {
 
     const ins = computeCapacityLoad(state).find((e) => e.workCenter === WORK_CENTERS.INS && e.day === 14)!;
     expect(ins).toMatchObject({ plannedMin: 0, actualMin: 5 }); // 0個×12分＋段取り5分
+  });
+});
+
+// Issue #67：山積みバーグラフ用の表示データ（design.md EXT-42）
+describe("buildCapacityChartModel（Issue #67：山積みバーグラフ用の表示データ）", () => {
+  it("[単体][機能テスト][正常] design.md §9.5の確定結果から、作業区ごとの帯・共通の日軸・超過分が組み立てられる", () => {
+    const { state } = firmChairOrder();
+
+    const model = buildCapacityChartModel(computeCapacityLoad(state));
+
+    expect(model.days).toEqual([12, 13]);
+    expect(model.maxMin).toBe(300); // 能力240・最大負荷300のうち大きい方
+    expect(model.rows.map((r) => r.workCenter)).toEqual([WORK_CENTERS.ASM, WORK_CENTERS.CUT, WORK_CENTERS.INS]);
+    const asm = model.rows.find((r) => r.workCenter === WORK_CENTERS.ASM)!;
+    expect(asm).toMatchObject({ capacityMin: 240 });
+    expect(asm.cells).toEqual([{ day: 13, plannedMin: 300, actualMin: 0, overloadMin: 60 }]);
+    // 超過しているのはWC-ASMだけで、表の「超過（N分）」・capacityOverloads()と同じ判定になる
+    const overloaded = model.rows.flatMap((r) => r.cells.filter((c) => c.overloadMin > 0).map((c) => `${r.workCenter}@${c.day}`));
+    expect(overloaded).toEqual(capacityOverloads(state).map((e) => `${e.workCenter}@${e.day}`));
+  });
+
+  it("[単体][機能テスト][境界] 超過分は計画負荷と実績負荷のうち大きい方を基準にする（表の判定と同じ）", () => {
+    const model = buildCapacityChartModel([
+      { workCenter: "WC-X", day: 3, plannedMin: 100, actualMin: 300, capacityMin: 240 },
+      { workCenter: "WC-X", day: 4, plannedMin: 240, actualMin: 0, capacityMin: 240 }, // ちょうど能力＝超過ではない
+    ]);
+
+    expect(model.rows[0].cells.map((c) => c.overloadMin)).toEqual([60, 0]);
+    expect(model.maxMin).toBe(300);
+  });
+
+  it("[単体][機能テスト][境界] 作業区ごとに負荷のある日が違っても、日軸は和集合になり各セルは自分の日だけを持つ", () => {
+    const model = buildCapacityChartModel([
+      { workCenter: "WC-B", day: 20, plannedMin: 50, actualMin: 0, capacityMin: 100 },
+      { workCenter: "WC-A", day: 12, plannedMin: 10, actualMin: 0, capacityMin: 100 },
+      { workCenter: "WC-A", day: 30, plannedMin: 20, actualMin: 0, capacityMin: 100 },
+    ]);
+
+    expect(model.days).toEqual([12, 20, 30]);
+    expect(model.rows.map((r) => [r.workCenter, r.cells.map((c) => c.day)])).toEqual([
+      ["WC-A", [12, 30]],
+      ["WC-B", [20]],
+    ]);
+  });
+
+  it("[単体][機能テスト][境界] 負荷が1件も無ければ空のモデルを返す", () => {
+    expect(buildCapacityChartModel([])).toEqual({ days: [], rows: [], maxMin: 0 });
   });
 });
 

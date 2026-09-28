@@ -1666,3 +1666,138 @@ textarea {
   stroke-width: 1.5;
   stroke-dasharray: 4 3;
 }
+
+/* 能力（山積み）のバーグラフ（Issue #67、design.md EXT-42）。棒の色は既存トークンを再利用する：
+   計画=--color-accent（Gantt・受注残と同じ）、実績=--pf-active（Ganttの完了と同じ）、超過=--warn-*（AlertBarと同じ） */
+.capacity-chart__legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.9rem;
+  margin-bottom: 0.5rem;
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+}
+
+.capacity-chart__legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.capacity-chart__swatch {
+  width: 14px;
+  height: 12px;
+  border-radius: 2px;
+  display: inline-block;
+  box-sizing: border-box;
+}
+
+.capacity-chart__swatch--plan {
+  background: transparent;
+  border: 2px dashed var(--color-accent);
+}
+
+.capacity-chart__swatch--actual {
+  background: var(--pf-active);
+}
+
+.capacity-chart__swatch--cap {
+  height: 0;
+  border-radius: 0;
+  border-top: 2px dashed var(--color-text);
+}
+
+.capacity-chart__swatch--overload {
+  background: var(--warn-bg);
+  border: 2px solid var(--warn-border);
+}
+
+.capacity-chart__scroll {
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+  margin-bottom: 0.5rem;
+}
+
+.capacity-chart__svg {
+  display: block;
+}
+
+.capacity-chart__band {
+  fill: var(--bg-subtle);
+  opacity: 0.5;
+}
+
+.capacity-chart__label,
+.capacity-chart__sub-label,
+.capacity-chart__value,
+.capacity-chart__axis-label,
+.capacity-chart__overload-label {
+  font-size: 12px;
+  fill: var(--color-text);
+}
+
+.capacity-chart__sub-label,
+.capacity-chart__axis-label {
+  fill: var(--color-text-muted);
+}
+
+/* 値ラベルは能力線・超過セルの背景に重なりうるため、背景色の縁取りを文字の下に敷く */
+.capacity-chart__value {
+  paint-order: stroke;
+  stroke: var(--color-surface);
+  stroke-width: 3px;
+  stroke-linejoin: round;
+}
+
+.capacity-chart__label,
+.capacity-chart__overload-label {
+  font-weight: 700;
+}
+
+.capacity-chart__overload-label {
+  fill: var(--warn-text);
+}
+
+.capacity-chart__baseline {
+  stroke: var(--border);
+  stroke-width: 1;
+}
+
+.capacity-chart__cap-line {
+  stroke: var(--color-text);
+  stroke-width: 1.5;
+  stroke-dasharray: 5 3;
+}
+
+.capacity-chart__cell-bg--overload {
+  fill: var(--warn-bg);
+  stroke: var(--warn-border);
+  stroke-width: 1;
+}
+
+/* 計画負荷は破線の枠＋薄い塗り、実績負荷は塗り。線種でも区別し、色だけに頼らない */
+.capacity-chart__bar--plan {
+  fill: var(--color-accent);
+  fill-opacity: 0.25;
+  stroke: var(--color-accent);
+  stroke-width: 1.5;
+  stroke-dasharray: 4 3;
+}
+
+.capacity-chart__bar--actual {
+  fill: var(--pf-active);
+}
+
+.capacity-chart__bar--plan.capacity-chart__bar--over {
+  fill: var(--warn-border);
+  fill-opacity: 0.45;
+  stroke: var(--warn-text);
+}
+
+.capacity-chart__bar--actual.capacity-chart__bar--over {
+  fill: var(--warn-border);
+  stroke: var(--warn-text);
+  stroke-width: 1.5;
+}
