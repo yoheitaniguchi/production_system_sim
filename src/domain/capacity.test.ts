@@ -226,7 +226,7 @@ describe("段取り時間の山積みへの反映（Issue #66）", () => {
     expect(asm(large) - asm(small)).toBe(5 * 30);
   });
 
-  it("[単体][機能テスト][境界] 製造オーダを分割すると、オーダごとに1回ずつ段取りが加算される（分割の代償）", () => {
+  it("[結合][機能テスト][境界] 製造オーダを分割すると、オーダごとに1回ずつ段取りが加算される（分割の代償）", () => {
     const { state } = firmChairOrder();
     setSetup(state, ITEM_IDS.FG_CHAIR, 10, 20);
     const fgOrder = state.mfgOrders.find((mo) => mo.itemId === ITEM_IDS.FG_CHAIR)!;
@@ -238,7 +238,7 @@ describe("段取り時間の山積みへの反映（Issue #66）", () => {
     expect(byKey[`${WORK_CENTERS.ASM}@14`].plannedMin).toBe(4 * 30 + 20); // 140
   });
 
-  it("[単体][機能テスト][正常] 着手済みの工程は実績負荷へ段取り時間込みで移り、計画負荷には二重に乗らない", () => {
+  it("[結合][機能テスト][正常] 着手済みの工程は実績負荷へ段取り時間込みで移り、計画負荷には二重に乗らない", () => {
     const { state } = firmChairOrder();
     setSetup(state, ITEM_IDS.SA_SEAT, 10, 15);
     const saOrder = state.mfgOrders.find((mo) => mo.itemId === ITEM_IDS.SA_SEAT)!;
@@ -265,7 +265,7 @@ describe("段取り時間の山積みへの反映（Issue #66）", () => {
     expect(cutEntry).toMatchObject({ plannedMin: 0, actualMin: 195 });
   });
 
-  it("[単体][機能テスト][境界] 取消（CANCELED）されたオーダは、段取り時間があっても計画負荷に算入されない", () => {
+  it("[結合][機能テスト][境界] 取消（CANCELED）されたオーダは、段取り時間があっても計画負荷に算入されない", () => {
     const { state, soNo } = firmChairOrder();
     setSetup(state, ITEM_IDS.FG_CHAIR, 10, 20);
     cancelSalesOrder(state, soNo);
@@ -315,6 +315,64 @@ describe("段取り時間の山積みへの反映（Issue #66）", () => {
     const previewByKey = Object.fromEntries(computePlannedOrderLoad(preview).map((e) => [`${e.workCenter}@${e.day}`, e.previewMin]));
     const confirmedByKey = Object.fromEntries(computeCapacityLoad(confirmed).map((e) => [`${e.workCenter}@${e.day}`, e.plannedMin]));
     expect(previewByKey).toEqual(confirmedByKey);
+    // 比較だけだと両関数が同じ誤りをしても通るため、絶対値も固定する
+    expect(previewByKey).toEqual({ "WC-CUT@12": 195, "WC-ASM@13": 320, "WC-INS@13": 125 });
+  });
+
+  it("[単体][機能テスト][境界] 同じ作業区・同じ日に計画オーダが2件重なると、段取りはオーダごとに2回加算される", () => {
+    const { state } = plannedChairOrder();
+    const soNo2 = createSalesOrder(
+      state,
+      { customerId: "CUST-B", itemId: ITEM_IDS.FG_CHAIR, qty: 10, requestDay: 15 },
+      0,
+    );
+    confirmDelivery(state, soNo2, 15);
+    runMRP(state);
+    setSetup(state, ITEM_IDS.FG_CHAIR, 10, 20);
+
+    const asm = computePlannedOrderLoad(state).find((e) => e.workCenter === WORK_CENTERS.ASM && e.day === 13)!;
+    const fgPlos = state.plannedOrders.filter((p) => p.itemId === ITEM_IDS.FG_CHAIR && p.orderType === "MAKE");
+    expect(fgPlos).toHaveLength(2); // 前提：受注ごとに別々の計画オーダになる
+    expect(asm.previewMin).toBe(2 * (10 * 30 + 20)); // 640。段取り20分が2回
+  });
+
+  it("[結合][機能テスト][境界] 同じ日への分割でも、分割後のオーダごとに1回ずつ段取りが加算される", () => {
+    const { state } = firmChairOrder();
+    setSetup(state, ITEM_IDS.FG_CHAIR, 10, 20);
+    const fgOrder = state.mfgOrders.find((mo) => mo.itemId === ITEM_IDS.FG_CHAIR)!;
+
+    splitMfgOrder(state, fgOrder.moNo, 4, 13, 15); // 分割後の新オーダも同じ着手日（D+13）
+
+    const asm = computeCapacityLoad(state).find((e) => e.workCenter === WORK_CENTERS.ASM && e.day === 13)!;
+    expect(asm.plannedMin).toBe(6 * 30 + 20 + (4 * 30 + 20)); // 340＝標準時間300＋段取り20×2回
+  });
+
+  it("[単体][機能テスト][境界] 同一オーダで工程10が着手済み・工程20が未着手なら、実績と計画へ段取りが1回ずつ別々に計上される", () => {
+    const { state } = firmChairOrder();
+    setSetup(state, ITEM_IDS.FG_CHAIR, 10, 20); // WC-ASM
+    setSetup(state, ITEM_IDS.FG_CHAIR, 20, 5); // WC-INS
+    const fgOrder = state.mfgOrders.find((mo) => mo.itemId === ITEM_IDS.FG_CHAIR)!;
+    // 部品を揃える手間を省くため、着手した状態を直接作る（capacity.tsは状態から導出するだけの関数）
+    const wi10 = state.workInstructions.find((w) => w.moNo === fgOrder.moNo && w.stepNo === 10)!;
+    wi10.actualStartDay = 13;
+    wi10.inputQty = 10;
+
+    const byKey = Object.fromEntries(computeCapacityLoad(state).map((e) => [`${e.workCenter}@${e.day}`, e]));
+    expect(byKey[`${WORK_CENTERS.ASM}@13`]).toMatchObject({ plannedMin: 0, actualMin: 10 * 30 + 20 });
+    expect(byKey[`${WORK_CENTERS.INS}@13`]).toMatchObject({ plannedMin: 10 * 12 + 5, actualMin: 0 });
+  });
+
+  it("[単体][機能テスト][境界] 投入数0でも着手済みの作業指示には段取りが実績負荷として計上される（全数不良後の後工程）", () => {
+    const { state } = firmChairOrder();
+    setSetup(state, ITEM_IDS.FG_CHAIR, 20, 5); // WC-INS
+    const fgOrder = state.mfgOrders.find((mo) => mo.itemId === ITEM_IDS.FG_CHAIR)!;
+    // 工程10を全数不良で完了→工程20のinputQtyが0のまま人が着手した、という状態を直接作る
+    const wi20 = state.workInstructions.find((w) => w.moNo === fgOrder.moNo && w.stepNo === 20)!;
+    wi20.actualStartDay = 14;
+    wi20.inputQty = 0;
+
+    const ins = computeCapacityLoad(state).find((e) => e.workCenter === WORK_CENTERS.INS && e.day === 14)!;
+    expect(ins).toMatchObject({ plannedMin: 0, actualMin: 5 }); // 0個×12分＋段取り5分
   });
 });
 

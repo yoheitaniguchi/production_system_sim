@@ -106,7 +106,7 @@ describe("数値の範囲検証（CRUD側と同じ強さで課す）", () => {
     expect(() => parseMasterSnapshot(JSON.stringify(notNumber))).toThrow(/setupMin は数値/);
   });
 
-  it("段取り時間（setupMin）が欠落・nullの工順は許容し未設定として扱う。あれば書き出し→読み込みで保たれる（design.md EXT-41）", () => {
+  it("段取り時間（setupMin）が欠落・nullの工順は許容し未設定として扱い、あれば取り込みで値が保たれる（design.md EXT-41）", () => {
     // 欠落（CHAIR_PRESETはsetupMinを持たない＝過去のエクスポートJSONと同じ形）
     const legacy = parseMasterSnapshot(JSON.stringify(CHAIR_PRESET));
     expect(legacy.routingSteps.every((s) => s.setupMin === undefined)).toBe(true);
@@ -122,6 +122,17 @@ describe("数値の範囲検証（CRUD側と同じ強さで課す）", () => {
       routingSteps: [{ ...CHAIR_PRESET.routingSteps[0], setupMin: 25 }, ...CHAIR_PRESET.routingSteps.slice(1)],
     };
     expect(parseMasterSnapshot(JSON.stringify(withSetup)).routingSteps[0].setupMin).toBe(25);
+  });
+
+  it("[結合] 段取り時間を設定したマスタを書き出して読み直すと、設定済みの行は値が保たれ未設定の行は未設定のままになる（Issue #66）", () => {
+    const state = createTestState();
+    const step = state.routingSteps.find((s) => s.itemId === ITEM_IDS.FG_CHAIR && s.stepNo === 10)!;
+    step.setupMin = 25;
+
+    const parsed = parseMasterSnapshot(serializeMasterSnapshot(state));
+
+    expect(parsed.routingSteps.find((s) => s.itemId === ITEM_IDS.FG_CHAIR && s.stepNo === 10)?.setupMin).toBe(25);
+    expect(parsed.routingSteps.find((s) => s.itemId === ITEM_IDS.FG_CHAIR && s.stepNo === 20)?.setupMin).toBeUndefined();
   });
 
   it("負の稼働能力（capacityMinPerDay）を拒否する", () => {

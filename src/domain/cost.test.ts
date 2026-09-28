@@ -41,6 +41,17 @@ describe("rollupCost（v5-spec.md §11.2の計算例どおりの標準原価積�
   });
 });
 
+describe("段取り時間（Issue #66、design.md EXT-41）は原価に反映しない", () => {
+  it("[単体][機能テスト][境界] 工順へ段取り時間を設定しても、標準原価（材料費・加工費）は変わらない", () => {
+    const state = createTestState(0);
+    const before = rollupCost(state, ITEM_IDS.FG_CHAIR);
+    for (const step of state.routingSteps) step.setupMin = 60;
+
+    expect(rollupCost(state, ITEM_IDS.FG_CHAIR)).toEqual(before);
+    expect(before).toMatchObject({ material: 2560, labor: 1400, standardCost: 3960 }); // §11.2の例
+  });
+});
+
 describe("computeMfgOrderCost（v5-spec.md §11.2「原価差異の可視化」の不良1個の例）", () => {
   it("第1工程完了直後は投入額のみ計上され、完成振替は0（未完了）", () => {
     const state = createTestState(0);
