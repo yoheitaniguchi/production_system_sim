@@ -1,14 +1,23 @@
 // 演習ガイド（v5-spec.md §8.1 D3、design.md DEV-4・EXT-17）
-import { computeGuideProgress, currentGuideStep, isPresetMaster } from "../domain/exerciseGuide";
+import { computeGuideProgress, computeGuideSummary, currentGuideStep, isPresetMaster } from "../domain/exerciseGuide";
 import type { SimulationState } from "../types";
 
 interface ExerciseGuidePanelProps {
   state: SimulationState;
 }
 
+function formatPercent(value: number | null): string {
+  return value != null ? `${(value * 100).toFixed(1)}%` : "—";
+}
+
+function formatRatio(value: number | null): string {
+  return value != null ? value.toFixed(2) : "—";
+}
+
 function ExerciseGuidePanel({ state }: ExerciseGuidePanelProps) {
   const steps = computeGuideProgress(state);
   const current = currentGuideStep(state);
+  const summary = current === null ? computeGuideSummary(state) : null;
 
   return (
     <div className="panel">
@@ -34,6 +43,46 @@ function ExerciseGuidePanel({ state }: ExerciseGuidePanelProps) {
         <div className="guide__current guide__current--done">
           全ステップ（TC-01〜TC-18）が完了しました。お疲れさまでした。
         </div>
+      )}
+
+      {summary && (
+        <>
+          <h3>演習完了レポート</h3>
+          <table className="panel__table">
+            <thead>
+              <tr>
+                <th>項目</th>
+                <th>値</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>所要日数</td>
+                <td>{summary.durationDays}日</td>
+              </tr>
+              <tr>
+                <td>発生した警告件数（延べ）</td>
+                <td>{summary.totalAlertCount}件</td>
+              </tr>
+              <tr>
+                <td>納期遵守率</td>
+                <td>{formatPercent(summary.kpiHighlights.deliveryComplianceRate)}</td>
+              </tr>
+              <tr>
+                <td>計画達成率</td>
+                <td>{formatPercent(summary.kpiHighlights.planAchievementRate)}</td>
+              </tr>
+              <tr>
+                <td>直行率</td>
+                <td>{formatPercent(summary.kpiHighlights.firstPassYieldRate)}</td>
+              </tr>
+              <tr>
+                <td>在庫回転</td>
+                <td>{formatRatio(summary.kpiHighlights.inventoryTurnover)}</td>
+              </tr>
+            </tbody>
+          </table>
+        </>
       )}
 
       <table className="panel__table">
