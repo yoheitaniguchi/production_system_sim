@@ -1,11 +1,12 @@
 // 取引先マスタ（v5-spec.md §3.7 最小機能4）。design.md DEV-1により得意先／仕入先は別テーブルなので、
-// 同じ形のテーブルを partnerType で使い分ける。
+// 同じ形のテーブルを partnerType で使い分ける。ただし「優先度ランク」列（design.md EXT-36）は
+// 得意先のみが持つ概念（MRP実行時の需要処理順序に影響する）のため、得意先側にのみ追加する。
 import { useState } from "react";
 import { findCustomerReferences, findSupplierReferences } from "../../domain/masterIntegrity";
 import type { PartnerType } from "../../domain/masterData";
 import type { SimulationAction } from "../../domain/reducer";
 import type { SimulationState } from "../../types";
-import { EditableTextField } from "../EditableField";
+import { EditableNumberField, EditableTextField } from "../EditableField";
 import DeleteRowButton from "./DeleteRowButton";
 
 interface Props {
@@ -22,8 +23,8 @@ function PartnerTable({ state, dispatch, partnerType }: Props) {
   const idLabel = isCustomer ? "得意先番号" : "仕入先番号";
   const nameLabel = isCustomer ? "得意先名" : "仕入先名";
   const rows = isCustomer
-    ? state.customers.map((c) => ({ partnerId: c.customerId, name: c.name }))
-    : state.suppliers.map((s) => ({ partnerId: s.supplierId, name: s.name }));
+    ? state.customers.map((c) => ({ partnerId: c.customerId, name: c.name, priorityRank: c.priorityRank ?? 0 }))
+    : state.suppliers.map((s) => ({ partnerId: s.supplierId, name: s.name, priorityRank: 0 }));
 
   const blockedBy = (partnerId: string) =>
     isCustomer ? findCustomerReferences(state, partnerId) : findSupplierReferences(state, partnerId);
@@ -39,11 +40,18 @@ function PartnerTable({ state, dispatch, partnerType }: Props) {
   return (
     <>
       <h3>{title}</h3>
+      {isCustomer && (
+        <p className="panel__hint">
+          優先度ランクは数値が大きいほど優先される。MRP実行（計画の再計算）時、複数受注が同じ部材・在庫を
+          取り合う場面で、優先度ランクが高い得意先の需要から先に処理される（同ランクなら納期が早い順）
+        </p>
+      )}
       <table className="panel__table">
         <thead>
           <tr>
             <th>{idLabel}</th>
             <th>{nameLabel}</th>
+            {isCustomer && <th>優先度ランク</th>}
             <th />
           </tr>
         </thead>
@@ -60,6 +68,18 @@ function PartnerTable({ state, dispatch, partnerType }: Props) {
                   }
                 />
               </td>
+              {isCustomer && (
+                <td>
+                  <EditableNumberField
+                    value={row.priorityRank}
+                    min={0}
+                    ariaLabel={`優先度ランク（${row.partnerId}）`}
+                    onCommit={(priorityRank) =>
+                      dispatch({ type: "MASTER_UPDATE_CUSTOMER_PRIORITY_RANK", payload: { customerId: row.partnerId, priorityRank } })
+                    }
+                  />
+                </td>
+              )}
               <td>
                 <DeleteRowButton
                   blockedBy={blockedBy(row.partnerId)}
@@ -91,6 +111,7 @@ function PartnerTable({ state, dispatch, partnerType }: Props) {
                 onChange={(e) => setDraft({ ...draft, name: e.target.value })}
               />
             </td>
+            {isCustomer && <td />}
             <td>
               <button type="button" className="master__add" disabled={!draft.partnerId.trim()} onClick={handleAdd}>
                 ＋追加

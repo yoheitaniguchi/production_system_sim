@@ -177,7 +177,12 @@ export function parseMasterSnapshot(json: string): MasterSnapshot {
   const customers: Customer[] = requireArray(raw, "customers").map((row, i) => {
     const where = `customers[${i}]`;
     const record = requireRow(row, where);
-    return { customerId: requireString(record, "customerId", where), name: requireString(record, "name", where) };
+    return {
+      customerId: requireString(record, "customerId", where),
+      name: requireString(record, "name", where),
+      // design.md EXT-36：既存プリセット・過去エクスポート済みJSONとの後方互換のためoptional
+      priorityRank: optionalNonNegative(record, "priorityRank", where),
+    };
   });
 
   const suppliers: Supplier[] = requireArray(raw, "suppliers").map((row, i) => {

@@ -403,6 +403,15 @@ export function updatePartnerName(
   return `${partnerId} の名称を「${label}」に変更した`;
 }
 
+/** 得意先の優先度ランク更新（design.md EXT-36）。数値が大きいほどMRP需要処理で優先される */
+export function updateCustomerPriorityRank(state: SimulationState, customerId: string, priorityRank: number): string {
+  const customer = state.customers.find((c) => c.customerId === customerId);
+  if (!customer) throw new MasterDataError(`得意先が見つかりません: ${customerId}`);
+  if (priorityRank < 0) throw new MasterDataError("優先度ランクは0以上で入力してください");
+  customer.priorityRank = priorityRank;
+  return `${customerId} の優先度ランクを ${priorityRank} に変更した`;
+}
+
 export function deletePartner(state: SimulationState, partnerType: PartnerType, partnerId: string): string {
   if (partnerType === "CUSTOMER") {
     if (!state.customers.some((c) => c.customerId === partnerId)) {

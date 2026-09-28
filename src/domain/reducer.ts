@@ -34,6 +34,7 @@ import {
   updateBomLine,
   updateItem,
   updatePartnerName,
+  updateCustomerPriorityRank,
   updateRoutingStep,
   updateWorkCenter,
   type ItemPatch,
@@ -90,6 +91,7 @@ export type SimulationAction =
   | { type: "MASTER_ADD_PARTNER"; payload: { partnerType: PartnerType; partnerId: string; name: string } }
   | { type: "MASTER_UPDATE_PARTNER_NAME"; payload: { partnerType: PartnerType; partnerId: string; name: string } }
   | { type: "MASTER_DELETE_PARTNER"; payload: { partnerType: PartnerType; partnerId: string } }
+  | { type: "MASTER_UPDATE_CUSTOMER_PRIORITY_RANK"; payload: { customerId: string; priorityRank: number } }
   | { type: "MASTER_IMPORT"; payload: { snapshot: MasterSnapshot } }
   | { type: "MASTER_RESET_TO_PRESET"; payload?: { presetId?: string } };
 
@@ -390,6 +392,11 @@ export function simulationReducer(state: SimulationState, action: SimulationActi
 
     case "MASTER_DELETE_PARTNER":
       return applyAction(state, (next) => deletePartner(next, action.payload.partnerType, action.payload.partnerId));
+
+    case "MASTER_UPDATE_CUSTOMER_PRIORITY_RANK":
+      return applyAction(state, (next) =>
+        updateCustomerPriorityRank(next, action.payload.customerId, action.payload.priorityRank),
+      );
 
     case "MASTER_IMPORT":
       return applyMasterSnapshot(state, action.payload.snapshot, "マスタをインポートした");

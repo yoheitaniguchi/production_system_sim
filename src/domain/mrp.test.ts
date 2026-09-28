@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { ITEM_IDS } from "../data/masterData";
+import { updateCustomerPriorityRank } from "./masterData";
 import { confirmDelivery, createSalesOrder } from "./salesOrder";
 import { firmAllPlannedOrders, runMRP } from "./mrp";
+import { resolveRootPegKey } from "./pegging";
 import { ackPurchaseOrder, receivePurchaseOrder } from "./procurement";
 import { completeStep, releaseMfgOrder, startStep } from "./production";
 import { createTestState } from "./testUtils";
@@ -203,5 +205,49 @@ describe("runMRP / firmAllPlannedOrders", () => {
 
     completeStep(state, fgOrder.moNo, 10, 10, 0, 15); // design.md EXT-10：同じ操作の再実行でHOLDから復帰
     expect(state.mfgOrders.find((mo) => mo.moNo === fgOrder.moNo)?.status).toBe("WIP");
+  });
+});
+
+// Issue #58：得意先の優先度ランクによる需要処理順序の上書き（design.md EXT-36）
+describe("runMRP：得意先の優先度ランクによる優先順位付け（design.md EXT-36）", () => {
+  it("[単体][機能テスト][正常] 優先度ランクが高い得意先の需要は、納期が遅くても先に手元在庫を使う", () => {
+    const state = createTestState(0);
+    state.stocks.push({ itemId: ITEM_IDS.RM_BOARD, onHand: 1, allocated: 0 });
+    updateCustomerPriorityRank(state, "CUST-B", 10);
+
+    // CUST-A（優先度未設定＝0）：納期が早い（D+10）が優先度は低い
+    const soA = createSalesOrder(state, { customerId: "CUST-A", itemId: ITEM_IDS.FG_CHAIR, qty: 1, requestDay: 10 }, 0);
+    confirmDelivery(state, soA, 10);
+    // CUST-B（優先度10）：納期が遅い（D+30）が優先度は高い
+    const soB = createSalesOrder(state, { customerId: "CUST-B", itemId: ITEM_IDS.FG_CHAIR, qty: 1, requestDay: 30 }, 0);
+    confirmDelivery(state, soB, 30);
+
+    runMRP(state);
+
+    const fgPlos = state.plannedOrders.filter((p) => p.itemId === ITEM_IDS.FG_CHAIR);
+    // EXT-1の納期昇順だけならAが先に展開されるはずだが、優先度ランクがそれより優先されるためBが先頭になる
+    expect(fgPlos[0].pegTo).toBe(`${soB}-1`);
+    expect(fgPlos[1].pegTo).toBe(`${soA}-1`);
+
+    const rmPlos = state.plannedOrders.filter((p) => p.itemId === ITEM_IDS.RM_BOARD);
+    const bRmPlo = rmPlos.find((p) => resolveRootPegKey(state, p.pegTo) === `${soB}-1`);
+    const aRmPlo = rmPlos.find((p) => resolveRootPegKey(state, p.pegTo) === `${soA}-1`);
+    // 手元在庫1枚は優先度が高いBの所要に使われるため、Bの木板は新規発注不要、Aは1枚とも新規発注になる
+    expect(bRmPlo).toBeUndefined();
+    expect(aRmPlo).toMatchObject({ qty: 1, orderType: "BUY" });
+  });
+
+  it("[単体][機能テスト][境界] 優先度ランク未設定の既存受注同士では、従来どおり納期昇順・同着は受注番号昇順のまま変わらない", () => {
+    const state = createTestState(0);
+    const soY = createSalesOrder(state, { customerId: "CUST-A", itemId: ITEM_IDS.FG_CHAIR, qty: 1, requestDay: 30 }, 0);
+    confirmDelivery(state, soY, 30);
+    const soZ = createSalesOrder(state, { customerId: "CUST-B", itemId: ITEM_IDS.FG_CHAIR, qty: 1, requestDay: 10 }, 0);
+    confirmDelivery(state, soZ, 10);
+
+    runMRP(state);
+
+    const fgPlos = state.plannedOrders.filter((p) => p.itemId === ITEM_IDS.FG_CHAIR);
+    expect(fgPlos[0].pegTo).toBe(`${soZ}-1`);
+    expect(fgPlos[1].pegTo).toBe(`${soY}-1`);
   });
 });

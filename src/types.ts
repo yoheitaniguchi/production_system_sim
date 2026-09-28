@@ -48,6 +48,8 @@ export interface RoutingStep {
 export interface Customer {
   customerId: string;
   name: string;
+  /** 優先度ランク（design.md EXT-36）。数値が大きいほど優先。未設定は0扱い（既存の受注と同じ扱い） */
+  priorityRank?: number;
 }
 
 export interface Supplier {
