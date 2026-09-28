@@ -43,6 +43,12 @@ export interface RoutingStep {
   stepNo: number;
   workCenter: string;
   stdTimeMin: number;
+  /**
+   * 段取り時間（分）。1件の作業指示（＝製造オーダ1件の当該工程）につき数量に関係なく1回だけ、
+   * 能力計画（CRP）の山積みへ加算する（design.md EXT-41、Issue #66）。省略時は0として扱う
+   * （既存プリセット・過去エクスポート済みJSONとの後方互換）。原価計算（cost.ts）には反映しない
+   */
+  setupMin?: number;
 }
 
 export interface Customer {

@@ -2,7 +2,7 @@
 //
 // production.tsのfirstStepNo/lastStepNoは実行時にstate.routingStepsを読むため、仕掛中の製造オーダが
 // ある品目の工順を増減させると「最終工程」が変わり完成入庫が起きなくなる。そのため構造変更
-// （行の追加・削除）だけを未完了オーダのある品目で禁止し、標準時間・作業区の変更は常に許可する。
+// （行の追加・削除）だけを未完了オーダのある品目で禁止し、標準時間・段取り時間・作業区の変更は常に許可する。
 import { useState } from "react";
 import { openMfgOrdersOf } from "../../domain/masterIntegrity";
 import type { SimulationAction } from "../../domain/reducer";
@@ -16,7 +16,7 @@ interface Props {
 }
 
 function RoutingTable({ state, dispatch }: Props) {
-  const [draft, setDraft] = useState({ itemId: "", stepNo: 10, workCenter: "", stdTimeMin: 10 });
+  const [draft, setDraft] = useState({ itemId: "", stepNo: 10, workCenter: "", stdTimeMin: 10, setupMin: 0 });
 
   const itemName = (id: string) => state.items.find((i) => i.itemId === id)?.name ?? id;
   const makeItems = state.items.filter((i) => i.makeBuy === "MAKE");
@@ -38,6 +38,7 @@ function RoutingTable({ state, dispatch }: Props) {
           stepNo: draft.stepNo,
           workCenter: draft.workCenter,
           stdTimeMin: draft.stdTimeMin,
+          setupMin: draft.setupMin,
         },
       },
     });
@@ -54,6 +55,7 @@ function RoutingTable({ state, dispatch }: Props) {
             <th>工程</th>
             <th>作業区</th>
             <th>標準時間（分）</th>
+            <th>段取り時間（分）</th>
             <th />
           </tr>
         </thead>
@@ -84,6 +86,19 @@ function RoutingTable({ state, dispatch }: Props) {
                     dispatch({
                       type: "MASTER_UPDATE_ROUTING_STEP",
                       payload: { itemId: step.itemId, stepNo: step.stepNo, patch: { stdTimeMin } },
+                    })
+                  }
+                />
+              </td>
+              <td>
+                <EditableNumberField
+                  value={step.setupMin ?? 0}
+                  min={0}
+                  ariaLabel={`段取り時間（分）（${itemName(step.itemId)}（${step.itemId}） 工程${step.stepNo}）`}
+                  onCommit={(setupMin) =>
+                    dispatch({
+                      type: "MASTER_UPDATE_ROUTING_STEP",
+                      payload: { itemId: step.itemId, stepNo: step.stepNo, patch: { setupMin } },
                     })
                   }
                 />
@@ -151,6 +166,15 @@ function RoutingTable({ state, dispatch }: Props) {
               />
             </td>
             <td>
+              <input
+                type="number"
+                min={0}
+                value={draft.setupMin}
+                aria-label="段取り時間（分）（新規行）"
+                onChange={(e) => setDraft({ ...draft, setupMin: Number(e.target.value) })}
+              />
+            </td>
+            <td>
               <button
                 type="button"
                 className="master__add"
@@ -170,7 +194,11 @@ function RoutingTable({ state, dispatch }: Props) {
       )}
       <p className="master__note">
         内製品目には工順が1行以上必要です（0行だと作業指示が作られず、製造オーダを完了できません）。
-        未完了の製造オーダがある品目は、工順の追加・削除ができません（標準時間・作業区の変更は可能です）。
+        未完了の製造オーダがある品目は、工順の追加・削除ができません（標準時間・段取り時間・作業区の変更は可能です）。
+      </p>
+      <p className="master__note">
+        段取り時間は、能力（山積み）の負荷に「製造オーダ1件の当該工程につき1回だけ」加算されます
+        （数量には比例しません。0のときは加算されません）。原価には反映されません。
       </p>
     </>
   );

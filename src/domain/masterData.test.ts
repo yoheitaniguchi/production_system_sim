@@ -218,6 +218,37 @@ describe("工順（BOP）のCRUD", () => {
     expect(step.workCenter).toBe(WORK_CENTERS.CUT);
   });
 
+  it("段取り時間（Issue #66）は工順の追加時・更新時に設定でき、負の値は拒否する", () => {
+    const state = createTestState();
+    const added = addRoutingStep(state, {
+      itemId: ITEM_IDS.SA_SEAT,
+      stepNo: 20,
+      workCenter: WORK_CENTERS.ASM,
+      stdTimeMin: 5,
+      setupMin: 12,
+    });
+    expect(added).toContain("段取り12分");
+    expect(state.routingSteps.find((s) => s.itemId === ITEM_IDS.SA_SEAT && s.stepNo === 20)?.setupMin).toBe(12);
+    expect(() =>
+      addRoutingStep(state, { itemId: ITEM_IDS.SA_SEAT, stepNo: 30, workCenter: WORK_CENTERS.ASM, stdTimeMin: 5, setupMin: -1 }),
+    ).toThrow(/段取り時間は0以上/);
+
+    const message = updateRoutingStep(state, ITEM_IDS.SA_SEAT, 10, { setupMin: 30 });
+    expect(message).toContain("段取り時間を 30 分に");
+    expect(state.routingSteps.find((s) => s.itemId === ITEM_IDS.SA_SEAT && s.stepNo === 10)?.setupMin).toBe(30);
+    expect(() => updateRoutingStep(state, ITEM_IDS.SA_SEAT, 10, { setupMin: -5 })).toThrow(/段取り時間は0以上/);
+    // 拒否された更新は値を書き換えない
+    expect(state.routingSteps.find((s) => s.itemId === ITEM_IDS.SA_SEAT && s.stepNo === 10)?.setupMin).toBe(30);
+  });
+
+  it("段取り時間は未完了オーダがある品目でも変更できる（構造変更ではないため。design.md EXT-20・EXT-41）", () => {
+    const state = createTestState();
+    withOpenMfgOrder(state, ITEM_IDS.FG_CHAIR);
+
+    updateRoutingStep(state, ITEM_IDS.FG_CHAIR, 10, { setupMin: 25 });
+    expect(state.routingSteps.find((s) => s.itemId === ITEM_IDS.FG_CHAIR && s.stepNo === 10)?.setupMin).toBe(25);
+  });
+
   it("最後の1行を消すと、完了できなくなる旨を業務メッセージで知らせる", () => {
     const state = createTestState();
     const message = deleteRoutingStep(state, ITEM_IDS.SA_SEAT, 10);

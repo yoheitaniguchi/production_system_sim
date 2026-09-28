@@ -159,6 +159,9 @@ export function parseMasterSnapshot(json: string): MasterSnapshot {
       stepNo: requirePositiveInt(record, "stepNo", where),
       workCenter: requireString(record, "workCenter", where),
       stdTimeMin: requireNonNegative(record, "stdTimeMin", where),
+      // design.md EXT-41：capacityMinPerDay（EXT-32、必須）と異なり、段取り時間は「未設定＝0」で
+      // 意味が完結する任意項目のため、欠落を許容する（priorityRankのEXT-36と同じ後方互換の考え方）
+      setupMin: optionalNonNegative(record, "setupMin", where),
     };
   });
 

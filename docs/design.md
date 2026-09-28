@@ -100,6 +100,7 @@ v5仕様書 §1（P1〜P13）のスコープ宣言をそのまま採用する。
 | EXT-38 | KPIのトレンド化（Issue #60） | `KpiDashboard.tsx`（v5-spec.md §10の12指標）は現在値のみの表形式で日次推移が見えない。`DashboardPanel.tsx`は既に主要4指標のみ`DashboardKpiHighlights`型でスパークライン表示済みだが、残り8指標の推移を見る手段が無い。Issueは「12指標へのアクセス方法を決定する」ことを要件に含めていた | `DashboardKpiHighlights`（`types.ts`）を4指標から`KpiSnapshot`（`domain/kpi.ts`）と同一の12指標へ拡張した（`domain/kpi.ts`との循環import回避のため、フィールドをtypes.ts側に複製する既存の設計をそのまま踏襲。将来`KpiSnapshot`にフィールドを追加する際は両方を変えること）。`dashboard.ts`の`computeDashboardSnapshot()`は`kpiHighlights: kpi`と`computeKpi()`の戻り値をそのまま代入するだけになり、4フィールド個別指定のコードは不要になった。日次系列の抽出は`dashboard.ts`に新設した`extractKpiSeries(history, key)`（`dashboardHistory`から指定キーの値だけを取り出す純粋関数。受け入れ条件が要求する「ドメイン層でvitest検証できるロジック」として`dashboard.test.ts`に4件のテストを追加）に集約し、`DashboardPanel.tsx`・`KpiDashboard.tsx`の両方がこれを呼ぶ。表示コンポーネントの`Sparkline`は元々`DashboardPanel.tsx`内のローカル関数だったものを`components/Sparkline.tsx`として切り出し共有した（Issueが「共通化版」と呼んでいたもの）。`KpiDashboard.tsx`は`MetricRow`に`key: keyof DashboardKpiHighlights`を追加し、組織目線・現場目線の各表に「推移」列を追加、2日分未満のときは`Sparkline`自身が持つ「推移データ不足」表示にフォールバックする（`DashboardPanel.tsx`の既存パターンをそのまま踏襲、追加の空状態実装は不要）。CSVエクスポート（Issue #54）は現在値のみを扱う既存仕様のままとし、推移列はCSVの対象に含めない。**追記（ux-reviewerレビュー後の改善）**：①`Sparkline.tsx`のSVGが`aria-hidden="true"`固定だったため、値が存在する行だけスクリーンリーダーへ何も伝わらない逆転現象があった。`role="img"`＋開始値→最新値を読み上げる`aria-label`（例：「推移（3日分）：0.9 から 1」）に変更し、データ不足時のテキスト表示と同程度の情報がどちらの状態でも伝わるようにした。②CSVエクスポートが推移列を含まないことを`KpiDashboard.tsx`のヒントテキストに明記した。③Issue #60分の追記で1段落に説明を詰め込みすぎていたため、「組織目線/現場目線の構成」と「推移列・CSVの扱い」を別々の`panel__hint`段落に分けた |
 | EXT-39 | 原価パネルのグラフ化（Issue #62） | `CostPanel.tsx`は表のみで、材料費/加工費の構成比や製造オーダ間の原価差異の大小が数値の羅列からしか読み取れなかった。原価差異の日次時系列トレンドは`cost.ts`が日次履歴を持たないため別Issueの範囲外（Issue自身が明記） | `domain/cost.ts`にグラフ用のデータ整形関数を2つ追加した。`computeItemCostComposition()`は`computeAllItemCosts()`の戻り値をそのまま使い、標準原価に対する材料費・加工費の比率だけを付け足す（標準原価0の品目は比率null）。`computeMfgOrderVarianceSeries()`は`computeMfgOrderCost()`の差異を表と同じ順序（取消オーダも含む）で並べる（受け入れ条件どおり、表示値が既存関数の戻り値と一致することを`cost.test.ts`で検証）。描画は`components/CostCharts.tsx`（SVGの横棒グラフ2種）に分離した。**構成比は100%積み上げ**とし（構成の違いを比べるのが目的のため、全品目の棒の長さを揃える。金額は棒の右に文字で併記。当初は金額に比例した棒長にしたが、ネジ等の小額品目の棒が数pxになり構成比が読めなかったため`ux-reviewer`指摘で変更）、加工費の%は「100−材料費の%」で求めて丸め後の合計が101%等にならないようにした。**製造オーダ別差異**は`computeMfgOrderCost()`の定義（投入−完成品振替）どおり、未完了のオーダでは振替額が0のため投入額がそのまま差異として大きく見える。そこで完了（DONE）オーダの確定した差異は塗りつぶし、未完了オーダの暫定値は薄い塗り＋破線の枠（色だけに頼らず線種でも区別）とし、凡例・状態の併記・ヒント文で誤読を防ぐ。**配色**：材料費は`--color-accent`、加工費・差異は新設した専用トークン`--chart-cost-labor`・`--chart-cost-variance`（ライト系は`:root`の値を継承、ダーク系4ブロックだけ上書き）を使う。ダッシュボードの`--chart-purchase`（発注残）・`--chart-shipment`（出荷残）は色の意味が違い、glass-lightでは出荷残が緑のため差異が緑に見える問題もあるため流用しない。SVGは文字サイズ（12px）を保つため拡縮させず固定幅とし、狭い画面では`.cost-chart__scroll`で横スクロールさせる。値の文字は`--color-text`（`--color-text-muted`ではテーマによってコントラスト4.5:1に満たない）、隣接セグメントは`--color-surface`色の枠線で区切る。一意キーである品目コード・オーダ番号をラベル先頭に置き、長い名称は末尾が省略されるようにした。`role="img"`のaria-labelで「数値は下の表と同じ」と明示し、支援技術向けの正本は表側に残す。CSSは既存のBEM風の流儀（`dashboard__`・`gantt__`）に合わせ`cost-chart__`接頭辞とした |
 | EXT-40 | シナリオ（SimulationState全体）のJSON保存・復元（Issue #61） | EXT-26は「マスタ」だけをJSON入出力の対象とし、受注・オーダ・在庫・イベントログ等のトランザクションは取り込み時に全て初期化する。演習の中断・再開や不具合再現の状態共有ができなかった。CLAUDE.mdの「永続化なし・単一セッション」方針との関係が論点 | 新規モジュール`domain/scenarioIO.ts`に`serializeScenario()`・`parseScenario()`を置いた（マスタ以外を扱うため`masterIO.ts`へは足さず分離。`assertSnapshotUsable()`・`MasterIOError`は再利用）。書き出す文書は`{kind:"production-system-sim-scenario", version:1, state}`で、`state`は`SimulationState`全体（`dashboardHistory`・`eventLog`を含む）。**永続化方針との関係**：ユーザーが明示的に行うエクスポート/インポート操作だけであり、自動保存・localStorageへの常時反映はしないため「永続化なし」とは矛盾しない（Issue #55の永続化とは別物）。**取り込みはall-or-nothing**で、①スキーマ検証（`TABLE_SPECS`に19テーブル（マスタ6・トランザクション11・ログ／ダッシュボード履歴2）の行の形を宣言的に定義。任意項目は欠落可だが、あるなら型が合う必要がある。エラーは最大12件まで列挙し残りは件数表示）、②マスタ検証（`parseMasterSnapshot()`をそのまま通す。型だけでなくqtyPerは正・標準時間や賃率は0以上・stepNoは正の整数・空文字禁止といったCRUD側と同じ値域と、`assertSnapshotUsable()`＝重複キー・BOM循環・参照検査。負のqtyPerはバックフラッシュで在庫が増える実害になるため型の一致だけでは足りない）、③`dashboardHistory`の不変条件（reducerが保つ「1日1件・day昇順・現在日以前」）と採番シーケンスの検証、のいずれかが失敗すれば一切取り込まない。マスタのJSON（`masterIO.ts`の出力）を選んでしまう取り違えは起こりやすいため`kind`不一致とは別に専用の案内文で拒否する。**採番シーケンスの判定**：Issueは「実データの最大番号以上」と書くが、`nextSoSeq`等は「次に採番される番号」（初期値1、採番後に+1）であり、最大番号と**同じ**値だと取り込み後の最初の採番が既存の主キーと重複するため、「次に採番される番号が既存の最大番号より大きい（最大+1以上）」を条件とした（`SO-`/`MO-`/`PO-`/`TXN-`/`SHIP-`/`LOT-`の6種。`PREFIX+数字`の形式に合わない主キーは無視）。**範囲外**：トランザクション間の参照整合性（`soLines`が存在しない`salesOrders`を指していない等）の網羅的な検証は、Issueの方針どおり別Issueとした。reducerには`SCENARIO_IMPORT`actionを追加し、検証済みの状態を`structuredClone`して丸ごと置き換える（部分マージなし）。エクスポート時点の状態を値のまま復元する受け入れ基準のため、イベントログへの追記もしない（取り込み結果は`BurgerMenu.tsx`のメニュー内に`role="status"`/`role="alert"`で通知する）。UIは`BurgerMenu.tsx`の「シナリオ」項目（エクスポート／ファイルからインポート）とし、取り込み前に`window.confirm`で「現在の状態をすべて置き換える」旨と取り込む内容（日付・受注件数）を確認する。**留意点**：`SimulationState`にフィールドを足した場合は`scenarioIO.ts`の`TABLE_SPECS`（および`RoutingStep`等の行の形）も合わせて更新すること。任意項目として宣言しない限り、旧版のファイルはスキーマ検証で拒否される |
+| EXT-41 | 段取り時間の追加（Issue #66） | §9.8 L-C2・§9.9が「段取り時間は扱わない」としてMVPスコープ外にした簡略化への再着手。§11.1の表が挙げる「ボトルネックと段取り」のうち、段取りが欠落したままだと山積みが実際より軽く出る。木製イス題材（工順3行・作業区3件）では段取りが主要な学習テーマになりにくいため教育効果は限定的だが、`RoutingStep`へ任意フィールドを足すだけで実装できるため取り込む | **①データモデル**：`RoutingStep.setupMin?: number`（分）を追加する。省略時は0として扱う任意項目。**②計算式**：`computeCapacityLoad()`の計画負荷・実績負荷を「数量×標準時間＋段取り時間」とする。段取り時間は数量に比例させず、**作業指示（WORK_INSTRUCTION）1件＝製造オーダ1件の当該工程につき1回だけ**加算する（実績負荷も同様に、着手した作業指示の実着手日へ1回）。計画負荷と実績負荷は着手済みか否かで排他的に分岐するため、段取りが二重に乗ることはない。`computePlannedOrderLoad()`（EXT-35の確定前プレビュー）も、計画オーダ1件につき工程ごとに1回加算し、確定後の計画負荷と段取り込みで一致させる。**③帰結として、製造オーダを分割すると分割数ぶんだけ段取りが加算される**（山積み超過を分割で解消するEXT-33の手立てには、段取りぶんの代償がつく。現実の段取りが「ロットごと」に発生することと整合する）。**④JSON入出力（masterIO.ts）**：`setupMin`は欠落・nullを許容し「未設定＝0」とする（`capacityMinPerDay`（EXT-32、必須）とは逆の判断。あれは欠落すると能力が決まらず山積み判定自体が成立しないが、段取りは「無い」ことに意味があり、`priorityRank`（EXT-36）と同じ後方互換の考え方が使える）。値が与えられたときは数値かつ0以上を要求する（CRUDと同じ強さ）。シナリオ入出力（scenarioIO.ts、EXT-40）も同様に任意項目として扱う。**⑤マスタ編集（EXT-20）**：段取り時間は構造変更ではないため、標準時間・作業区と同じく未完了オーダのある品目でも変更できる（禁止対象は工順行の追加・削除のみ）。`RoutingTable.tsx`に「段取り時間（分）」列（`EditableNumberField`）と新規行の入力欄を追加した。**⑥対象外**：原価計算（`cost.ts`、EXT-15）には反映しない（標準原価は1個あたりの積み上げであり、ロット当たり1回の段取りを1個あたりへ配賦するにはロットサイズの概念が要るが、現状のシミュレーターにはロットサイズがない）。段取りの自動最適化（同一品目の連続生産による削減等）は行わない。既定プリセット（`CHAIR_PRESET`・自転車）は段取り未設定のままで、design.md §9.5の計算例・既存テストの期待値は変わらない |
 
 ---
 
@@ -112,7 +113,7 @@ v5仕様書 §4 のER図をそのままTypeScriptの型定義に対応させる�
 |---|---|---|
 | `ITEM` | `ItemMaster` | `uom`は全品目「個」固定（P10）のためフィールドとして持たない |
 | `BOM_LINE` | `BomLine` | |
-| `ROUTING_STEP` | `RoutingStep` | `itemId, stepNo, workCenter, stdTimeMin` |
+| `ROUTING_STEP` | `RoutingStep` | `itemId, stepNo, workCenter, stdTimeMin, setupMin?`（`setupMin`はEXT-41で追加した任意項目） |
 | `PARTNER` | `Customer` / `Supplier` | DEV-1により分離を維持 |
 | `SALES_ORDER` + `SO_LINE` | `SalesOrder` + `SoLine` | データモデルは2テーブルに分離するが、**1受注＝1明細固定**（`SalesOrder`生成時に`SoLine`を必ず1件同時生成する）。`peg_to`のキー形式（`SO-001-1`）はそのまま採用し、ペギング追跡画面での表示に使う |
 | `PLANNED_ORDER` | `PlannedOrder` | 状態を持たない揮発データ。MRP実行のたびに配列を丸ごと再生成する |
@@ -320,6 +321,9 @@ function capacityOverloads(state) -> CapacityLoadEntry[]:
 ため、二重計上は起きない）。DONEになった工程も実績負荷（実着手日）として残り続ける（`StockTxn`同様、
 実績は事後に消えない）。
 
+（疑似コードの`stdTimeMin`項は、EXT-41で「数量×標準時間＋段取り時間（`step.setupMin`、省略時0、作業指示1件につき1回）」へ拡張した。
+段取り時間が未設定の場合は上記の式・§9.5の計算例と完全に一致する。）
+
 ### 9.5 具体的な計算例（木製イスデータ、TC-04〜05の確定結果をそのまま使う）
 
 3作業区とも`capacityMinPerDay = 240`（実働4時間相当）とする。8時間（480分）にすると既定シナリオ
@@ -365,13 +369,13 @@ v5-spec.md §15に倣い、本節で採用した簡略化を明記する。
 | # | 内容 | 影響 |
 |---|---|---|
 | L-C1 | 計画負荷はオーダ単位で着手日へ一括計上する近似であり、工程ごとの実際の日程差（例：FG-100の工程10と工程20が本当は別日になる）は反映しない | 小。MFG_ORDER自体が`startDay`/`dueDay`という単一区間しか持たないため、本システムの日程管理粒度（オーダ単位）に合わせた結果であり、CRP固有の限界ではない |
-| L-C2 | 稼働日カレンダー・複数直・段取り時間は扱わない | 中。§11.1の表が「ボトルネックと段取り」を挙げているうち、段取り時間は本設計の対象外のまま残る |
+| L-C2 | 稼働日カレンダー・複数直は扱わない。~~段取り時間も扱わない~~ **（段取り時間はIssue #66で実装済み、EXT-41参照）** | 中。稼働日カレンダー・複数直は依然として本設計の対象外のまま残る。段取り時間は`RoutingStep.setupMin`（任意項目）として山積みに反映済み（原価には反映しない） |
 | L-C3 | ~~確定前（PLANNED_ORDER）段階での山積みプレビューはMVPに含めない~~ **（Issue #57で実装済み、EXT-35参照）** | 小。`computePlannedOrderLoad()`として`CapacityPanel.tsx`に追加済み。AlertBar連携（確定前段階での警告表示）は依然として未実装のまま残る |
 
 ### 9.9 任意の拡張候補（MVPスコープ外）
 
 - ~~計画オーダ（PLANNED_ORDER）段階での山積みプレビュー（確定前に見せる、C2-3参照）~~ **Issue #57で実装済み（EXT-35）**
-- 段取り時間（`RoutingStep`に段取り時間フィールドを追加）を負荷計算に含める
+- ~~段取り時間（`RoutingStep`に段取り時間フィールドを追加）を負荷計算に含める~~ **Issue #66で実装済み（EXT-41）**
 - 山積み表を`GanttChartPanel.tsx`と同様のSVGバー表示へ発展させる（MVPは`.panel__table`ベースの表で十分。既存のKPI・原価パネルもすべて表ベースであり、視覚表現の追加は必須ではない）
 
 ### 9.10 実装コスト評価

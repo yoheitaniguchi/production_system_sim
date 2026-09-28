@@ -28,6 +28,9 @@ interface LoadBucket {
  * 計上される（二重計上は起きない）。未着手工程の数量には`wi.inputQty`ではなく`mo.planQty`を使う
  * ——第1工程以外は前工程が完了するまで`inputQty`が0のままで、計画負荷が常に0になってしまうため
  * （design.md §9.6 C2-1）。MRP本体も歩留まり100%前提であり、一貫した前提である。
+ *
+ * 各工程の負荷は「数量×標準時間＋段取り時間」。段取り時間（RoutingStep.setupMin、省略時0）は数量に
+ * 比例させず、作業指示1件につき1回だけ加算する（design.md EXT-41、Issue #66）。
  */
 export function computeCapacityLoad(state: SimulationState): CapacityLoadEntry[] {
   const buckets = new Map<string, Map<number, LoadBucket>>();
@@ -52,10 +55,13 @@ export function computeCapacityLoad(state: SimulationState): CapacityLoadEntry[]
     const step = state.routingSteps.find((s) => s.itemId === mo.itemId && s.stepNo === wi.stepNo);
     if (!step) continue;
 
+    // 段取り時間は数量に比例させず、作業指示1件（＝当該工程の1回の段取り）につき1回だけ加算する
+    // （design.md EXT-41）。計画負荷・実績負荷は着手済みか否かで排他的に分岐するため、二重に乗ることもない
+    const setupMin = step.setupMin ?? 0;
     if (wi.actualStartDay != null) {
-      bucketOf(wi.workCenter, wi.actualStartDay).actualMin += wi.inputQty * step.stdTimeMin;
+      bucketOf(wi.workCenter, wi.actualStartDay).actualMin += wi.inputQty * step.stdTimeMin + setupMin;
     } else if (mo.status !== "DONE" && mo.status !== "CANCELED") {
-      bucketOf(wi.workCenter, mo.startDay).plannedMin += mo.planQty * step.stdTimeMin;
+      bucketOf(wi.workCenter, mo.startDay).plannedMin += mo.planQty * step.stdTimeMin + setupMin;
     }
   }
 
@@ -167,7 +173,9 @@ export function computePlannedOrderLoad(state: SimulationState): PlannedOrderLoa
         byDay = new Map<number, number>();
         buckets.set(step.workCenter, byDay);
       }
-      byDay.set(plo.startDay, (byDay.get(plo.startDay) ?? 0) + plo.qty * step.stdTimeMin);
+      // 計画オーダ1件は確定すると製造オーダ1件（＝各工程の作業指示1件ずつ）になるため、段取り時間も
+      // 確定済み負荷と同じく1オーダ1工程につき1回だけ加算する（design.md EXT-41）
+      byDay.set(plo.startDay, (byDay.get(plo.startDay) ?? 0) + plo.qty * step.stdTimeMin + (step.setupMin ?? 0));
     }
   }
 

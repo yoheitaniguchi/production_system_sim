@@ -187,6 +187,137 @@ describe("computePlannedOrderLoad（Issue #57：計画オーダ段階での山�
   });
 });
 
+// Issue #66：段取り時間（design.md EXT-41）。RoutingStep.setupMinを、作業指示1件（＝製造オーダ1件の当該工程）
+// につき数量に関係なく1回だけ山積みへ加算する。CHAIR_PRESETは段取り未設定（0扱い）のため、
+// 上のdescribe群（design.md §9.5の期待値）は無変更で通る
+function setSetup(state: ReturnType<typeof createTestState>, itemId: string, stepNo: number, setupMin: number) {
+  const step = state.routingSteps.find((s) => s.itemId === itemId && s.stepNo === stepNo)!;
+  step.setupMin = setupMin;
+}
+
+describe("段取り時間の山積みへの反映（Issue #66）", () => {
+  it("[単体][機能テスト][正常] 計画負荷は「数量×標準時間＋段取り時間」で、段取りは1オーダ1工程につき1回だけ加算される", () => {
+    const { state } = firmChairOrder();
+    setSetup(state, ITEM_IDS.SA_SEAT, 10, 15); // WC-CUT
+    setSetup(state, ITEM_IDS.FG_CHAIR, 10, 20); // WC-ASM
+    // FG-100の工程20（WC-INS）は段取り未設定のまま
+
+    const byKey = Object.fromEntries(computeCapacityLoad(state).map((e) => [`${e.workCenter}@${e.day}`, e]));
+    expect(byKey[`${WORK_CENTERS.CUT}@12`].plannedMin).toBe(10 * 18 + 15); // 195
+    expect(byKey[`${WORK_CENTERS.ASM}@13`].plannedMin).toBe(10 * 30 + 20); // 320
+    expect(byKey[`${WORK_CENTERS.INS}@13`].plannedMin).toBe(10 * 12); // 120（段取り0＝従来どおり）
+  });
+
+  it("[単体][機能テスト][境界] 段取り時間は数量に比例しない：数量が2倍でも段取り分は増えない", () => {
+    const small = createTestState(0);
+    const large = createTestState(0);
+    for (const [state, qty] of [[small, 5], [large, 10]] as const) {
+      const soNo = createSalesOrder(state, { customerId: "CUST-A", itemId: ITEM_IDS.FG_CHAIR, qty, requestDay: 15 }, 0);
+      confirmDelivery(state, soNo, 15);
+      runMRP(state);
+      firmAllPlannedOrders(state, 0);
+      setSetup(state, ITEM_IDS.FG_CHAIR, 10, 20);
+    }
+    const asm = (state: typeof small) =>
+      computeCapacityLoad(state).find((e) => e.workCenter === WORK_CENTERS.ASM && e.day === 13)!.plannedMin;
+
+    expect(asm(small)).toBe(5 * 30 + 20); // 170
+    expect(asm(large)).toBe(10 * 30 + 20); // 320。差は数量差ぶん（150）だけで、段取り（20）は両方に1回ずつ
+    expect(asm(large) - asm(small)).toBe(5 * 30);
+  });
+
+  it("[単体][機能テスト][境界] 製造オーダを分割すると、オーダごとに1回ずつ段取りが加算される（分割の代償）", () => {
+    const { state } = firmChairOrder();
+    setSetup(state, ITEM_IDS.FG_CHAIR, 10, 20);
+    const fgOrder = state.mfgOrders.find((mo) => mo.itemId === ITEM_IDS.FG_CHAIR)!;
+
+    splitMfgOrder(state, fgOrder.moNo, 4, 14, 15);
+
+    const byKey = Object.fromEntries(computeCapacityLoad(state).map((e) => [`${e.workCenter}@${e.day}`, e]));
+    expect(byKey[`${WORK_CENTERS.ASM}@13`].plannedMin).toBe(6 * 30 + 20); // 200
+    expect(byKey[`${WORK_CENTERS.ASM}@14`].plannedMin).toBe(4 * 30 + 20); // 140
+  });
+
+  it("[単体][機能テスト][正常] 着手済みの工程は実績負荷へ段取り時間込みで移り、計画負荷には二重に乗らない", () => {
+    const { state } = firmChairOrder();
+    setSetup(state, ITEM_IDS.SA_SEAT, 10, 15);
+    const saOrder = state.mfgOrders.find((mo) => mo.itemId === ITEM_IDS.SA_SEAT)!;
+
+    releaseMfgOrder(state, saOrder.moNo);
+    startStep(state, saOrder.moNo, 10, 12);
+
+    const cutEntry = computeCapacityLoad(state).find((e) => e.workCenter === WORK_CENTERS.CUT && e.day === 12)!;
+    expect(cutEntry).toMatchObject({ plannedMin: 0, actualMin: 10 * 18 + 15 });
+  });
+
+  it("[結合][機能テスト][正常] 完了（DONE）後も、段取り込みの実績負荷が実着手日に残り続ける", () => {
+    const { state } = firmChairOrder();
+    setSetup(state, ITEM_IDS.SA_SEAT, 10, 15);
+    const rmPo = state.purchaseOrders.find((po) => po.itemId === ITEM_IDS.RM_BOARD)!;
+    ackPurchaseOrder(state, rmPo.poNo, rmPo.dueDay);
+    receivePurchaseOrder(state, rmPo.poNo, rmPo.dueDay);
+    const saOrder = state.mfgOrders.find((mo) => mo.itemId === ITEM_IDS.SA_SEAT)!;
+    releaseMfgOrder(state, saOrder.moNo);
+    startStep(state, saOrder.moNo, 10, 12);
+    completeStep(state, saOrder.moNo, 10, 10, 0, 13);
+
+    const cutEntry = computeCapacityLoad(state).find((e) => e.workCenter === WORK_CENTERS.CUT && e.day === 12)!;
+    expect(cutEntry).toMatchObject({ plannedMin: 0, actualMin: 195 });
+  });
+
+  it("[単体][機能テスト][境界] 取消（CANCELED）されたオーダは、段取り時間があっても計画負荷に算入されない", () => {
+    const { state, soNo } = firmChairOrder();
+    setSetup(state, ITEM_IDS.FG_CHAIR, 10, 20);
+    cancelSalesOrder(state, soNo);
+
+    expect(computeCapacityLoad(state)).toHaveLength(0);
+  });
+
+  it("[単体][機能テスト][境界] 段取り時間の加算で能力ちょうど（超過しない）と1分超過の境目が変わる", () => {
+    const { state } = firmChairOrder();
+    // WC-INS：10個×12分=120分。段取り120分でちょうど能力（240分）→超過しない、121分で1分超過
+    setSetup(state, ITEM_IDS.FG_CHAIR, 20, 120);
+    expect(capacityOverloads(state).some((e) => e.workCenter === WORK_CENTERS.INS)).toBe(false);
+
+    setSetup(state, ITEM_IDS.FG_CHAIR, 20, 121);
+    const ins = capacityOverloads(state).find((e) => e.workCenter === WORK_CENTERS.INS)!;
+    expect(ins).toMatchObject({ day: 13, plannedMin: 241, capacityMin: 240 });
+  });
+
+  it("[単体][機能テスト][境界] 段取り時間が明示的に0でも未設定と同じ結果になる（省略時は0扱い）", () => {
+    const { state: withoutSetup } = firmChairOrder();
+    const { state: zeroSetup } = firmChairOrder();
+    for (const step of zeroSetup.routingSteps) step.setupMin = 0;
+
+    expect(computeCapacityLoad(zeroSetup)).toEqual(computeCapacityLoad(withoutSetup));
+  });
+
+  it("[単体][機能テスト][正常] 計画オーダの見込み負荷（確定前プレビュー）にも、1計画オーダにつき1回だけ段取りが加算される", () => {
+    const { state } = plannedChairOrder();
+    setSetup(state, ITEM_IDS.SA_SEAT, 10, 15);
+    setSetup(state, ITEM_IDS.FG_CHAIR, 10, 20);
+
+    const byKey = Object.fromEntries(computePlannedOrderLoad(state).map((e) => [`${e.workCenter}@${e.day}`, e]));
+    expect(byKey[`${WORK_CENTERS.CUT}@12`].previewMin).toBe(195);
+    expect(byKey[`${WORK_CENTERS.ASM}@13`].previewMin).toBe(320);
+    expect(byKey[`${WORK_CENTERS.INS}@13`].previewMin).toBe(120);
+  });
+
+  it("[結合][機能テスト][正常] 確定前プレビューの見込み負荷は、確定後の計画負荷と段取り込みで一致する", () => {
+    const preview = plannedChairOrder().state;
+    const confirmed = firmChairOrder().state;
+    for (const state of [preview, confirmed]) {
+      setSetup(state, ITEM_IDS.SA_SEAT, 10, 15);
+      setSetup(state, ITEM_IDS.FG_CHAIR, 10, 20);
+      setSetup(state, ITEM_IDS.FG_CHAIR, 20, 5);
+    }
+
+    const previewByKey = Object.fromEntries(computePlannedOrderLoad(preview).map((e) => [`${e.workCenter}@${e.day}`, e.previewMin]));
+    const confirmedByKey = Object.fromEntries(computeCapacityLoad(confirmed).map((e) => [`${e.workCenter}@${e.day}`, e.plannedMin]));
+    expect(previewByKey).toEqual(confirmedByKey);
+  });
+});
+
 // Issue #59：慢性的なボトルネック作業区の検知（design.md EXT-37）
 // design.md §9.5の計算例（受注1件・回答納期D+15でWC-ASMがD+13に300分/240分で山積み超過）を、
 // 複数受注が回答納期をずらして重なることで「同一作業区が3日以上連続で超過する」状態へ拡張する。

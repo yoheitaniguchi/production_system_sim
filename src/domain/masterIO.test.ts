@@ -98,6 +98,32 @@ describe("数値の範囲検証（CRUD側と同じ強さで課す）", () => {
     expect(() => parseMasterSnapshot(JSON.stringify(negativeRate))).toThrow(/ratePerHour は0以上/);
   });
 
+  it("負の段取り時間（setupMin）・数値以外の段取り時間を拒否する（Issue #66）", () => {
+    const negative = { ...CHAIR_PRESET, routingSteps: [{ ...CHAIR_PRESET.routingSteps[0], setupMin: -1 }] };
+    expect(() => parseMasterSnapshot(JSON.stringify(negative))).toThrow(/setupMin は0以上/);
+
+    const notNumber = { ...CHAIR_PRESET, routingSteps: [{ ...CHAIR_PRESET.routingSteps[0], setupMin: "10分" }] };
+    expect(() => parseMasterSnapshot(JSON.stringify(notNumber))).toThrow(/setupMin は数値/);
+  });
+
+  it("段取り時間（setupMin）が欠落・nullの工順は許容し未設定として扱う。あれば書き出し→読み込みで保たれる（design.md EXT-41）", () => {
+    // 欠落（CHAIR_PRESETはsetupMinを持たない＝過去のエクスポートJSONと同じ形）
+    const legacy = parseMasterSnapshot(JSON.stringify(CHAIR_PRESET));
+    expect(legacy.routingSteps.every((s) => s.setupMin === undefined)).toBe(true);
+
+    const withNull = {
+      ...CHAIR_PRESET,
+      routingSteps: [{ ...CHAIR_PRESET.routingSteps[0], setupMin: null }, ...CHAIR_PRESET.routingSteps.slice(1)],
+    };
+    expect(parseMasterSnapshot(JSON.stringify(withNull)).routingSteps[0].setupMin).toBeUndefined();
+
+    const withSetup = {
+      ...CHAIR_PRESET,
+      routingSteps: [{ ...CHAIR_PRESET.routingSteps[0], setupMin: 25 }, ...CHAIR_PRESET.routingSteps.slice(1)],
+    };
+    expect(parseMasterSnapshot(JSON.stringify(withSetup)).routingSteps[0].setupMin).toBe(25);
+  });
+
   it("負の稼働能力（capacityMinPerDay）を拒否する", () => {
     const negativeCapacity = {
       ...CHAIR_PRESET,

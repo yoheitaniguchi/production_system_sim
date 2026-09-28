@@ -263,17 +263,21 @@ export function addRoutingStep(state: SimulationState, input: RoutingStep): stri
     throw new MasterDataError(`作業区が見つかりません: ${input.workCenter}`);
   }
   if (input.stdTimeMin < 0) throw new MasterDataError("標準時間は0以上で入力してください");
+  if (input.setupMin !== undefined && input.setupMin < 0) {
+    throw new MasterDataError("段取り時間は0以上で入力してください");
+  }
   assertRoutingStructureEditable(state, input.itemId);
 
   state.routingSteps.push({ ...input });
-  return `工順 ${input.itemId} 工程${input.stepNo}（${input.workCenter}・${input.stdTimeMin}分）を追加した`;
+  const setup = input.setupMin ? `・段取り${input.setupMin}分` : "";
+  return `工順 ${input.itemId} 工程${input.stepNo}（${input.workCenter}・${input.stdTimeMin}分${setup}）を追加した`;
 }
 
 export function updateRoutingStep(
   state: SimulationState,
   itemId: string,
   stepNo: number,
-  patch: { workCenter?: string; stdTimeMin?: number },
+  patch: { workCenter?: string; stdTimeMin?: number; setupMin?: number },
 ): string {
   const step = state.routingSteps.find((s) => s.itemId === itemId && s.stepNo === stepNo);
   if (!step) throw new MasterDataError(`工順が見つかりません: ${itemId} 工程${stepNo}`);
@@ -290,6 +294,11 @@ export function updateRoutingStep(
     if (patch.stdTimeMin < 0) throw new MasterDataError("標準時間は0以上で入力してください");
     step.stdTimeMin = patch.stdTimeMin;
     changes.push(`標準時間を ${patch.stdTimeMin} 分に`);
+  }
+  if (patch.setupMin !== undefined) {
+    if (patch.setupMin < 0) throw new MasterDataError("段取り時間は0以上で入力してください");
+    step.setupMin = patch.setupMin;
+    changes.push(`段取り時間を ${patch.setupMin} 分に`);
   }
 
   if (changes.length === 0) return `工順 ${itemId} 工程${stepNo} に変更はなかった`;
