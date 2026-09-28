@@ -1,7 +1,15 @@
 // 原価（v5-spec.md §11.2 Phase 2-A：標準原価の積上げ・オーダ別原価差異・組織目線の金額指標）
 import { downloadCsv, todayDateStamp } from "../csvExport";
-import { backlogValue, computeAllItemCosts, computeMfgOrderCost, inventoryValue, scrapLossValue } from "../domain/cost";
+import {
+  backlogValue,
+  computeItemCostComposition,
+  computeMfgOrderCost,
+  computeMfgOrderVarianceSeries,
+  inventoryValue,
+  scrapLossValue,
+} from "../domain/cost";
 import type { SimulationState } from "../types";
+import { CostCompositionChart, MfgOrderVarianceChart } from "./CostCharts";
 
 interface CostPanelProps {
   state: SimulationState;
@@ -13,8 +21,9 @@ function formatYen(value: number): string {
 
 function CostPanel({ state }: CostPanelProps) {
   const itemName = (id: string) => state.items.find((i) => i.itemId === id)?.name ?? id;
-  const itemCosts = computeAllItemCosts(state);
+  const itemCosts = computeItemCostComposition(state);
   const mfgOrderCosts = state.mfgOrders.map((mo) => computeMfgOrderCost(state, mo.moNo));
+  const varianceSeries = computeMfgOrderVarianceSeries(state);
 
   const amountMetrics = [
     { label: "在庫金額", amount: inventoryValue(state), note: "現在庫数量 × 標準原価の合計" },
@@ -81,6 +90,10 @@ function CostPanel({ state }: CostPanelProps) {
       </table>
 
       <h3>品目別標準原価</h3>
+      <p className="panel__hint">
+        グラフの棒は標準原価を100%とした材料費・加工費の構成比で、金額は棒の右に表示する。数値の正本は下の表。
+      </p>
+      <CostCompositionChart rows={itemCosts.map((c) => ({ ...c, name: itemName(c.itemId) }))} />
       <div className="panel__toolbar">
         <button type="button" aria-label="品目別標準原価をCSVでエクスポート" onClick={downloadItemCostsCsv}>
           CSVでエクスポート
@@ -114,6 +127,10 @@ function CostPanel({ state }: CostPanelProps) {
         <p className="panel__empty">製造オーダはありません。計画オーダを確定してください。</p>
       ) : (
         <>
+          <p className="panel__hint">
+            未完了のオーダは完成品振替額がまだ0のため、投入額がそのまま差異として表示される。完了後は不良・仕損の分だけが残る。
+          </p>
+          <MfgOrderVarianceChart rows={varianceSeries.map((p) => ({ ...p, itemName: itemName(p.itemId) }))} />
           <div className="panel__toolbar">
             <button type="button" aria-label="製造オーダ別原価差異をCSVでエクスポート" onClick={downloadMfgOrderCostsCsv}>
               CSVでエクスポート
