@@ -6,7 +6,9 @@ import { completeStep, releaseMfgOrder, startStep } from "./production";
 import {
   backlogValue,
   computeAllItemCosts,
+  computeItemCostComposition,
   computeMfgOrderCost,
+  computeMfgOrderVarianceSeries,
   inventoryValue,
   rollupCost,
   scrapLossValue,
@@ -88,6 +90,71 @@ describe("computeMfgOrderCost（v5-spec.md §11.2「原価差異の可視化」�
     const cost = computeMfgOrderCost(state, fgOrder.moNo);
     expect(cost.outputStandard).toBe(3960 * 9);
     expect(cost.variance).toBe(3960);
+  });
+});
+
+// Issue #62：原価パネルのグラフが読むデータ整形（表示値はrollupCost()・computeMfgOrderCost()と一致させる）
+describe("computeItemCostComposition（Issue #62）", () => {
+  it("[単体][機能テスト][正常] 各品目の材料費・加工費・標準原価がrollupCost()と一致し、比率は材料費/加工費÷標準原価になる", () => {
+    const state = createTestState(0);
+    const composition = computeItemCostComposition(state);
+
+    expect(composition).toHaveLength(5);
+    for (const row of composition) {
+      expect(row).toMatchObject(rollupCost(state, row.itemId));
+    }
+    const chair = composition.find((c) => c.itemId === ITEM_IDS.FG_CHAIR)!;
+    expect(chair.materialRatio).toBeCloseTo(2560 / 3960);
+    expect(chair.laborRatio).toBeCloseTo(1400 / 3960);
+    expect(chair.materialRatio! + chair.laborRatio!).toBeCloseTo(1);
+  });
+
+  it("[単体][機能テスト][正常] BUY品目は加工費0・材料費100%になる", () => {
+    const state = createTestState(0);
+    const board = computeItemCostComposition(state).find((c) => c.itemId === ITEM_IDS.RM_BOARD)!;
+    expect(board).toMatchObject({ material: 800, labor: 0, materialRatio: 1, laborRatio: 0 });
+  });
+
+  it("[単体][機能テスト][境界] 標準原価が0の品目（購入単価未設定のBUY品目）は比率がnullになる", () => {
+    const state = createTestState(0);
+    state.items.find((i) => i.itemId === ITEM_IDS.PT_SCREW)!.purchasePrice = undefined;
+
+    const screw = computeItemCostComposition(state).find((c) => c.itemId === ITEM_IDS.PT_SCREW)!;
+    expect(screw).toMatchObject({ standardCost: 0, materialRatio: null, laborRatio: null });
+  });
+});
+
+describe("computeMfgOrderVarianceSeries（Issue #62）", () => {
+  it("[単体][機能テスト][境界] 製造オーダが無ければ空配列を返す", () => {
+    expect(computeMfgOrderVarianceSeries(createTestState(0))).toEqual([]);
+  });
+
+  it("[結合][機能テスト][正常] 各オーダの差異がcomputeMfgOrderCost()と一致し、表と同じ順序・状態を保つ", () => {
+    const state = createTestState(0);
+    const soNo = createSalesOrder(state, { customerId: "CUST-A", itemId: ITEM_IDS.FG_CHAIR, qty: 10, requestDay: 15 }, 0);
+    confirmDelivery(state, soNo, 15);
+    runMRP(state);
+    firmAllPlannedOrders(state, 0);
+    state.stocks.push(
+      { itemId: ITEM_IDS.SA_SEAT, onHand: 10, allocated: 0 },
+      { itemId: ITEM_IDS.PT_LEG, onHand: 40, allocated: 0 },
+      { itemId: ITEM_IDS.PT_SCREW, onHand: 80, allocated: 0 },
+    );
+    const fgOrder = state.mfgOrders.find((mo) => mo.itemId === ITEM_IDS.FG_CHAIR)!;
+    releaseMfgOrder(state, fgOrder.moNo);
+    startStep(state, fgOrder.moNo, 10, 13);
+    completeStep(state, fgOrder.moNo, 10, 10, 0, 13);
+    startStep(state, fgOrder.moNo, 20, 14);
+    completeStep(state, fgOrder.moNo, 20, 9, 1, 14);
+
+    const series = computeMfgOrderVarianceSeries(state);
+    expect(series.map((p) => p.moNo)).toEqual(state.mfgOrders.map((mo) => mo.moNo));
+    for (const point of series) {
+      expect(point.variance).toBe(computeMfgOrderCost(state, point.moNo).variance);
+    }
+    // 不良1個の完了オーダは標準原価×不良数（3,960円）。未着手の座面ASSYは投入も振替も無く0
+    expect(series.find((p) => p.moNo === fgOrder.moNo)).toMatchObject({ status: "DONE", variance: 3960 });
+    expect(series.find((p) => p.itemId === ITEM_IDS.SA_SEAT)).toMatchObject({ variance: 0 });
   });
 });
 

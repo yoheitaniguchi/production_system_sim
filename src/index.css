@@ -1508,3 +1508,72 @@ textarea {
 .dashboard__point--inventory {
   fill: var(--chart-inventory);
 }
+
+/* 横棒グラフ共通（原価パネルのCostCharts.tsx。Issue #62）。系列色はダッシュボードと同じ--chart-*トークンを使う */
+.chart-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.9rem;
+  margin-bottom: 0.5rem;
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+}
+
+.chart-legend__item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.chart-swatch {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  display: inline-block;
+}
+
+.chart-swatch--material {
+  background: var(--color-accent);
+}
+
+.chart-swatch--labor {
+  background: var(--chart-purchase);
+}
+
+.chart-scroll {
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+  margin-bottom: 1rem;
+}
+
+/* 狭い画面では縮小して文字が潰れるより、最小幅を確保して横スクロールさせる */
+.chart-svg {
+  display: block;
+  width: 100%;
+  min-width: 560px;
+  height: auto;
+}
+
+.chart-label {
+  font-size: 12px;
+  fill: var(--color-text);
+}
+
+.chart-value {
+  font-size: 12px;
+  fill: var(--color-text-muted);
+}
+
+.chart-bar--material {
+  fill: var(--color-accent);
+}
+
+.chart-bar--labor {
+  fill: var(--chart-purchase);
+}
+
+.chart-bar--variance {
+  fill: var(--chart-shipment);
+}

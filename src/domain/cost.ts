@@ -1,5 +1,5 @@
 // 原価計算（v5-spec.md §11.2 Phase 2-A：最小設計。design.md EXT-19）
-import type { SimulationState } from "../types";
+import type { MfgOrderStatus, SimulationState } from "../types";
 import { MAX_BOM_DEPTH } from "./masterIntegrity";
 
 export class CostError extends Error {}
@@ -87,6 +87,24 @@ export function computeAllItemCosts(state: SimulationState): Array<{ itemId: str
   return state.items.map((item) => ({ itemId: item.itemId, ...rollupInto(state, item.itemId, ctx) }));
 }
 
+/** 品目別標準原価の材料費/加工費構成（原価パネルの積み上げ棒グラフ用。Issue #62） */
+export interface ItemCostComposition extends ItemCost {
+  itemId: string;
+  /** 標準原価に占める材料費の割合（0〜1）。標準原価が0の品目はnull */
+  materialRatio: number | null;
+  /** 標準原価に占める加工費の割合（0〜1）。標準原価が0の品目はnull */
+  laborRatio: number | null;
+}
+
+/** 全品目の材料費/加工費構成。数値はcomputeAllItemCosts()の戻り値をそのまま使い、比率だけを付け足す */
+export function computeItemCostComposition(state: SimulationState): ItemCostComposition[] {
+  return computeAllItemCosts(state).map((cost) => ({
+    ...cost,
+    materialRatio: cost.standardCost > 0 ? cost.material / cost.standardCost : null,
+    laborRatio: cost.standardCost > 0 ? cost.labor / cost.standardCost : null,
+  }));
+}
+
 export interface MfgOrderCost {
   moNo: string;
   /** 投入材料費（第1工程完了で消費した子品目の標準原価合計。未消費なら0） */
@@ -128,6 +146,28 @@ export function computeMfgOrderCost(state: SimulationState, moNo: string): MfgOr
     outputStandard,
     variance: inputMaterial + inputLabor - outputStandard,
   };
+}
+
+/** 製造オーダ別原価差異の比較グラフ用の1点（Issue #62） */
+export interface MfgOrderVariancePoint {
+  moNo: string;
+  itemId: string;
+  status: MfgOrderStatus;
+  variance: number;
+}
+
+/**
+ * 全製造オーダの原価差異を並べた系列（表と同じ`state.mfgOrders`の順序）。
+ * 値はcomputeMfgOrderCost()の戻り値をそのまま使う。未完了オーダは完成品振替額が0のため、
+ * 投入額がそのまま差異として現れる（原価差異の定義どおり。完了後は不良・仕損の分だけが残る）。
+ */
+export function computeMfgOrderVarianceSeries(state: SimulationState): MfgOrderVariancePoint[] {
+  return state.mfgOrders.map((mo) => ({
+    moNo: mo.moNo,
+    itemId: mo.itemId,
+    status: mo.status,
+    variance: computeMfgOrderCost(state, mo.moNo).variance,
+  }));
 }
 
 /** 在庫金額（全品目の現在庫数量×標準原価の合計。v5-spec.md §11.2「在庫数量→在庫金額」） */
