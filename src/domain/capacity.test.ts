@@ -167,7 +167,10 @@ describe("computePlannedOrderLoad（Issue #57：計画オーダ段階での山�
 
     const confirmedKeys = new Set(confirmedLoad.map((e) => `${e.workCenter}@${e.day}`));
     const previewKeys = new Set(previewLoad.map((e) => `${e.workCenter}@${e.day}`));
-    // 2件目は納期が異なり別日程になるため、同一の作業区×日が両方に現れることはない
+    // ある需要はstate.plannedOrders（未確定）とstate.mfgOrders/workInstructions（確定済み）の
+    // どちらか一方にしか存在し得ない（runMRP()は毎回plannedOrdersを全消去して再構築し、
+    // firmAllPlannedOrders()は全件を転記した後plannedOrdersを空にするため）。
+    // よって両者は構造的に排他であり、同一の作業区×日が両方に現れることはない
     expect([...confirmedKeys].some((k) => previewKeys.has(k))).toBe(false);
 
     // 1件目分（確定済み）・2件目分（見込み）がそれぞれ独立に計上され、合算されていないことを確認する
