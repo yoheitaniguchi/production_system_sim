@@ -129,11 +129,18 @@ function explodeOpenOrderComponents(
 
 /**
  * MRP実行（v5-spec.md §7.1 runMRP）。PLANNED_ORDERを全削除して再生成する。
- * design.md EXT-1：需要は必要日（confirmDay ?? requestDay）昇順、同着は受注番号昇順で展開する。
+ * design.md EXT-1・EXT-36：需要は得意先の優先度ランク（priorityRank、未設定は0）降順を最優先し、
+ * 同ランクなら必要日（confirmDay ?? requestDay）昇順、さらに同着は受注番号昇順で展開する。
  */
 export function runMRP(state: SimulationState): void {
   state.plannedOrders = [];
   const supply = computeSupply(state);
+
+  const priorityRankOf = (soNo: string): number => {
+    const so = state.salesOrders.find((s) => s.soNo === soNo);
+    const customer = so ? state.customers.find((c) => c.customerId === so.customerId) : undefined;
+    return customer?.priorityRank ?? 0;
+  };
 
   const demands = state.soLines
     .filter((line) => line.status !== "CLOSED" && line.status !== "CANCELED" && line.qty - line.shippedQty > 0)
@@ -143,8 +150,9 @@ export function runMRP(state: SimulationState): void {
       due: line.confirmDay ?? line.requestDay,
       pegTo: pegKey(line.soNo, line.lineNo),
       soNo: line.soNo,
+      priorityRank: priorityRankOf(line.soNo),
     }))
-    .sort((a, b) => a.due - b.due || a.soNo.localeCompare(b.soNo));
+    .sort((a, b) => b.priorityRank - a.priorityRank || a.due - b.due || a.soNo.localeCompare(b.soNo));
 
   const ctx = {
     items: state.items,
