@@ -4,10 +4,12 @@
 // （このタブは「今どうなっているか」を一目で把握するための俯瞰画面に留める）。
 // 日次推移（バーンダウンチャート・KPIサマリー・アラート件数）はreducer.tsがADVANCE_DAY等の操作のたびに
 // 記録するstate.dashboardHistoryをそのまま使い、ここでBOM階層やオーダ状態を独自に辿り直すことはしない。
-// 一方、遅延ランキングは「今どの遅延が最も深刻か」という現在時点の状態を見る欄のため、AlertBar.tsxと同様に
-// checkSchedule(state)をその都度直接呼んで計算する（履歴化はしない。アラート件数バッジの件数だけが
-// dashboardHistory由来で、内訳の一覧はAlertBar同様に常時再計算という2つの鮮度モデルが混在する点に注意）。
+// 一方、遅延ランキング・慢性的なボトルネック作業区は「今どうなっているか」という現在時点の状態を見る欄のため、
+// AlertBar.tsxと同様にcheckSchedule(state)・computeChronicBottlenecks(state)をその都度直接呼んで計算する
+// （履歴化はしない。アラート件数バッジの件数だけがdashboardHistory由来で、内訳の一覧はAlertBar同様に
+// 常時再計算という2つの鮮度モデルが混在する点に注意。design.md EXT-37）。
 import { useMemo, useState } from "react";
+import { computeChronicBottlenecks } from "../domain/capacity";
 import { checkSchedule, sortAlertsByDelay } from "../domain/schedule";
 import type { DashboardSnapshot, SimulationState } from "../types";
 
@@ -139,6 +141,7 @@ function DashboardPanel({ state, onNavigate }: DashboardPanelProps) {
     : [];
 
   const delayRanking = useMemo(() => sortAlertsByDelay(checkSchedule(state)), [state]);
+  const chronicBottlenecks = useMemo(() => computeChronicBottlenecks(state), [state]);
 
   return (
     <div className="panel">
@@ -148,7 +151,10 @@ function DashboardPanel({ state, onNavigate }: DashboardPanelProps) {
         俯瞰する。個々の指標の算出方法はKPI／原価／能力タブを、警告への対応は画面上部の警告バーを参照。
         推移は「次の日へ進む」等の操作のたびに当日分を記録して積み上げる（ページを開き直すと消える）。
         遅延ランキングは、警告バーが常時表示する日程遅延のうちどれから対処すべきかを判断しやすくするため、
-        遅延日数が大きい順に並べ替えて一覧にしたものである。
+        遅延日数が大きい順に並べ替えて一覧にしたものである。慢性的なボトルネック作業区は、アラート件数の
+        「能力超過」が数える日次の超過件数のうち、同一の作業区で3日以上連続して起きているものだけを
+        抽出したもの——単発の忙しさではなく、その作業区自体の能力見直し（増員・稼働時間延長）を
+        検討すべきサインとして扱う。
       </p>
 
       <h3>KPIサマリー</h3>
@@ -207,6 +213,43 @@ function DashboardPanel({ state, onNavigate }: DashboardPanelProps) {
                 <td>{alert.target}</td>
                 <td>{alert.delayDays}日</td>
                 <td>{alert.affectedSoLine}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+
+      <h3>慢性的なボトルネック作業区</h3>
+      {chronicBottlenecks.length === 0 ? (
+        <p className="panel__empty">慢性的なボトルネックはありません。</p>
+      ) : (
+        <table className="panel__table">
+          <thead>
+            <tr>
+              <th>作業区</th>
+              <th>連続超過期間</th>
+            </tr>
+          </thead>
+          <tbody>
+            {chronicBottlenecks.map((b) => (
+              <tr key={`${b.workCenter}-${b.startDay}`}>
+                <td>
+                  {onNavigate ? (
+                    <button
+                      type="button"
+                      className="dashboard__alert-badge dashboard__alert-badge--warn"
+                      aria-label={`${b.workCenter}。クリックすると能力タブへ移動します`}
+                      onClick={() => onNavigate("capacity")}
+                    >
+                      {b.workCenter}
+                    </button>
+                  ) : (
+                    b.workCenter
+                  )}
+                </td>
+                <td>
+                  D+{b.startDay} 〜 D+{b.endDay}（{b.consecutiveDays}日間）
+                </td>
               </tr>
             ))}
           </tbody>

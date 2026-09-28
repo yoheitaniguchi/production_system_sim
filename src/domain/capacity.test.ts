@@ -1,7 +1,13 @@
-// 能力計画（CRP）の山積み計算（design.md §9、EXT-30〜32・EXT-35）
+// 能力計画（CRP）の山積み計算（design.md §9、EXT-30〜32・EXT-35・EXT-37）
 import { describe, expect, it } from "vitest";
 import { ITEM_IDS, WORK_CENTERS } from "../data/masterData";
-import { capacityOverloads, computeCapacityLoad, computePlannedOrderLoad } from "./capacity";
+import {
+  CHRONIC_BOTTLENECK_THRESHOLD_DAYS,
+  capacityOverloads,
+  computeCapacityLoad,
+  computeChronicBottlenecks,
+  computePlannedOrderLoad,
+} from "./capacity";
 import { firmAllPlannedOrders, runMRP } from "./mrp";
 import { ackPurchaseOrder, receivePurchaseOrder } from "./procurement";
 import { completeStep, releaseMfgOrder, splitMfgOrder, startStep } from "./production";
@@ -178,5 +184,65 @@ describe("computePlannedOrderLoad（Issue #57：計画オーダ段階での山�
     const asmPreview = previewLoad.find((e) => e.workCenter === WORK_CENTERS.ASM);
     expect(asmConfirmed?.plannedMin).toBe(300);
     expect(asmPreview?.previewMin).toBe(300);
+  });
+});
+
+// Issue #59：慢性的なボトルネック作業区の検知（design.md EXT-37）
+// design.md §9.5の計算例（受注1件・回答納期D+15でWC-ASMがD+13に300分/240分で山積み超過）を、
+// 複数受注が回答納期をずらして重なることで「同一作業区が3日以上連続で超過する」状態へ拡張する。
+function firmChairOrders(requestDays: number[]) {
+  const state = createTestState(0);
+  const soNos = requestDays.map((requestDay, i) => {
+    const soNo = createSalesOrder(
+      state,
+      { customerId: i % 2 === 0 ? "CUST-A" : "CUST-B", itemId: ITEM_IDS.FG_CHAIR, qty: 10, requestDay },
+      0,
+    );
+    confirmDelivery(state, soNo, requestDay);
+    return soNo;
+  });
+  runMRP(state);
+  firmAllPlannedOrders(state, 0);
+  return { state, soNos };
+}
+
+describe("computeChronicBottlenecks（Issue #59：慢性的なボトルネック作業区の検知）", () => {
+  it("[結合][機能テスト][正常] WC-ASMが3日連続（D+13〜D+15）で山積み超過している状態をボトルネックとして検知する", () => {
+    // 回答納期D+15/16/17の3受注 → FG-100(WC-ASM工程)のstartDayがD+13/14/15と3日連続で並ぶ
+    const { state } = firmChairOrders([15, 16, 17]);
+
+    const overloads = capacityOverloads(state);
+    const asmOverloadDays = overloads.filter((o) => o.workCenter === WORK_CENTERS.ASM).map((o) => o.day);
+    expect(asmOverloadDays.sort((a, b) => a - b)).toEqual([13, 14, 15]);
+
+    const bottlenecks = computeChronicBottlenecks(state);
+    expect(bottlenecks).toEqual([
+      { workCenter: WORK_CENTERS.ASM, startDay: 13, endDay: 15, consecutiveDays: 3 },
+    ]);
+    // WC-CUT・WC-INSは各日とも能力内（180分・120分 ≤ 240分）のため検知されない
+    expect(bottlenecks.some((b) => b.workCenter === WORK_CENTERS.CUT || b.workCenter === WORK_CENTERS.INS)).toBe(false);
+  });
+
+  it("[単体][機能テスト][境界] 連続超過が2日（閾値未満）ではボトルネックとして検知されない", () => {
+    // 回答納期D+15/16の2受注 → WC-ASMの超過はD+13〜D+14の2日のみ
+    const { state } = firmChairOrders([15, 16]);
+
+    const overloads = capacityOverloads(state);
+    expect(overloads.filter((o) => o.workCenter === WORK_CENTERS.ASM)).toHaveLength(2);
+
+    expect(computeChronicBottlenecks(state)).toEqual([]);
+  });
+
+  it("[単体][機能テスト][境界] 閾値を明示的に2へ引き下げると、2日連続の超過も検知される", () => {
+    const { state } = firmChairOrders([15, 16]);
+
+    const bottlenecks = computeChronicBottlenecks(state, 2);
+    expect(bottlenecks).toEqual([
+      { workCenter: WORK_CENTERS.ASM, startDay: 13, endDay: 14, consecutiveDays: 2 },
+    ]);
+  });
+
+  it("[単体][機能テスト][正常] 既定の閾値定数はdesign.md §9.5のシナリオに合わせて3である", () => {
+    expect(CHRONIC_BOTTLENECK_THRESHOLD_DAYS).toBe(3);
   });
 });
