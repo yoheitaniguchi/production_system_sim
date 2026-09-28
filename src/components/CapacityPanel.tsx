@@ -41,8 +41,14 @@ function CapacityPanel({ state }: CapacityPanelProps) {
         （P13・EXT-20と同じ「警告のみ」方針）。稼働日カレンダーは扱わないため、能力は1日あたりの固定値である
       </p>
 
+      <h3>確定済みの負荷</h3>
       {load.length === 0 ? (
-        <p className="panel__empty">製造オーダはありません。計画オーダを確定してください。</p>
+        <p className="panel__empty">
+          確定済みの製造オーダはありません。
+          {plannedLoad.length > 0
+            ? "下の「計画オーダの見込み負荷」で確定前の見込みを確認できます。"
+            : "計画オーダを確定してください。"}
+        </p>
       ) : (
         <>
           <div className="panel__toolbar">
@@ -82,7 +88,7 @@ function CapacityPanel({ state }: CapacityPanelProps) {
       )}
 
       {plannedLoad.length > 0 && (
-        <>
+        <div className="capacity-panel__preview">
           <h3>計画オーダの見込み負荷（確定前プレビュー）</h3>
           <p className="panel__hint">
             まだ確定していない計画オーダ（PLANNED_ORDER）による見込み負荷。計画オーダを確定すると
@@ -117,7 +123,7 @@ function CapacityPanel({ state }: CapacityPanelProps) {
               })}
             </tbody>
           </table>
-        </>
+        </div>
       )}
     </div>
   );

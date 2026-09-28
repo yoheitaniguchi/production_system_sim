@@ -736,6 +736,19 @@ textarea {
   font-weight: 600;
 }
 
+/* 確定前プレビュー（Issue #57）：GanttChartPanel.tsxの「計画＝破線」という既存の視覚言語を踏襲し、
+   確定済み負荷の表と一目で区別できるようにする */
+.capacity-panel__preview {
+  border: 1.5px dashed var(--color-text-muted);
+  border-radius: 4px;
+  padding: 0.75rem;
+  margin-top: 1rem;
+}
+
+.capacity-panel__preview h3 {
+  margin-top: 0;
+}
+
 .master__new-row input[type="text"],
 .master__new-row input[type="number"],
 .master__new-row select {
