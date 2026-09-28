@@ -11,8 +11,11 @@ import { useMemo, useState } from "react";
 import { checkSchedule, sortAlertsByDelay } from "../domain/schedule";
 import type { DashboardSnapshot, SimulationState } from "../types";
 
+type DashboardNavigateTarget = "planning" | "master-data" | "capacity";
+
 interface DashboardPanelProps {
   state: SimulationState;
+  onNavigate?: (target: DashboardNavigateTarget) => void;
 }
 
 type MetricMode = "qty" | "amount";
@@ -93,7 +96,7 @@ function Sparkline({ values }: { values: (number | null)[] }) {
   );
 }
 
-function DashboardPanel({ state }: DashboardPanelProps) {
+function DashboardPanel({ state, onNavigate }: DashboardPanelProps) {
   const [mode, setMode] = useState<MetricMode>("qty");
   const history = state.dashboardHistory;
   const latest = history[history.length - 1];
@@ -120,12 +123,12 @@ function DashboardPanel({ state }: DashboardPanelProps) {
       ]
     : [];
 
-  const alertBadges = latest
+  const alertBadges: { label: string; count: number; target: DashboardNavigateTarget }[] = latest
     ? [
-        { label: "日程遅延", count: latest.alertCounts.schedule },
-        { label: "未充足需要", count: latest.alertCounts.unmetDemand },
-        { label: "マスタ不整合", count: latest.alertCounts.masterIssue },
-        { label: "能力超過", count: latest.alertCounts.capacityOverload },
+        { label: "日程遅延", count: latest.alertCounts.schedule, target: "planning" },
+        { label: "未充足需要", count: latest.alertCounts.unmetDemand, target: "planning" },
+        { label: "マスタ不整合", count: latest.alertCounts.masterIssue, target: "master-data" },
+        { label: "能力超過", count: latest.alertCounts.capacityOverload, target: "capacity" },
       ]
     : [];
 
@@ -160,12 +163,15 @@ function DashboardPanel({ state }: DashboardPanelProps) {
       <h3>アラート件数</h3>
       <div className="dashboard__alerts">
         {alertBadges.map((a) => (
-          <span
+          <button
             key={a.label}
+            type="button"
             className={a.count > 0 ? "dashboard__alert-badge dashboard__alert-badge--warn" : "dashboard__alert-badge dashboard__alert-badge--ok"}
+            disabled={a.count === 0}
+            onClick={a.count > 0 ? () => onNavigate?.(a.target) : undefined}
           >
             {a.label} {a.count}件
-          </span>
+          </button>
         ))}
       </div>
 

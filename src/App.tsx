@@ -101,7 +101,11 @@ function App() {
         </button>
       </nav>
       <main className="app__main">
-        <ActiveComponent state={state} dispatch={dispatch} />
+        {activeTab === "dashboard" ? (
+          <DashboardPanel state={state} onNavigate={(tabId) => setActiveTab(tabId)} />
+        ) : (
+          <ActiveComponent state={state} dispatch={dispatch} />
+        )}
       </main>
       {flowPopupOpen && <ProcessFlowPopup state={state} onClose={() => setFlowPopupOpen(false)} />}
       <EventLogPanel entries={state.eventLog} />
