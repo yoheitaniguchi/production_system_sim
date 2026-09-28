@@ -54,6 +54,14 @@ export function checkSchedule(state: SimulationState): ScheduleAlert[] {
   return alerts;
 }
 
+/**
+ * checkSchedule()が返す警告を遅延日数（delayDays）の降順に並べ替える（ダッシュボード：遅延ランキング）。
+ * delayDaysが同値の場合はArray.prototype.sortが保証する安定ソートにより元の順序を保つ。
+ */
+export function sortAlertsByDelay(alerts: ScheduleAlert[]): ScheduleAlert[] {
+  return [...alerts].sort((a, b) => b.delayDays - a.delayDays);
+}
+
 export interface UnmetDemand {
   itemId: string;
   shortage: number;

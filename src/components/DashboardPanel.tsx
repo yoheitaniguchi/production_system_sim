@@ -5,6 +5,7 @@
 // 日次推移はreducer.tsがADVANCE_DAY等の操作のたびに記録するstate.dashboardHistoryをそのまま使い、
 // ここでBOM階層やオーダ状態を独自に辿り直すことはしない。
 import { useMemo, useState } from "react";
+import { checkSchedule, sortAlertsByDelay } from "../domain/schedule";
 import type { DashboardSnapshot, SimulationState } from "../types";
 
 interface DashboardPanelProps {
@@ -125,6 +126,8 @@ function DashboardPanel({ state }: DashboardPanelProps) {
       ]
     : [];
 
+  const delayRanking = useMemo(() => sortAlertsByDelay(checkSchedule(state)), [state]);
+
   return (
     <div className="panel">
       <h2>ダッシュボード</h2>
@@ -160,6 +163,32 @@ function DashboardPanel({ state }: DashboardPanelProps) {
           </span>
         ))}
       </div>
+
+      <h3>遅延ランキング</h3>
+      {delayRanking.length === 0 ? (
+        <p className="panel__empty">遅延はありません。</p>
+      ) : (
+        <table className="panel__table">
+          <thead>
+            <tr>
+              <th>発生源</th>
+              <th>対象オーダ</th>
+              <th>遅延日数</th>
+              <th>影響を受ける受注</th>
+            </tr>
+          </thead>
+          <tbody>
+            {delayRanking.map((alert) => (
+              <tr key={`${alert.source}-${alert.target}`}>
+                <td>{alert.source}</td>
+                <td>{alert.target}</td>
+                <td>{alert.delayDays}日</td>
+                <td>{alert.affectedSoLine}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
 
       <h3>バーンダウンチャート</h3>
       <div className="dashboard__toolbar">
