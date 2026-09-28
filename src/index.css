@@ -426,6 +426,18 @@ textarea {
   background: var(--ok-bg);
 }
 
+.guide__summary {
+  margin: 0.75rem 0;
+  padding: 0.6rem 0.9rem;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  background: var(--ok-bg);
+}
+
+.guide__summary .panel__table {
+  margin-top: 0.5rem;
+}
+
 .guide__expected {
   color: var(--warn-text);
   font-size: 0.9rem;

@@ -46,45 +46,56 @@ function ExerciseGuidePanel({ state }: ExerciseGuidePanelProps) {
       )}
 
       {summary && (
-        <>
+        <div className="guide__summary">
           <h3>演習完了レポート</h3>
           <table className="panel__table">
             <thead>
               <tr>
                 <th>項目</th>
                 <th>値</th>
+                <th>算出方法</th>
               </tr>
             </thead>
             <tbody>
               <tr>
                 <td>所要日数</td>
                 <td>{summary.durationDays}日</td>
+                <td>受注登録（イベントログ開始日）から完了時点までの日数</td>
               </tr>
               <tr>
                 <td>発生した警告件数（延べ）</td>
                 <td>{summary.totalAlertCount}件</td>
+                <td>
+                  日程遅延・未充足需要・マスタ不整合・能力超過の警告件数を日次で合算（同一警告が複数日続くと
+                  日数分カウントされる簡略集計）
+                </td>
               </tr>
               <tr>
                 <td>納期遵守率</td>
                 <td>{formatPercent(summary.kpiHighlights.deliveryComplianceRate)}</td>
+                <td>実出荷日 ≤ 回答納期</td>
               </tr>
               <tr>
                 <td>計画達成率</td>
                 <td>{formatPercent(summary.kpiHighlights.planAchievementRate)}</td>
+                <td>良品数 ÷ 計画数（両方）</td>
               </tr>
               <tr>
                 <td>直行率</td>
                 <td>{formatPercent(summary.kpiHighlights.firstPassYieldRate)}</td>
+                <td>良品数 ÷ 投入数</td>
               </tr>
               <tr>
                 <td>在庫回転</td>
                 <td>{formatRatio(summary.kpiHighlights.inventoryTurnover)}</td>
+                <td>出庫数量 ÷ 現在庫（EXT-13）</td>
               </tr>
             </tbody>
           </table>
-        </>
+        </div>
       )}
 
+      <h3>ステップ一覧</h3>
       <table className="panel__table">
         <thead>
           <tr>
