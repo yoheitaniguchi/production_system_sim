@@ -12,7 +12,7 @@
 // 演習の想定順序（TC-04→TC-06→TC-14の3回）から外れた操作をすると回数がずれる場合があるが、
 // このガイドは進行の目安であり他タブの操作を妨げないため、簡略化として許容する。
 import { ITEM_IDS } from "../data/masterData";
-import type { SimulationState } from "../types";
+import type { DashboardKpiHighlights, SimulationState } from "../types";
 
 export interface GuideStep {
   tc: string;
@@ -188,4 +188,27 @@ export function computeGuideProgress(state: SimulationState): GuideStepResult[] 
 /** 次に取り組むべきステップ（最初の未完了ステップ）。全完了ならnull */
 export function currentGuideStep(state: SimulationState): GuideStepResult | null {
   return computeGuideProgress(state).find((s) => !s.done) ?? null;
+}
+
+export interface GuideSummary {
+  /** 所要日数（演習開始日から完了時点までの日数） */
+  durationDays: number;
+  /** 発生した警告件数（延べ）。dashboardHistoryの各日alertCountsの合計を全日にわたり合算する（Issue #53） */
+  totalAlertCount: number;
+  /** 主要KPI最終値（dashboardHistoryの最終日エントリ） */
+  kpiHighlights: DashboardKpiHighlights;
+}
+
+/**
+ * 全ステップ完了時の演習完了レポート（Issue #53）。研修の振り返り資料として、所要日数・発生した
+ * 警告件数（延べ）・主要KPI最終値をまとめる。currentGuideStep(state) === nullのときに使う想定。
+ */
+export function computeGuideSummary(state: SimulationState): GuideSummary {
+  const durationDays = state.day - state.eventLog[0].day;
+  const totalAlertCount = state.dashboardHistory.reduce((sum, snap) => {
+    const c = snap.alertCounts;
+    return sum + c.schedule + c.unmetDemand + c.masterIssue + c.capacityOverload;
+  }, 0);
+  const last = state.dashboardHistory[state.dashboardHistory.length - 1];
+  return { durationDays, totalAlertCount, kpiHighlights: last.kpiHighlights };
 }
