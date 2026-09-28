@@ -10,8 +10,10 @@
 // 常時再計算という2つの鮮度モデルが混在する点に注意。design.md EXT-37）。
 import { useMemo, useState } from "react";
 import { computeChronicBottlenecks } from "../domain/capacity";
+import { extractKpiSeries } from "../domain/dashboard";
 import { checkSchedule, sortAlertsByDelay } from "../domain/schedule";
 import type { DashboardSnapshot, SimulationState } from "../types";
+import Sparkline from "./Sparkline";
 
 type DashboardNavigateTarget = "planning" | "master-data" | "capacity";
 
@@ -79,31 +81,6 @@ function formatRatio(value: number | null): string {
   return value != null ? value.toFixed(2) : "—";
 }
 
-function Sparkline({ values }: { values: (number | null)[] }) {
-  const points = values
-    .map((v, i) => (v != null ? { x: i, y: v } : null))
-    .filter((p): p is { x: number; y: number } => p != null);
-  if (points.length < 2) return <span className="dashboard__spark-empty">推移データ不足</span>;
-
-  const w = 84;
-  const h = 22;
-  const minX = points[0].x;
-  const maxX = points[points.length - 1].x;
-  const minY = Math.min(...points.map((p) => p.y));
-  const maxY = Math.max(...points.map((p) => p.y));
-  const xOf = (x: number) => (maxX === minX ? 0 : ((x - minX) / (maxX - minX)) * w);
-  const yOf = (y: number) => (maxY === minY ? h / 2 : h - ((y - minY) / (maxY - minY)) * h);
-  const path = points.map((p) => `${xOf(p.x)},${yOf(p.y)}`).join(" ");
-  const last = points[points.length - 1];
-
-  return (
-    <svg className="dashboard__spark" width={w} height={h} viewBox={`0 0 ${w} ${h}`} aria-hidden="true">
-      <polyline points={path} className="dashboard__spark-line" />
-      <circle cx={xOf(last.x)} cy={yOf(last.y)} r={2} className="dashboard__spark-dot" />
-    </svg>
-  );
-}
-
 function DashboardPanel({ state, onNavigate }: DashboardPanelProps) {
   const [mode, setMode] = useState<MetricMode>("qty");
   const history = state.dashboardHistory;
@@ -166,7 +143,7 @@ function DashboardPanel({ state, onNavigate }: DashboardPanelProps) {
             <div key={card.label} className="dashboard__kpi-card">
               <span className="dashboard__kpi-card-label">{card.label}</span>
               <span className="dashboard__kpi-card-value">{card.value}</span>
-              <Sparkline values={history.map((snap) => snap.kpiHighlights[card.key])} />
+              <Sparkline values={extractKpiSeries(history, card.key)} />
             </div>
           ))
         )}

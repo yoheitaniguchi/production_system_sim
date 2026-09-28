@@ -243,12 +243,25 @@ export interface DashboardAlertCounts {
   capacityOverload: number;
 }
 
-/** KpiSnapshot（domain/kpi.ts）のうち、ダッシュボードのサマリーカードに表示する指標だけを抜粋したもの */
+/**
+ * KpiSnapshot（domain/kpi.ts）と同一の12指標を保持する（Issue #60、design.md EXT-38）。
+ * ダッシュボードのサマリーカードは引き続き主要4指標のみを表示し、KPIタブ（KpiDashboard.tsx）が
+ * 残り8指標分の日次推移をこの型から読み出す。domain/kpi.tsとの循環import回避のためフィールドを
+ * ここに複製している（domain/kpi.ts側のKpiSnapshotの定義を変えたら、こちらも合わせて変えること）
+ */
 export interface DashboardKpiHighlights {
   deliveryComplianceRate: number | null;
+  confirmDateComplianceRate: number | null;
+  orderBacklogQty: number;
   planAchievementRate: number | null;
   firstPassYieldRate: number | null;
+  wipQty: number;
+  avgProductionLeadTimeDays: number | null;
   inventoryTurnover: number | null;
+  supplierDeliveryComplianceRate: number | null;
+  stockoutEventCount: number;
+  physicalInventoryVarianceRate: number | null;
+  scheduleAlertCount: number;
 }
 
 /**
