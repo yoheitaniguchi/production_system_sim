@@ -1,12 +1,13 @@
-// 能力計画（CRP）の山積み計算（design.md §9、EXT-30〜32）
+// 能力計画（CRP）の山積み計算（design.md §9、EXT-30〜32・EXT-35）
 import { describe, expect, it } from "vitest";
 import { ITEM_IDS, WORK_CENTERS } from "../data/masterData";
-import { capacityOverloads, computeCapacityLoad } from "./capacity";
+import { capacityOverloads, computeCapacityLoad, computePlannedOrderLoad } from "./capacity";
 import { firmAllPlannedOrders, runMRP } from "./mrp";
 import { ackPurchaseOrder, receivePurchaseOrder } from "./procurement";
 import { completeStep, releaseMfgOrder, splitMfgOrder, startStep } from "./production";
 import { cancelSalesOrder, confirmDelivery, createSalesOrder } from "./salesOrder";
 import { createTestState } from "./testUtils";
+import type { PlannedOrder } from "../types";
 
 // design.md §9.5の計算例：TC-04〜05をそのまま実行するだけで、追加のシナリオ設計なしに
 // WC-ASMの山積み超過（D+13、300分 > 240分）が再現できることを検証する。
@@ -103,5 +104,76 @@ describe("computeCapacityLoad（design.md §9.5の計算例）", () => {
     const byKey = Object.fromEntries(load.map((e) => [`${e.workCenter}@${e.day}`, e]));
     expect(byKey[`${WORK_CENTERS.ASM}@13`]).toMatchObject({ plannedMin: 180, capacityMin: 240 });
     expect(byKey[`${WORK_CENTERS.ASM}@14`]).toMatchObject({ plannedMin: 120, capacityMin: 240 });
+  });
+});
+
+// Issue #57：確定前（PLANNED_ORDER段階）の山積みプレビュー（design.md EXT-35）
+function plannedChairOrder() {
+  const state = createTestState(0);
+  const soNo = createSalesOrder(state, { customerId: "CUST-A", itemId: ITEM_IDS.FG_CHAIR, qty: 10, requestDay: 15 }, 0);
+  confirmDelivery(state, soNo, 15);
+  runMRP(state);
+  return { state, soNo };
+}
+
+describe("computePlannedOrderLoad（Issue #57：計画オーダ段階での山積みプレビュー）", () => {
+  it("[単体][機能テスト][正常] 確定前の計画オーダだけでも、design.md §9.5と同じWC-ASM超過が見込み負荷として検知される", () => {
+    const { state } = plannedChairOrder();
+    expect(state.workInstructions).toHaveLength(0); // 未確定であることの前提確認
+
+    const load = computePlannedOrderLoad(state);
+    const byKey = Object.fromEntries(load.map((e) => [`${e.workCenter}@${e.day}`, e]));
+
+    expect(byKey[`${WORK_CENTERS.CUT}@12`]).toMatchObject({ previewMin: 180, capacityMin: 240 });
+    expect(byKey[`${WORK_CENTERS.ASM}@13`]).toMatchObject({ previewMin: 300, capacityMin: 240 });
+    expect(byKey[`${WORK_CENTERS.INS}@13`]).toMatchObject({ previewMin: 120, capacityMin: 240 });
+  });
+
+  it("[単体][機能テスト][境界] orderType===BUYの計画オーダは工程を持たないため見込み負荷に計上されない", () => {
+    const { state } = plannedChairOrder();
+    // マスタ上BUY品目は工順を持たないため、あえてMAKE品目(FG-100)のitemIdをBUYとして持つ
+    // 架空の計画オーダを追加し、orderTypeの分岐そのものが効いていることを直接確認する
+    const fakeBuyOrder: PlannedOrder = {
+      ploNo: "PLO-TEST-BUY",
+      itemId: ITEM_IDS.FG_CHAIR,
+      qty: 5,
+      dueDay: 25,
+      startDay: 20,
+      orderType: "BUY",
+      pegTo: "PLO-TEST-BUY",
+      bomLevel: 0,
+    };
+    state.plannedOrders.push(fakeBuyOrder);
+
+    const load = computePlannedOrderLoad(state);
+    expect(load.some((e) => e.day === 20)).toBe(false); // BUY扱いのD+20分は計上されない
+  });
+
+  it("[結合][機能テスト][境界] 確定済みオーダと未確定の計画オーダが混在しても二重計上されない", () => {
+    const { state } = firmChairOrder(); // 1件目：確定済み（WORK_INSTRUCTION化）
+    const soNo2 = createSalesOrder(
+      state,
+      { customerId: "CUST-B", itemId: ITEM_IDS.FG_CHAIR, qty: 10, requestDay: 25 },
+      0,
+    );
+    confirmDelivery(state, soNo2, 25);
+    runMRP(state); // 2件目由来の需要だけ新規PLANNED_ORDERとして展開される
+
+    expect(state.workInstructions.length).toBeGreaterThan(0); // 1件目由来の確定済み作業指示が残っている
+    expect(state.plannedOrders.length).toBeGreaterThan(0); // 2件目由来の未確定の計画オーダがある
+
+    const confirmedLoad = computeCapacityLoad(state);
+    const previewLoad = computePlannedOrderLoad(state);
+
+    const confirmedKeys = new Set(confirmedLoad.map((e) => `${e.workCenter}@${e.day}`));
+    const previewKeys = new Set(previewLoad.map((e) => `${e.workCenter}@${e.day}`));
+    // 2件目は納期が異なり別日程になるため、同一の作業区×日が両方に現れることはない
+    expect([...confirmedKeys].some((k) => previewKeys.has(k))).toBe(false);
+
+    // 1件目分（確定済み）・2件目分（見込み）がそれぞれ独立に計上され、合算されていないことを確認する
+    const asmConfirmed = confirmedLoad.find((e) => e.workCenter === WORK_CENTERS.ASM);
+    const asmPreview = previewLoad.find((e) => e.workCenter === WORK_CENTERS.ASM);
+    expect(asmConfirmed?.plannedMin).toBe(300);
+    expect(asmPreview?.previewMin).toBe(300);
   });
 });

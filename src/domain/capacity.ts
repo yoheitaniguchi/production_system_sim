@@ -76,3 +76,49 @@ export function computeCapacityLoad(state: SimulationState): CapacityLoadEntry[]
 export function capacityOverloads(state: SimulationState): CapacityLoadEntry[] {
   return computeCapacityLoad(state).filter((e) => e.plannedMin > e.capacityMin || e.actualMin > e.capacityMin);
 }
+
+export interface PlannedOrderLoadEntry {
+  workCenter: string;
+  day: number;
+  /** 未確定の計画オーダ（PLANNED_ORDER）による見込み負荷 */
+  previewMin: number;
+  capacityMin: number;
+}
+
+/**
+ * 確定前の計画オーダ（PLANNED_ORDER）による見込み負荷を作業区×日へ計上する（design.md EXT-35、Issue #57）。
+ * WORK_INSTRUCTIONがまだ存在しない段階の負荷であり、computeCapacityLoad()とは別の計算経路・別フィールド
+ * （previewMin）に計上する。計画オーダは確定（firmAllPlannedOrders）されるとMFG_ORDER/WORK_INSTRUCTIONへ
+ * 差し替わり state.plannedOrders から消えるため、両者が同一オーダを指して二重計上することは構造上起きない。
+ *
+ * 集計粒度はcomputeCapacityLoad()の計画負荷と同じく「オーダ全工程をオーダのstartDayへ一括計上」に揃える
+ * （design.md L-C1の近似を踏襲）。orderType==="BUY"の計画オーダは工程を持たないため対象外（負荷0）。
+ */
+export function computePlannedOrderLoad(state: SimulationState): PlannedOrderLoadEntry[] {
+  const buckets = new Map<string, Map<number, number>>();
+
+  for (const plo of state.plannedOrders) {
+    if (plo.orderType !== "MAKE") continue;
+    for (const step of state.routingSteps) {
+      if (step.itemId !== plo.itemId) continue;
+      let byDay = buckets.get(step.workCenter);
+      if (!byDay) {
+        byDay = new Map<number, number>();
+        buckets.set(step.workCenter, byDay);
+      }
+      byDay.set(plo.startDay, (byDay.get(plo.startDay) ?? 0) + plo.qty * step.stdTimeMin);
+    }
+  }
+
+  const capacityOf = (workCenter: string): number =>
+    state.workCenters.find((w) => w.workCenter === workCenter)?.capacityMinPerDay ?? 0;
+
+  const entries: PlannedOrderLoadEntry[] = [];
+  for (const [workCenter, byDay] of buckets) {
+    for (const [day, previewMin] of byDay) {
+      entries.push({ workCenter, day, previewMin, capacityMin: capacityOf(workCenter) });
+    }
+  }
+
+  return entries.sort((a, b) => a.day - b.day || a.workCenter.localeCompare(b.workCenter));
+}

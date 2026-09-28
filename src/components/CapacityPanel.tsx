@@ -3,7 +3,7 @@
 // 作業区×日で計画負荷・実績負荷・能力を一覧し、超過をハイライトする。有限能力スケジューリング
 // （山崩し・自動リスケジュール）は行わない、あくまで可視化のみの画面（design.md §9.2）。
 import { downloadCsv, todayDateStamp } from "../csvExport";
-import { computeCapacityLoad } from "../domain/capacity";
+import { computeCapacityLoad, computePlannedOrderLoad } from "../domain/capacity";
 import type { SimulationState } from "../types";
 
 interface CapacityPanelProps {
@@ -12,6 +12,7 @@ interface CapacityPanelProps {
 
 function CapacityPanel({ state }: CapacityPanelProps) {
   const load = computeCapacityLoad(state);
+  const plannedLoad = computePlannedOrderLoad(state);
 
   const downloadLoadCsv = () =>
     downloadCsv(
@@ -77,6 +78,45 @@ function CapacityPanel({ state }: CapacityPanelProps) {
             })}
           </tbody>
         </table>
+        </>
+      )}
+
+      {plannedLoad.length > 0 && (
+        <>
+          <h3>計画オーダの見込み負荷（確定前プレビュー）</h3>
+          <p className="panel__hint">
+            まだ確定していない計画オーダ（PLANNED_ORDER）による見込み負荷。計画オーダを確定すると
+            上の確定済み負荷の表へ移る。ここで超過が見えても計画オーダの確定は止まらない
+            （警告のみ。P13・EXT-20・EXT-31と同じ方針）
+          </p>
+          <table className="panel__table">
+            <thead>
+              <tr>
+                <th>作業区</th>
+                <th>日</th>
+                <th>見込み負荷（分）</th>
+                <th>能力（分/日）</th>
+                <th>判定</th>
+              </tr>
+            </thead>
+            <tbody>
+              {plannedLoad.map((entry) => {
+                const overloaded = entry.previewMin > entry.capacityMin;
+                return (
+                  <tr
+                    key={`${entry.workCenter}-${entry.day}`}
+                    className={overloaded ? "capacity-panel__row--overload" : undefined}
+                  >
+                    <td>{entry.workCenter}</td>
+                    <td>D+{entry.day}</td>
+                    <td>{entry.previewMin}</td>
+                    <td>{entry.capacityMin}</td>
+                    <td>{overloaded ? `超過見込み（${entry.previewMin - entry.capacityMin}分）` : "OK"}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
         </>
       )}
     </div>
