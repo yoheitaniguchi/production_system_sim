@@ -77,6 +77,67 @@ export function capacityOverloads(state: SimulationState): CapacityLoadEntry[] {
   return computeCapacityLoad(state).filter((e) => e.plannedMin > e.capacityMin || e.actualMin > e.capacityMin);
 }
 
+/** 慢性的なボトルネックと判定する連続超過日数の既定閾値（Issue #59、design.md EXT-37） */
+export const CHRONIC_BOTTLENECK_THRESHOLD_DAYS = 3;
+
+export interface ChronicBottleneck {
+  workCenter: string;
+  startDay: number;
+  endDay: number;
+  consecutiveDays: number;
+}
+
+/**
+ * 同一作業区が閾値日数以上連続して山積み超過している「慢性的なボトルネック」を検出する（Issue #59）。
+ * computeCapacityLoad()が1回の呼び出しで複数日ぶんの計画/実績負荷を返す性質を利用し、
+ * dashboardHistoryやDashboardSnapshot型の変更を必要としない（現在時点のstateから都度導出する）。
+ * 超過していない日・エントリ自体が存在しない日（＝負荷0）はいずれも連続を途切れさせる。
+ */
+export function computeChronicBottlenecks(
+  state: SimulationState,
+  thresholdDays: number = CHRONIC_BOTTLENECK_THRESHOLD_DAYS,
+): ChronicBottleneck[] {
+  const byWorkCenter = new Map<string, CapacityLoadEntry[]>();
+  for (const entry of computeCapacityLoad(state)) {
+    let list = byWorkCenter.get(entry.workCenter);
+    if (!list) {
+      list = [];
+      byWorkCenter.set(entry.workCenter, list);
+    }
+    list.push(entry);
+  }
+
+  const results: ChronicBottleneck[] = [];
+  for (const [workCenter, entries] of byWorkCenter) {
+    entries.sort((a, b) => a.day - b.day);
+
+    let streak: { start: number; prev: number } | null = null;
+    const flush = () => {
+      if (streak && streak.prev - streak.start + 1 >= thresholdDays) {
+        results.push({ workCenter, startDay: streak.start, endDay: streak.prev, consecutiveDays: streak.prev - streak.start + 1 });
+      }
+      streak = null;
+    };
+
+    for (const entry of entries) {
+      const overloaded = entry.plannedMin > entry.capacityMin || entry.actualMin > entry.capacityMin;
+      if (!overloaded) {
+        flush();
+        continue;
+      }
+      if (streak && entry.day === streak.prev + 1) {
+        streak.prev = entry.day;
+      } else {
+        flush();
+        streak = { start: entry.day, prev: entry.day };
+      }
+    }
+    flush();
+  }
+
+  return results.sort((a, b) => a.workCenter.localeCompare(b.workCenter) || a.startDay - b.startDay);
+}
+
 export interface PlannedOrderLoadEntry {
   workCenter: string;
   day: number;
