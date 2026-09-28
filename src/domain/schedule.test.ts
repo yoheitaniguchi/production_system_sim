@@ -3,7 +3,8 @@ import { ITEM_IDS } from "../data/masterData";
 import { confirmDelivery, createSalesOrder } from "./salesOrder";
 import { ackPurchaseOrder } from "./procurement";
 import { firmAllPlannedOrders, runMRP } from "./mrp";
-import { checkSchedule, unmetDemand } from "./schedule";
+import { checkSchedule, sortAlertsByDelay, unmetDemand } from "./schedule";
+import type { ScheduleAlert } from "./schedule";
 import { createTestState } from "./testUtils";
 
 describe("checkSchedule（v5-spec.md §7.5）", () => {
@@ -31,6 +32,37 @@ describe("checkSchedule（v5-spec.md §7.5）", () => {
     const alerts = checkSchedule(state);
     expect(alerts).toHaveLength(1);
     expect(alerts[0]).toMatchObject({ source: rmPo.poNo, delayDays: 2, affectedSoLine: `${soNo}-1` });
+  });
+});
+
+describe("sortAlertsByDelay（ダッシュボード：遅延ランキング）", () => {
+  function makeAlert(source: string, delayDays: number): ScheduleAlert {
+    return { level: "遅延", source, target: "MO-parent", delayDays, affectedSoLine: "SO-001-1" };
+  }
+
+  it("[単体][機能テスト][正常] 遅延日数の降順（8→5→2）に並べ替える", () => {
+    const alerts = [makeAlert("PO-A", 5), makeAlert("PO-B", 8), makeAlert("PO-C", 2)];
+
+    expect(sortAlertsByDelay(alerts).map((a) => a.source)).toEqual(["PO-B", "PO-A", "PO-C"]);
+  });
+
+  it("[単体][機能テスト][境界] 遅延日数が同値の場合は元の順序を保つ", () => {
+    const alerts = [makeAlert("PO-A", 5), makeAlert("PO-B", 5), makeAlert("PO-C", 5)];
+
+    expect(sortAlertsByDelay(alerts).map((a) => a.source)).toEqual(["PO-A", "PO-B", "PO-C"]);
+  });
+
+  it("[単体][機能テスト][境界] 空配列を渡すと空配列を返す", () => {
+    expect(sortAlertsByDelay([])).toEqual([]);
+  });
+
+  it("[単体][機能テスト] 引数の配列を破壊的に変更しない", () => {
+    const alerts = [makeAlert("PO-A", 2), makeAlert("PO-B", 8)];
+    const original = [...alerts];
+
+    sortAlertsByDelay(alerts);
+
+    expect(alerts).toEqual(original);
   });
 });
 
