@@ -75,7 +75,7 @@ function App() {
 
   return (
     <div className="app">
-      <BurgerMenu themeId={themeId} onSelectTheme={setThemeId} />
+      <BurgerMenu themeId={themeId} onSelectTheme={setThemeId} state={state} dispatch={dispatch} />
       <header className="app__header">
         <h1>生産管理ミニマムシミュレーター</h1>
       </header>

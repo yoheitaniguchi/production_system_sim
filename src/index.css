@@ -1012,6 +1012,8 @@ textarea {
   display: flex;
   flex-direction: column;
   gap: 0.2rem;
+  max-height: calc(100vh - 5rem);
+  overflow-y: auto;
 }
 
 .burger-menu__item {
@@ -1053,7 +1055,8 @@ textarea {
   color: var(--color-text-muted);
 }
 
-.burger-menu__theme {
+.burger-menu__theme,
+.burger-menu__action {
   width: 100%;
   padding: 0.4rem 0.6rem;
   border: none;
@@ -1064,7 +1067,8 @@ textarea {
   color: var(--color-text);
 }
 
-.burger-menu__theme:hover {
+.burger-menu__theme:hover,
+.burger-menu__action:hover {
   background: var(--bg-subtle);
 }
 
@@ -1072,6 +1076,62 @@ textarea {
   background: var(--color-accent);
   color: var(--color-accent-contrast);
   font-weight: bold;
+}
+
+/* シナリオの書き出し・取り込み（BurgerMenu.tsx。Issue #61）。ボタンの見た目は.burger-menu__themeと共通 */
+.burger-menu__hint {
+  margin: 0.3rem 0.4rem 0;
+  max-width: 16rem;
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}
+
+.burger-menu__notice {
+  margin-top: 0.2rem;
+  padding: 0.4rem 0.6rem;
+  max-width: 22rem;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.burger-menu__notice--ok {
+  background: var(--ok-bg);
+  color: var(--color-text);
+}
+
+.burger-menu__notice--error {
+  background: var(--warn-bg);
+  color: var(--color-text);
+  border: 1px solid var(--warn-border);
+}
+
+.burger-menu__notice-summary {
+  margin: 0;
+  font-weight: bold;
+}
+
+.burger-menu__notice-detail {
+  margin: 0.3rem 0 0;
+  max-height: 10rem;
+  overflow: auto;
+  font: inherit;
+  white-space: pre-wrap;
+}
+
+/* 画面には出さず、常時マウントしたまま結果だけを支援技術へ読み上げる領域 */
+.burger-menu__live {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.burger-menu__file-input {
+  display: none;
 }
 
 /* 進捗ガント（GanttChartPanel.tsx）。既存の状態表現トークン（--color-accent, --pf-active,
