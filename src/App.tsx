@@ -1,4 +1,4 @@
-import { useLayoutEffect, useReducer, useState } from "react";
+import { useLayoutEffect, useReducer, useRef, useState } from "react";
 import AlertBar from "./components/AlertBar";
 import BurgerMenu from "./components/BurgerMenu";
 import CapacityPanel from "./components/CapacityPanel";
@@ -63,6 +63,16 @@ function App() {
     return acc;
   }, {});
 
+  // タブナビゲーションのボタン要素（常時マウントされておりタブ切替でも消えない）。
+  // DashboardPanelのアラート件数バッジはクリックすると自身の親（<main>の中身）ごとアンマウントされるため、
+  // AlertBar/TodayActionsBar（<main>の外にあり自分自身は消えない）と異なりクリックした要素へフォーカスを
+  // 残せない。遷移後にフォーカスを見失わないよう、遷移先のタブボタンへ明示的にフォーカスを移す。
+  const tabButtonRefs = useRef<Partial<Record<(typeof TABS)[number]["id"], HTMLButtonElement>>>({});
+  const navigateFromDashboard = (tabId: (typeof TABS)[number]["id"]) => {
+    setActiveTab(tabId);
+    tabButtonRefs.current[tabId]?.focus();
+  };
+
   return (
     <div className="app">
       <BurgerMenu themeId={themeId} onSelectTheme={setThemeId} />
@@ -83,6 +93,9 @@ function App() {
         {TABS.map((tab) => (
           <button
             key={tab.id}
+            ref={(el) => {
+              tabButtonRefs.current[tab.id] = el ?? undefined;
+            }}
             type="button"
             className={tab.id === activeTab ? "app__tab app__tab--active" : "app__tab"}
             onClick={() => setActiveTab(tab.id)}
@@ -102,7 +115,7 @@ function App() {
       </nav>
       <main className="app__main">
         {activeTab === "dashboard" ? (
-          <DashboardPanel state={state} onNavigate={(tabId) => setActiveTab(tabId)} />
+          <DashboardPanel state={state} onNavigate={navigateFromDashboard} />
         ) : (
           <ActiveComponent state={state} dispatch={dispatch} />
         )}

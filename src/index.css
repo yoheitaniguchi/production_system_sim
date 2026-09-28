@@ -1358,6 +1358,10 @@ textarea {
   color: var(--warn-text);
 }
 
+.dashboard__alert-badge--warn:hover {
+  filter: brightness(1.1);
+}
+
 .dashboard__toolbar {
   display: flex;
   gap: 0.5rem;

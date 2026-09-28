@@ -18,6 +18,12 @@ interface DashboardPanelProps {
   onNavigate?: (target: DashboardNavigateTarget) => void;
 }
 
+const NAVIGATE_TARGET_LABEL: Record<DashboardNavigateTarget, string> = {
+  planning: "計画タブ",
+  "master-data": "マスタタブ",
+  capacity: "能力タブ",
+};
+
 type MetricMode = "qty" | "amount";
 
 interface SeriesDef {
@@ -162,17 +168,23 @@ function DashboardPanel({ state, onNavigate }: DashboardPanelProps) {
 
       <h3>アラート件数</h3>
       <div className="dashboard__alerts">
-        {alertBadges.map((a) => (
-          <button
-            key={a.label}
-            type="button"
-            className={a.count > 0 ? "dashboard__alert-badge dashboard__alert-badge--warn" : "dashboard__alert-badge dashboard__alert-badge--ok"}
-            disabled={a.count === 0}
-            onClick={a.count > 0 ? () => onNavigate?.(a.target) : undefined}
-          >
-            {a.label} {a.count}件
-          </button>
-        ))}
+        {alertBadges.map((a) =>
+          a.count > 0 ? (
+            <button
+              key={a.label}
+              type="button"
+              className="dashboard__alert-badge dashboard__alert-badge--warn"
+              aria-label={`${a.label} ${a.count}件。クリックすると${NAVIGATE_TARGET_LABEL[a.target]}へ移動します`}
+              onClick={() => onNavigate?.(a.target)}
+            >
+              {a.label} {a.count}件
+            </button>
+          ) : (
+            <span key={a.label} className="dashboard__alert-badge dashboard__alert-badge--ok">
+              {a.label} {a.count}件
+            </span>
+          ),
+        )}
       </div>
 
       <h3>日程遅延ランキング</h3>
