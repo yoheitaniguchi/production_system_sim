@@ -1012,6 +1012,8 @@ textarea {
   display: flex;
   flex-direction: column;
   gap: 0.2rem;
+  max-height: calc(100vh - 5rem);
+  overflow-y: auto;
 }
 
 .burger-menu__item {
@@ -1053,28 +1055,7 @@ textarea {
   color: var(--color-text-muted);
 }
 
-.burger-menu__theme {
-  width: 100%;
-  padding: 0.4rem 0.6rem;
-  border: none;
-  background: none;
-  border-radius: 6px;
-  font-size: 0.85rem;
-  text-align: left;
-  color: var(--color-text);
-}
-
-.burger-menu__theme:hover {
-  background: var(--bg-subtle);
-}
-
-.burger-menu__theme--active {
-  background: var(--color-accent);
-  color: var(--color-accent-contrast);
-  font-weight: bold;
-}
-
-/* シナリオの書き出し・取り込み（BurgerMenu.tsx。Issue #61） */
+.burger-menu__theme,
 .burger-menu__action {
   width: 100%;
   padding: 0.4rem 0.6rem;
@@ -1086,10 +1067,18 @@ textarea {
   color: var(--color-text);
 }
 
+.burger-menu__theme:hover,
 .burger-menu__action:hover {
   background: var(--bg-subtle);
 }
 
+.burger-menu__theme--active {
+  background: var(--color-accent);
+  color: var(--color-accent-contrast);
+  font-weight: bold;
+}
+
+/* シナリオの書き出し・取り込み（BurgerMenu.tsx。Issue #61）。ボタンの見た目は.burger-menu__themeと共通 */
 .burger-menu__hint {
   margin: 0.3rem 0.4rem 0;
   max-width: 16rem;
@@ -1101,8 +1090,6 @@ textarea {
   margin-top: 0.2rem;
   padding: 0.4rem 0.6rem;
   max-width: 22rem;
-  max-height: 14rem;
-  overflow: auto;
   border-radius: 6px;
   font-size: 0.8rem;
   white-space: pre-wrap;
@@ -1118,6 +1105,29 @@ textarea {
   background: var(--warn-bg);
   color: var(--color-text);
   border: 1px solid var(--warn-border);
+}
+
+.burger-menu__notice-summary {
+  margin: 0;
+  font-weight: bold;
+}
+
+.burger-menu__notice-detail {
+  margin: 0.3rem 0 0;
+  max-height: 10rem;
+  overflow: auto;
+  font: inherit;
+  white-space: pre-wrap;
+}
+
+/* 画面には出さず、常時マウントしたまま結果だけを支援技術へ読み上げる領域 */
+.burger-menu__live {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
 }
 
 .burger-menu__file-input {

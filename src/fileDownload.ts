@@ -7,5 +7,6 @@ export function downloadTextFile(filename: string, mimeType: string, text: strin
   anchor.href = url;
   anchor.download = filename;
   anchor.click();
-  URL.revokeObjectURL(url);
+  // 直後に解放すると一部のブラウザでダウンロードが始まる前にURLが無効になるため、少し遅らせる
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
