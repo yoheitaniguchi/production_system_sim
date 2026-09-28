@@ -1,5 +1,6 @@
 // 取引先マスタ（v5-spec.md §3.7 最小機能4）。design.md DEV-1により得意先／仕入先は別テーブルなので、
-// 同じ形のテーブルを partnerType で使い分ける。
+// 同じ形のテーブルを partnerType で使い分ける。ただし「優先度ランク」列（design.md EXT-36）は
+// 得意先のみが持つ概念（MRP実行時の需要処理順序に影響する）のため、得意先側にのみ追加する。
 import { useState } from "react";
 import { findCustomerReferences, findSupplierReferences } from "../../domain/masterIntegrity";
 import type { PartnerType } from "../../domain/masterData";
@@ -39,6 +40,12 @@ function PartnerTable({ state, dispatch, partnerType }: Props) {
   return (
     <>
       <h3>{title}</h3>
+      {isCustomer && (
+        <p className="panel__hint">
+          優先度ランクは数値が大きいほど優先される。MRP実行（計画の再計算）時、複数受注が同じ部材・在庫を
+          取り合う場面で、優先度ランクが高い得意先の需要から先に処理される（同ランクなら納期が早い順）
+        </p>
+      )}
       <table className="panel__table">
         <thead>
           <tr>
