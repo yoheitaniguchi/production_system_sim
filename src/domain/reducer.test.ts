@@ -198,6 +198,14 @@ describe("simulationReducer", () => {
     ).toBe(40);
 
     state = dispatch(state, {
+      type: "MASTER_UPDATE_ROUTING_STEP",
+      payload: { itemId: ITEM_IDS.FG_CHAIR, stepNo: 10, patch: { setupMin: 20 } },
+    });
+    expect(
+      state.routingSteps.find((s) => s.itemId === ITEM_IDS.FG_CHAIR && s.stepNo === 10)?.setupMin,
+    ).toBe(20);
+
+    state = dispatch(state, {
       type: "MASTER_UPDATE_PARTNER_NAME",
       payload: { partnerType: "CUSTOMER", partnerId: "CUST-A", name: "新得意先A" },
     });

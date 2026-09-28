@@ -20,6 +20,7 @@ function buildScenarioStates(): { allocated: SimulationState; final: SimulationS
   state = run(
     state,
     { type: "MASTER_UPDATE_CUSTOMER_PRIORITY_RANK", payload: { customerId: "CUST-B", priorityRank: 5 } },
+    { type: "MASTER_UPDATE_ROUTING_STEP", payload: { itemId: ITEM_IDS.FG_CHAIR, stepNo: 10, patch: { setupMin: 20 } } },
     { type: "SO_CREATE", payload: { customerId: "CUST-A", itemId: ITEM_IDS.FG_CHAIR, qty: 2, requestDay: 15 } },
     { type: "SO_CONFIRM_DELIVERY", payload: { soNo: "SO-001", confirmDay: 15 } },
     { type: "MRP_RUN" },
@@ -111,6 +112,9 @@ describe("シナリオのエクスポート→インポートの往復（Issue #
       expect(state[key].length, key).toBeGreaterThan(0);
     }
     expect(state.customers.find((c) => c.customerId === "CUST-B")?.priorityRank).toBe(5);
+    // 任意項目（段取り時間）の設定済みの値と、未設定（キー自体が無い）行が共存した状態で往復できること
+    expect(state.routingSteps.find((r) => r.itemId === ITEM_IDS.FG_CHAIR && r.stepNo === 10)?.setupMin).toBe(20);
+    expect(state.routingSteps.some((r) => r.setupMin === undefined)).toBe(true);
     // null値の往復も検証できるよう、nullを持つ行が実際にあること
     expect(state.soLines.some((l) => l.confirmDay === null)).toBe(true);
     expect(state.workInstructions.some((w) => w.actualStartDay === null)).toBe(true);
@@ -201,6 +205,19 @@ describe("取り込みの拒否（all-or-nothing）", () => {
       tamper(state, (d) => (d.state.customers[1].priorityRank = "high")),
       "state.customers[1].priorityRank: 数値が必要です",
     );
+  });
+
+  it("[単体][異常系][境界] 段取り時間（setupMin）は無くてもよいが、あるなら数値で0以上である必要がある（Issue #66）", () => {
+    const withSetup = (d: LooseDoc) => d.state.routingSteps.findIndex((r: { setupMin?: number }) => r.setupMin !== undefined);
+    const idx = withSetup(JSON.parse(serializeScenario(state)));
+    expect(idx).toBeGreaterThanOrEqual(0);
+
+    expect(() => parseScenario(tamper(state, (d) => delete d.state.routingSteps[idx].setupMin))).not.toThrow();
+    expectRejected(
+      tamper(state, (d) => (d.state.routingSteps[idx].setupMin = "20分")),
+      `state.routingSteps[${idx}].setupMin: 数値が必要です`,
+    );
+    expectRejected(tamper(state, (d) => (d.state.routingSteps[idx].setupMin = -1)), "setupMin");
   });
 
   it("[単体][異常系][異常] マスタ整合性エラー（BOMの循環）を含むJSONは拒否する", () => {

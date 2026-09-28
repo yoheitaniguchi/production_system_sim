@@ -79,7 +79,7 @@ export type SimulationAction =
   | { type: "MASTER_ADD_ROUTING_STEP"; payload: { step: RoutingStep } }
   | {
       type: "MASTER_UPDATE_ROUTING_STEP";
-      payload: { itemId: string; stepNo: number; patch: { workCenter?: string; stdTimeMin?: number } };
+      payload: { itemId: string; stepNo: number; patch: { workCenter?: string; stdTimeMin?: number; setupMin?: number } };
     }
   | { type: "MASTER_DELETE_ROUTING_STEP"; payload: { itemId: string; stepNo: number } }
   | { type: "MASTER_ADD_WORK_CENTER"; payload: { workCenter: WorkCenter } }

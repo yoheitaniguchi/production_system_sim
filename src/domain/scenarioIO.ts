@@ -82,7 +82,7 @@ const TABLE_SPECS: Array<[keyof SimulationState, RowSpec]> = [
     },
   ],
   ["bom", { parentItemId: str, childItemId: str, qtyPer: num }],
-  ["routingSteps", { itemId: str, stepNo: num, workCenter: str, stdTimeMin: num }],
+  ["routingSteps", { itemId: str, stepNo: num, workCenter: str, stdTimeMin: num, setupMin: optNum }],
   ["customers", { customerId: str, name: str, priorityRank: optNum }],
   ["suppliers", { supplierId: str, name: str }],
   ["workCenters", { workCenter: str, ratePerHour: num, capacityMinPerDay: num }],
