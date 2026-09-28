@@ -3,11 +3,11 @@
 // masterIO.ts（マスタ一式だけを扱う）のパターンを、受注・オーダ・在庫・イベントログ等のトランザクションまで
 // 拡張したもの。演習の中断・再開や特定状態の共有に使う。明示的なエクスポート/インポート操作であり、
 // 自動保存はしない（CLAUDE.mdの「永続化なし」方針と矛盾しない）。取り込みはall-or-nothing：
-// スキーマ検証・マスタ整合性検証・採番シーケンス検証を全件通し、1件でも失敗すれば一切取り込まない。
+// スキーマ検証・マスタ検証（値域・整合性）・履歴と採番シーケンスの検証を全件通し、1件でも失敗すれば一切取り込まない。
 // トランザクション間の参照整合性（soLinesが存在しないsalesOrdersを指していないか等）の網羅的な検証は
 // 本モジュールの範囲外（Issue #61で別Issueとした）。
-import type { MasterSnapshot, SimulationState } from "../types";
-import { assertSnapshotUsable, MasterIOError } from "./masterIO";
+import type { SimulationState } from "../types";
+import { MasterIOError, parseMasterSnapshot } from "./masterIO";
 
 export class ScenarioIOError extends Error {}
 
@@ -241,6 +241,22 @@ function collectSchemaErrors(state: Record<string, unknown>): string[] {
   return errors;
 }
 
+/**
+ * dashboardHistoryの不変条件（reducer.tsのupsertDashboardSnapshotが保つ「1日1件・day昇順」）。
+ * 崩れたまま取り込むと、バーンダウンチャートの横軸が乱れたり、以降の当日分の上書き・追記が誤った位置に入る。
+ * 行の形が正しいことが前提のため、スキーマ検証を通った後に呼ぶ。
+ */
+function collectHistoryErrors(state: SimulationState): string[] {
+  const errors: string[] = [];
+  let prevDay = -1;
+  state.dashboardHistory.forEach((snap, i) => {
+    if (snap.day <= prevDay) errors.push(`state.dashboardHistory[${i}].day: 日の昇順（重複なし）である必要があります`);
+    if (snap.day > state.day) errors.push(`state.dashboardHistory[${i}].day: 現在日（${state.day}）より先の日は記録できません`);
+    prevDay = snap.day;
+  });
+  return errors;
+}
+
 // ---------------------------------------------------------------------------
 // 採番用シーケンスの検証
 // ---------------------------------------------------------------------------
@@ -326,24 +342,29 @@ export function parseScenario(json: string): SimulationState {
   // スキーマ検証を通ったため、以降は型どおりに扱える
   const state = raw.state as unknown as SimulationState;
 
-  const masters: MasterSnapshot = {
-    version: 1,
-    items: state.items,
-    bom: state.bom,
-    routingSteps: state.routingSteps,
-    workCenters: state.workCenters,
-    customers: state.customers,
-    suppliers: state.suppliers,
-  };
+  // マスタ部分は、マスタJSONの取り込み（parseMasterSnapshot）と同じ強さで検証する。型が合うだけでなく、
+  // CRUD側が課す値域（qtyPerは正、標準時間・賃率は0以上、stepNoは正の整数、空文字禁止等。EXT-26追記）と、
+  // 重複キー・BOM循環・参照の整合性（assertSnapshotUsable）も通す。負のqtyPerはバックフラッシュで在庫が増える等の実害になる。
+  // 戻り値（正規化後のスナップショット）は使わず、元のstateをそのまま復元する（往復で値を変えないため）
   try {
-    assertSnapshotUsable(masters);
+    parseMasterSnapshot(
+      JSON.stringify({
+        version: 1,
+        items: state.items,
+        bom: state.bom,
+        routingSteps: state.routingSteps,
+        workCenters: state.workCenters,
+        customers: state.customers,
+        suppliers: state.suppliers,
+      }),
+    );
   } catch (err) {
     if (err instanceof MasterIOError) throw new ScenarioIOError(err.message);
     throw err;
   }
 
-  const sequenceErrors = collectSequenceErrors(state);
-  if (sequenceErrors.length > 0) throw new ScenarioIOError(summarizeErrors(sequenceErrors));
+  const consistencyErrors = [...collectHistoryErrors(state), ...collectSequenceErrors(state)];
+  if (consistencyErrors.length > 0) throw new ScenarioIOError(summarizeErrors(consistencyErrors));
 
   return state;
 }

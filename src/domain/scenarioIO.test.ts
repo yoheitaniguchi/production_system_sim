@@ -12,9 +12,10 @@ function run(state: SimulationState, ...actions: SimulationAction[]): Simulation
 
 /**
  * 全テーブルに行が入るまで実際の操作（reducer経由）で進めた状態。出荷済みの受注1件（FG-100 x2）に加え、
- * 2件目の受注を登録してMRPを実行しただけの状態（計画オーダが未確定のまま残る）にしておく。
+ * null値（未回答の納期・未着手の作業指示・未回答の購買オーダ）を持つ行や、確定していない計画オーダも残す。
+ * 出荷引当の直後（ALLOCATED、実出荷日がnull）の状態も別に返す。
  */
-function buildRichState(): SimulationState {
+function buildScenarioStates(): { allocated: SimulationState; final: SimulationState } {
   let state = createInitialState();
   state = run(
     state,
@@ -44,16 +45,26 @@ function buildRichState(): SimulationState {
     { type: "WI_COMPLETE", payload: { moNo: fgOrder.moNo, stepNo: 20, goodQty: 2, scrapQty: 0 } },
     { type: "SHIPMENT_ALLOCATE", payload: { soNo: "SO-001", lineNo: 1 } },
   );
+  const allocated = state;
   const shipNo = state.shipments[0].shipNo;
   state = run(
     state,
     { type: "SHIPMENT_SHIP", payload: { shipNo } },
+    // SO-002：確定してオーダ化（未着手の作業指示・未回答の購買オーダが残る）
     { type: "SO_CREATE", payload: { customerId: "CUST-B", itemId: ITEM_IDS.FG_CHAIR, qty: 3, requestDay: 30 } },
     { type: "SO_CONFIRM_DELIVERY", payload: { soNo: "SO-002", confirmDay: 30 } },
     { type: "MRP_RUN" },
+    { type: "PLANNED_ORDERS_FIRM" },
+    // SO-003：納期未回答のまま計画オーダだけ展開した状態
+    { type: "SO_CREATE", payload: { customerId: "CUST-A", itemId: ITEM_IDS.FG_CHAIR, qty: 1, requestDay: 40 } },
+    { type: "MRP_RUN" },
     { type: "ADVANCE_DAY" },
   );
-  return state;
+  return { allocated, final: state };
+}
+
+function buildRichState(): SimulationState {
+  return buildScenarioStates().final;
 }
 
 // 型に合わない壊れたJSONを作るためのテスト専用の緩い型
@@ -100,12 +111,22 @@ describe("シナリオのエクスポート→インポートの往復（Issue #
       expect(state[key].length, key).toBeGreaterThan(0);
     }
     expect(state.customers.find((c) => c.customerId === "CUST-B")?.priorityRank).toBe(5);
+    // null値の往復も検証できるよう、nullを持つ行が実際にあること
+    expect(state.soLines.some((l) => l.confirmDay === null)).toBe(true);
+    expect(state.workInstructions.some((w) => w.actualStartDay === null)).toBe(true);
+    expect(state.purchaseOrders.some((p) => p.confirmDay === null)).toBe(true);
 
     const restored = parseScenario(serializeScenario(state));
 
     expect(restored).toEqual(state);
     expect(restored.eventLog.map((e) => e.message)).toEqual(state.eventLog.map((e) => e.message));
     expect(restored.stockTxns.map((t) => t.txnId)).toEqual(state.stockTxns.map((t) => t.txnId));
+  });
+
+  it("[結合][機能テスト][境界] 出荷引当直後（ALLOCATED・実出荷日null）の状態も往復で一致する", () => {
+    const { allocated } = buildScenarioStates();
+    expect(allocated.shipments.some((s) => s.status === "ALLOCATED" && s.actualDay === null)).toBe(true);
+    expect(parseScenario(serializeScenario(allocated))).toEqual(allocated);
   });
 
   it("[単体][機能テスト][境界] 初期状態（トランザクションが空）も往復で一致する", () => {
@@ -121,7 +142,7 @@ describe("シナリオのエクスポート→インポートの往復（Issue #
     );
     const soNos = next.salesOrders.map((o) => o.soNo);
     expect(new Set(soNos).size).toBe(soNos.length);
-    expect(soNos.at(-1)).toBe("SO-003");
+    expect(soNos.at(-1)).toBe("SO-004");
   });
 });
 
@@ -192,10 +213,10 @@ describe("取り込みの拒否（all-or-nothing）", () => {
   });
 
   it("[単体][異常系][異常] 採番用シーケンスが既存の最大番号以下だと拒否する（次の採番が既存と重複するため）", () => {
-    expectRejected(tamper(state, (d) => (d.state.nextSoSeq = 1)), "nextSoSeq（1）が既存の受注番号の最大値（SO-2）以下");
+    expectRejected(tamper(state, (d) => (d.state.nextSoSeq = 1)), "nextSoSeq（1）が既存の受注番号の最大値（SO-3）以下");
     // 最大番号ちょうど（次に採番される番号が既存と同じ）も拒否し、最大+1は受け入れる
-    expectRejected(tamper(state, (d) => (d.state.nextSoSeq = 2)), "nextSoSeq");
-    expect(() => parseScenario(tamper(state, (d) => (d.state.nextSoSeq = 3)))).not.toThrow();
+    expectRejected(tamper(state, (d) => (d.state.nextSoSeq = 3)), "nextSoSeq");
+    expect(() => parseScenario(tamper(state, (d) => (d.state.nextSoSeq = 4)))).not.toThrow();
     expectRejected(tamper(state, (d) => (d.state.nextMoSeq = 1)), "nextMoSeq");
     expectRejected(tamper(state, (d) => (d.state.nextTxnSeq = 1)), "nextTxnSeq");
     expectRejected(tamper(state, (d) => (d.state.nextLotSeq = 1)), "nextLotSeq");
@@ -204,9 +225,37 @@ describe("取り込みの拒否（all-or-nothing）", () => {
     expectRejected(tamper(state, (d) => (d.state.nextSoSeq = 0)), "state.nextSoSeq: 1以上の整数が必要です");
   });
 
-  it("[単体][異常系][境界] 番号の形式に合わない主キー（PREFIX+数字でないもの）は採番シーケンスの検証で無視する", () => {
-    const json = tamper(state, (d) => (d.state.lots[0].lotNo = "LOT-MANUAL"));
-    expect(() => parseScenario(json)).not.toThrow();
+  it("[単体][異常系][境界] 番号の形式に合わない主キーが混ざっても、数字の主キーの最大値は正しく検出される", () => {
+    // 形式外の主キー（LOT-MANUAL）を無視せず数値化するとNaNが最大値の計算を汚染し、nextLotSeq=1が素通りしてしまう
+    const json = tamper(state, (d) => {
+      d.state.lots[0].lotNo = "LOT-MANUAL";
+      d.state.nextLotSeq = 1;
+    });
+    expectRejected(json, "nextLotSeq");
+    // 形式外の主キーだけなら採番と衝突しないため、シーケンスが1でも受け入れる
+    const onlyManual = tamper(state, (d) => {
+      d.state.lots.forEach((lot: { lotNo: string }, i: number) => (lot.lotNo = `LOT-MANUAL-${i}`));
+      d.state.stockTxns.forEach((t: { lotNo?: string }) => delete t.lotNo);
+      d.state.lotGenealogy = [];
+      d.state.nextLotSeq = 1;
+    });
+    expect(() => parseScenario(onlyManual)).not.toThrow();
+  });
+
+  it("[単体][異常系][異常] マスタの値域（CRUDと同じ強さ）を外れる値は、型が合っていても拒否する", () => {
+    expectRejected(tamper(state, (d) => (d.state.bom[0].qtyPer = -1)), "qtyPer");
+    expectRejected(tamper(state, (d) => (d.state.items[0].leadTimeDays = -3)), "leadTimeDays");
+    expectRejected(tamper(state, (d) => (d.state.routingSteps[0].stepNo = 0)), "stepNo");
+    expectRejected(tamper(state, (d) => (d.state.workCenters[0].ratePerHour = -1)), "ratePerHour");
+    expectRejected(tamper(state, (d) => (d.state.customers[0].name = "")), "name");
+  });
+
+  it("[単体][異常系][異常] dashboardHistoryの不変条件（day昇順・重複なし・現在日以前）が崩れていたら拒否する", () => {
+    expectRejected(
+      tamper(state, (d) => (d.state.dashboardHistory[1].day = d.state.dashboardHistory[0].day)),
+      "日の昇順（重複なし）",
+    );
+    expectRejected(tamper(state, (d) => (d.state.dashboardHistory.at(-1).day = d.state.day + 5)), "現在日");
   });
 
   it("[単体][異常系][境界] エラーが多数あっても一覧は上限で打ち切り、残りの件数を示す", () => {
