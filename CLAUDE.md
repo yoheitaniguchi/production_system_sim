@@ -57,6 +57,8 @@ production_system_sim/
     ├── types.ts            # ドメインの型定義（design.md §4：v5の13テーブルとの対応）
     ├── theme.ts            # テーマ定義・テーマ切り替え管理
     ├── statusLabels.ts     # 各ドメインのステータス日本語ラベル定義
+    ├── csvExport.ts        # 表データのCSV書き出し（buildCsv・downloadCsv。Issue #54）
+    ├── fileDownload.ts     # テキストファイルのBlobダウンロード共有ユーティリティ（シナリオ書き出し用。Issue #61）
     ├── index.css           # グローバルスタイル・デザイントークン
     ├── data/
     │   └── masterData.ts   # 初期マスタデータ＝既定プリセット（design.md §1 S2：木製イス、EXT-26）
@@ -64,6 +66,7 @@ production_system_sim/
     │   ├── masterData.ts     # マスタCRUD（v5-spec.md §3.7、design.md EXT-20〜EXT-24）
     │   ├── masterIntegrity.ts # BOM循環・参照検査・健全性チェック（v5-spec.md §3.7 最小機能5、EXT-19/21/22）
     │   ├── masterIO.ts       # マスタ一式のJSON入出力（design.md EXT-26）
+    │   ├── scenarioIO.ts     # シナリオ（SimulationState全体）のJSON入出力（design.md EXT-40。Issue #61）
     │   ├── mrp.ts            # MRP展開（v5-spec.md §7.1）
     │   ├── production.ts     # 工程着手・完了・バックフラッシュ（v5-spec.md §7.3）
     │   ├── procurement.ts    # 発注・納期回答・入荷計上（v5-spec.md §6.5）
@@ -89,7 +92,7 @@ production_system_sim/
         ├── ClockControls.tsx      # 時計操作（Day表示・次の日へ進む・リセット）
         ├── AlertBar.tsx           # 日程整合警告・未充足需要（常時再計算、専用ボタン無し）
         ├── TodayActionsBar.tsx    # 本日実行可能な操作のハイライト（クリックでタブ遷移）
-        ├── BurgerMenu.tsx         # ハンバーガーメニュー（テーマ切替・外部リンク・リセット等）
+        ├── BurgerMenu.tsx         # ハンバーガーメニュー（テーマ切替・シナリオの保存/復元・外部リンク・リセット等）
         ├── SalesOrderPanel.tsx    # 受注：登録・納期回答・取消
         ├── PlanningPanel.tsx      # 計画：MRP実行・計画オーダ一括確定・ペグ先/BOMレベル表示
         ├── ProcurementPanel.tsx   # 発注：仕入先納期回答・入荷計上・注文残
@@ -109,7 +112,10 @@ production_system_sim/
         ├── EditableField.tsx      # マスタ画面用の編集可能フィールド（数値・テキスト・選択）
         ├── KpiDashboard.tsx       # 分析：KPIダッシュボード（組織目線/現場目線）
         ├── CostPanel.tsx          # 分析：原価（金額指標・品目別標準原価・オーダ別原価差異）
+        ├── CostCharts.tsx         # 原価パネルのグラフ（構成比の100%積み上げ横棒・オーダ別原価差異の横棒。design.md EXT-39）
         ├── CapacityPanel.tsx      # 分析：能力（山積み。作業区×日の計画/実績負荷と能力、超過ハイライト）
+        ├── CapacityLoadChart.tsx  # 能力パネルの山積みバーグラフ（作業区の帯×日の縦棒。design.md EXT-42）
+        ├── Sparkline.tsx          # KPI・ダッシュボード共有のスパークライン（日次推移。design.md EXT-38）
         ├── PeggingTracePanel.tsx  # 分析：ペギング追跡（受注→オーダ→実績）
         ├── LotTracePanel.tsx      # 分析：ロット追跡（後方追跡・前方追跡）
         ├── ExerciseGuidePanel.tsx # 分析：演習ガイド（TC-01〜18の進行状況と次の操作）
@@ -168,17 +174,17 @@ KPIサマリーカード、アラート件数の可視化。`domain/dashboard.ts
 - `src/data/masterData.ts`：v5-spec.md §1.1（木製イス）の品目5・BOM4行・工順3行・作業区3件。
   顧客2件（design.md §6の複数受注演習用）・仕入先3件（BUY品目ごとに1件、`defaultSupplierId`で対応付け）。
   これらは`CHAIR_PRESET`として既定プリセットにまとめてあり、`createInitialState()`の戻り値は従来どおり
-- `src/domain/`：20モジュール（`pegging.ts`・`mrp.ts`・`procurement.ts`・`shipment.ts`・`production.ts`・
+- `src/domain/`：21モジュール（`pegging.ts`・`mrp.ts`・`procurement.ts`・`shipment.ts`・`production.ts`・
   `salesOrder.ts`・`schedule.ts`・`inventory.ts`・`kpi.ts`・`cost.ts`・`lot.ts`・`todayActions.ts`・
   `exerciseGuide.ts`・`processFlow.ts`・`gantt.ts`・`capacity.ts`・`masterData.ts`・`masterIntegrity.ts`・
-  `masterIO.ts`・`dashboard.ts`）＋`reducer.ts`（design.md §7の action一覧を実装。`createInitialState()`・
+  `masterIO.ts`・`scenarioIO.ts`・`dashboard.ts`）＋`reducer.ts`（design.md §7の action一覧を実装。`createInitialState()`・
   `simulationReducer()`）を実装済み。`dashboard.ts`の`computeDashboardSnapshot()`は受注残・計画残・発注残・
   製造残・出荷残・在庫の残高（数量・金額）と、KPI/アラート件数を1回で計算する導出関数。金額換算は
   `cost.ts`に追加した`standardCostLookup()`（ctxを1回だけ作って複数品目の原価をまとめて参照する）で
   統一し、原価タブの算出方法と食い違わないようにしている。`reducer.ts`の`upsertDashboardSnapshot()`が
   `applyAction()`とADVANCE_DAYの末尾で毎回呼ばれ、`state.dashboardHistory`の当日分を上書き・日を跨いだら
   追記する（EventLogEntryと同じ「状態に保持する記録」だが、永続化はしない）
-- `src/domain/*.test.ts`：168件のテストで、v5-spec.md §9のTC-01〜18・TC-E1〜E3の全シナリオ、
+- `src/domain/*.test.ts`ほか（`npm test`全体で286件）：v5-spec.md §9のTC-01〜18・TC-E1〜E3の全シナリオ、
   reducerの委譲・不変性・エラーハンドリング・RESET時のマスタ保持、`processFlow.ts`のフロー判定、
   §11.2の原価計算例・§11.3のロット系譜（後方/前方追跡）を検証済み。design.md §6の複数受注演習も
   TC-M1として`multiOrderExercise.test.ts`で検証済み。マスタ自由登録は`masterData.test.ts`・
@@ -346,6 +352,36 @@ EXT-35〜38）。`capacity.ts`に`computePlannedOrderLoad()`（未確定のPLANN
 `aria-hidden`固定によるスクリーンリーダー情報欠落の解消、コンポーネント固有CSSクラスの転用中止、
 冗長な列の統合、ヒントテキストの整理等）を反映済み
 
+複数プリセットの同梱（Issue #56、design.md EXT-34）・原価パネルのグラフ化（Issue #62、EXT-39）・シナリオ
+（`SimulationState`全体）のJSON保存・復元（Issue #61、EXT-40）・段取り時間の追加（Issue #66、EXT-41）・山積み表の
+SVGバー化（Issue #67、EXT-42）も完了した。いずれも`logic-reviewer`・`ux-reviewer`レビューの指摘を反映済み。
+
+- **複数プリセット（#56）**：`data/masterData.ts`に第2プリセット`BICYCLE_PRESET`（自転車、4階層BOM）を追加し、
+  `MasterPreset`型・`MASTER_PRESETS`・`resolveMasterPreset()`・`resolveActivePresetId()`でプリセットを識別する。
+  `MasterIOToolbar.tsx`から切替でき、切替は全トランザクションの初期化を伴う。演習ガイド（TC-01〜18の自動判定）は
+  既定プリセット（木製イス）以外では判定不能のまま（EXT-27）
+- **原価グラフ（#62）**：`cost.ts`に`computeItemCostComposition()`・`computeMfgOrderVarianceSeries()`、
+  `CostCharts.tsx`（材料費/加工費の100%積み上げ横棒・製造オーダ別原価差異の横棒。未完了オーダの暫定値は薄い塗り＋
+  破線で確定値と区別）。専用トークン`--chart-cost-labor`・`--chart-cost-variance`を6テーマに追加
+- **シナリオ保存・復元（#61）**：`scenarioIO.ts`の`serializeScenario()`・`parseScenario()`。形式は
+  `{ kind: "production-system-sim-scenario", version: 1, state }`。宣言的スキーマ`TABLE_SPECS`（19テーブル）で
+  型検証し、マスタの値域は`parseMasterSnapshot()`に委譲、日次履歴の不変条件と採番シーケンス（実データの最大番号＋1
+  以上）も検証する。all-or-nothingで、エラーは件数上限つきでまとめて返す。`SCENARIO_IMPORT`actionは現在の状態を
+  丸ごと置き換え、イベントログへは追記しない。`BurgerMenu.tsx`に「シナリオの保存・復元」の導線（復元時は確認あり）。
+  **`SimulationState`へフィールドを追加したら`TABLE_SPECS`も更新すること**。トランザクション間の参照整合性の網羅的な
+  検証は対象外（必要になれば別Issue）
+- **段取り時間（#66）**：`RoutingStep.setupMin?`（省略時0）。`capacity.ts`の負荷は「数量×標準時間＋段取り時間」で、
+  段取りは数量に比例させず**作業指示1件（製造オーダ1件の当該工程）につき1回だけ**加算する（確定前プレビューも同様）。
+  原価（`cost.ts`）には反映しない。JSON入出力は欠落を許容する（未設定＝0。`capacityMinPerDay`（EXT-32）とは逆の
+  判断で、`priorityRank`（EXT-36）と同じ後方互換）。製造オーダを分割すると分割数ぶんだけ段取りが加算される。
+  既定プリセットは段取り未設定のままで、design.md §9.5の計算例は不変
+- **山積みバーグラフ（#67）**：`capacity.ts`の`buildCapacityChartModel()`（表示データの整形。超過の定義は表・
+  AlertBarと同じ）と`CapacityLoadChart.tsx`。作業区の帯（マスタ順）を縦に並べ、日を横軸に計画負荷（破線の枠）・
+  実績負荷（塗り）・能力（破線の横線）を縦棒で示し、超過セルは`--warn-*`＋「超過 +N分」の文字で強調する。表は残し、
+  その上に併記する。作業区名はSVGの外の固定列に置く。スクロール領域はフォーカス可能なリージョン（原価グラフにも
+  同様に付与）。負荷ありの能力タブをaxeへ通すe2eケースを`e2e/a11y.spec.ts`に追加した（初期状態ではグラフが描画
+  されず従来の検査対象外だったため）
+
 ## 次にやるべきこと（優先順）
 
 `docs/implementation-plan.md` §5「Phase 7（先送り事項）」・マスタ自由登録・§6「Phase 8：能力計画（CRP）」・
@@ -356,14 +392,16 @@ CI基盤の新設。検出された実違反の修正は個別Issue化して別�
 （Issue #51）・アラート件数バッジからのワンクリック遷移（Issue #52）・演習完了レポート（Issue #53）・
 表データのCSVエクスポート（Issue #54）・計画オーダ段階での山積みプレビュー（Issue #57）・複数受注の競合
 における優先順位付け（Issue #58）・ボトルネック作業区の推移ハイライト（Issue #59）・KPIのトレンド化
-（Issue #60）は全項目完了した。マスタのlocalStorage永続化（Issue #55）は、CLAUDE.md記載の「永続化なし・
-単一セッション」という設計方針そのものの転換と、複数学習者が同一ブラウザを共有する場合の永続化ポリシー
-（誰の入力を保存するか）という2点がIssue自身の「レビュー時の確認事項」で明示的にユーザー確認を要すると
-されているため、Issue #55へ着手前の判断待ちとして保留中（コメント済み）。次の一手は特に決まっていないため、
-着手前にユーザーに優先順位を確認すること。
+（Issue #60）・複数プリセットの同梱（Issue #56）・原価パネルのグラフ化（Issue #62）・シナリオのフルスナップ
+ショット保存・復元（Issue #61）・段取り時間の追加（Issue #66）・山積み表のSVGバー化（Issue #67）は全項目完了した。
+残るオープンIssueは5件（#55・#64・#65・#68・#69）で、いずれもIssue自身の「レビュー時の確認事項」が着手前の
+ユーザー判断を明示的に求めているため、実装に着手せず判断待ちとしている。マスタのlocalStorage永続化（Issue #55）は、
+CLAUDE.md記載の「永続化なし・単一セッション」という設計方針そのものの転換と、複数学習者が同一ブラウザを共有する場合の
+永続化ポリシー（誰の入力を保存するか）が論点でコメント済み。次の一手は特に決まっていないため、着手前にユーザーに
+優先順位を確認すること。
 
 以下は既存の先送り事項（マスタ自由登録・CRP・v5-spec.md §11ロードマップ・ダッシュボード）に費用対効果を
-付記した候補と、現状の実装（20ドメインモジュール・15画面）を踏まえて新規に提案する候補を、
+付記した候補と、現状の実装（21ドメインモジュール・15画面）を踏まえて新規に提案する候補を、
 ドメイン・件名・費用対効果・概要で整理したものである。費用対効果が高い（＝既存資産の再利用度が高く
 実装コストが低い）順に並べている。新規提案分には行末に「（新規提案）」を付した。
 
@@ -371,15 +409,10 @@ CI基盤の新設。検出された実違反の修正は個別Issue化して別�
 |---|---|---|---|
 | 基盤（CI） | CI継続確認 | 高（追加実装コストがほぼゼロで、リグレッション検知という効果を維持できる） | `.github/workflows/`（test.yml・deploy.yml・pr-preview.yml）が全PRで正しく動作し続けているかの継続確認。実装ではなく運用確認タスク |
 | マスタ／基盤 | マスタのlocalStorage永続化（Issue #55、保留中） | 中（実装コスト自体は中程度だが、CLAUDE.md記載の「永続化なし・単一セッション」という設計方針そのものの転換になるため、着手前に方針変更の可否をユーザーに確認する必要がある） | ブラウザリロードでマスタ編集内容が失われる現状を、localStorageへの自動保存で解消する案。JSON入出力（`masterIO.ts`）を土台にできる |
-| マスタ | 複数プリセットの同梱 | 中（`CHAIR_PRESET`の構造と`masterIO.ts`のJSON入出力を流用でき実装コストは低いが、教材として別題材を作り込む編集コストが別途かかる） | 木製イス以外の題材（例：別業種の4階層BOMモデル）を既定プリセットとして複数用意し、切替可能にする |
-| マスタ／分析（横断） | シナリオのフルスナップショット保存・復元（新規提案） | 中（`masterIO.ts`のJSON入出力パターンをトランザクション系テーブルまで拡張する設計だが、対象が13テーブル全てに及ぶため実装範囲は広い。明示的なエクスポート/インポート操作はCLAUDE.mdが言う「永続化なし＝自動保存しない」方針とは矛盾しない） | マスタだけでなく受注・オーダ・在庫・イベントログを含む`SimulationState`全体をJSON化する。演習の中断・再開や、特定状態の共有に使える |
-| 分析（原価） | 原価パネルのグラフ化（新規提案） | 中（`CostPanel.tsx`は現状テーブルのみ。ダッシュボード機能で導入済みの`--chart-*`トークンとSVGグラフの実装資産を再利用できる） | 原価差異のオーダ別推移、品目別標準原価の材料費/加工費構成比などをグラフで可視化する |
-| マスタ | 品目コードの改名機能 | 低（実装コスト大：BOM・工順・受注・各種オーダ等、全参照箇所への一括カスケード更新が必要／効果小：EXT-24で「削除→再登録」という代替運用が既に確立しており実用上困らない） | EXT-24で一度カスケード更新を断念した経緯がある。改めて着手する場合は全参照テーブルの一括更新ロジックが必要 |
-| 演習ガイド／マスタ | 演習ガイドのマスタ非依存化（EXT-27） | 低〜中（現状はCHAIR_PRESETの品目コード・数量に依存したハードコード判定のため、`exerciseGuide.ts`の判定ロジック全面書き換えが必要。「複数プリセットの同梱」と組み合わせて初めて価値が出る） | TC-01〜18の自動判定を、マスタが自由に差し替わっても機能するよう一般化する |
-| 能力（CRP）／マスタ | 段取り時間の追加 | 低（`RoutingStep`へのフィールド追加と`capacity.ts`の計算式変更で実装コストは低いが、実務でのCRPの主要要素である一方、木製イス題材における教育効果への寄与は小さい） | 工順に段取り時間フィールドを追加し、山積み計算に含める |
-| 能力（CRP）／UI | 山積み表のSVGバー化 | 低（`GanttChartPanel.tsx`のSVGバー実装パターンを流用でき実装コストは低いが、design.md §9.9が明記するとおり既存の表形式で情報伝達は十分であり必須ではない） | `.panel__table`ベースの`CapacityPanel.tsx`を、`GanttChartPanel.tsx`と同様のSVGバー表示へ発展させる |
-| 計画（MRP） | 安全在庫・ロットサイズ（v5-spec.md §11 Phase 4） | 低（v5-spec.mdにもdesign.mdにも最小設計が未着手で、CRPのとき（design.md §9新設）と同様の設計フェーズが先に必要。正味所要量計算というMRP展開ロジックの中核に触れるため、他ドメイン全体への影響範囲も大きい） | 初期在庫ゼロ・正味所要量＝オーダ数量という現状の単純化を外し、安全在庫・発注点方式やロットまとめ・最小発注単位を扱えるようにする |
-| マスタ | ECO・BOM有効日対応（新規提案） | 低（v5-spec.md §11.1で「2-Bと同時に検討」とされたまま未着手。BOM構造へバージョン・有効日の概念を持ち込む必要があり、`masterIntegrity.ts`のBOM循環検査・`mrp.ts`の展開ロジック双方に影響する中規模の設計変更が必要。v5-spec.md本文でも対象外寄りの扱いで教材としての優先度は低い） | 「いつ時点のBOMで計算したか」の再現性を扱う。BOM変更履歴と有効日を持たせ、過去時点のBOMでの原価・所要量計算を再現できるようにする |
+| マスタ | 品目コードの改名機能（Issue #64、要否検討・判断待ち） | 低（実装コスト大：BOM・工順・受注・各種オーダ等、全参照箇所への一括カスケード更新が必要／効果小：EXT-24で「削除→再登録」という代替運用が既に確立しており実用上困らない） | EXT-24で一度カスケード更新を断念した経緯がある。改めて着手する場合は全参照テーブルの一括更新ロジックが必要 |
+| 演習ガイド／マスタ | 演習ガイドのマスタ非依存化（Issue #65、EXT-27・判断待ち） | 低〜中（現状はCHAIR_PRESETの品目コード・数量に依存したハードコード判定のため、`exerciseGuide.ts`の判定ロジック全面書き換えが必要。複数プリセットは同梱済み（EXT-34）で、自転車プリセットでは演習ガイドが判定不能になるため、一般化の価値が出る状態になっている） | TC-01〜18の自動判定を、マスタが自由に差し替わっても機能するよう一般化する |
+| 計画（MRP） | 安全在庫・ロットサイズ（Issue #68は安全在庫のみ。v5-spec.md §11 Phase 4・判断待ち） | 低（v5-spec.mdにもdesign.mdにも最小設計が未着手で、CRPのとき（design.md §9新設）と同様の設計フェーズが先に必要。正味所要量計算というMRP展開ロジックの中核に触れるため、他ドメイン全体への影響範囲も大きい） | 初期在庫ゼロ・正味所要量＝オーダ数量という現状の単純化を外し、安全在庫・発注点方式やロットまとめ・最小発注単位を扱えるようにする |
+| マスタ | ECO・BOM有効日対応（Issue #69、設計検討のみ・判断待ち） | 低（v5-spec.md §11.1で「2-Bと同時に検討」とされたまま未着手。BOM構造へバージョン・有効日の概念を持ち込む必要があり、`masterIntegrity.ts`のBOM循環検査・`mrp.ts`の展開ロジック双方に影響する中規模の設計変更が必要。v5-spec.md本文でも対象外寄りの扱いで教材としての優先度は低い） | 「いつ時点のBOMで計算したか」の再現性を扱う。BOM変更履歴と有効日を持たせ、過去時点のBOMでの原価・所要量計算を再現できるようにする |
 
 ## 実装時に確認すべき設計判断（design.mdの要点）
 
