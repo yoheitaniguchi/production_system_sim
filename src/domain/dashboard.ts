@@ -9,7 +9,7 @@ import { capacityOverloads } from "./capacity";
 import { computeKpi } from "./kpi";
 import { validateMaster } from "./masterIntegrity";
 import { checkSchedule, unmetDemand } from "./schedule";
-import type { BacklogMetric, DashboardSnapshot, SimulationState } from "../types";
+import type { BacklogMetric, DashboardKpiHighlights, DashboardSnapshot, SimulationState } from "../types";
 
 function sumBy<T>(items: T[], fn: (item: T) => BacklogMetric): BacklogMetric {
   return items.reduce<BacklogMetric>(
@@ -80,11 +80,18 @@ export function computeDashboardSnapshot(state: SimulationState): DashboardSnaps
       masterIssue: validateMaster(state).length,
       capacityOverload: capacityOverloads(state).length,
     },
-    kpiHighlights: {
-      deliveryComplianceRate: kpi.deliveryComplianceRate,
-      planAchievementRate: kpi.planAchievementRate,
-      firstPassYieldRate: kpi.firstPassYieldRate,
-      inventoryTurnover: kpi.inventoryTurnover,
-    },
+    // KpiSnapshotとDashboardKpiHighlightsは同一の12指標を持つ（Issue #60、design.md EXT-38）
+    kpiHighlights: kpi,
   };
+}
+
+/**
+ * dashboardHistoryから指定したKPI指標の日次系列だけを取り出す（Issue #60）。
+ * KpiDashboard.tsx・DashboardPanel.tsxのSparklineへそのまま渡せる形にする。
+ */
+export function extractKpiSeries(
+  history: DashboardSnapshot[],
+  key: keyof DashboardKpiHighlights,
+): (number | null)[] {
+  return history.map((snap) => snap.kpiHighlights[key]);
 }
