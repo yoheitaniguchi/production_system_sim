@@ -2,6 +2,7 @@
 //
 // 作業区×日で計画負荷・実績負荷・能力を一覧し、超過をハイライトする。有限能力スケジューリング
 // （山崩し・自動リスケジュール）は行わない、あくまで可視化のみの画面（design.md §9.2）。
+import { downloadCsv, todayDateStamp } from "../csvExport";
 import { computeCapacityLoad } from "../domain/capacity";
 import type { SimulationState } from "../types";
 
@@ -11,6 +12,24 @@ interface CapacityPanelProps {
 
 function CapacityPanel({ state }: CapacityPanelProps) {
   const load = computeCapacityLoad(state);
+
+  const downloadLoadCsv = () =>
+    downloadCsv(
+      `capacity_load_${todayDateStamp()}.csv`,
+      ["作業区", "日(D+)", "計画負荷(分)", "実績負荷(分)", "能力(分/日)", "判定"],
+      load.map((entry) => {
+        const overloaded = entry.plannedMin > entry.capacityMin || entry.actualMin > entry.capacityMin;
+        const required = Math.max(entry.plannedMin, entry.actualMin);
+        return [
+          entry.workCenter,
+          entry.day,
+          entry.plannedMin,
+          entry.actualMin,
+          entry.capacityMin,
+          overloaded ? `超過（${required - entry.capacityMin}分）` : "OK",
+        ];
+      }),
+    );
 
   return (
     <div className="panel">
@@ -24,7 +43,13 @@ function CapacityPanel({ state }: CapacityPanelProps) {
       {load.length === 0 ? (
         <p className="panel__empty">製造オーダはありません。計画オーダを確定してください。</p>
       ) : (
-        <table className="panel__table">
+        <>
+          <div className="panel__toolbar">
+            <button type="button" aria-label="山積み表をCSVでエクスポート" onClick={downloadLoadCsv}>
+              CSVでエクスポート
+            </button>
+          </div>
+          <table className="panel__table">
           <thead>
             <tr>
               <th>作業区</th>
@@ -52,6 +77,7 @@ function CapacityPanel({ state }: CapacityPanelProps) {
             })}
           </tbody>
         </table>
+        </>
       )}
     </div>
   );
