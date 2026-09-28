@@ -56,9 +56,11 @@ function CostPanel({ state }: CostPanelProps) {
       <h2>原価</h2>
 
       <h3>組織目線（金額指標）</h3>
-      <button type="button" onClick={downloadAmountMetricsCsv}>
-        CSVダウンロード
-      </button>
+      <div className="panel__toolbar">
+        <button type="button" aria-label="金額指標をCSVでエクスポート" onClick={downloadAmountMetricsCsv}>
+          CSVでエクスポート
+        </button>
+      </div>
       <table className="panel__table">
         <thead>
           <tr>
@@ -79,9 +81,11 @@ function CostPanel({ state }: CostPanelProps) {
       </table>
 
       <h3>品目別標準原価</h3>
-      <button type="button" onClick={downloadItemCostsCsv}>
-        CSVダウンロード
-      </button>
+      <div className="panel__toolbar">
+        <button type="button" aria-label="品目別標準原価をCSVでエクスポート" onClick={downloadItemCostsCsv}>
+          CSVでエクスポート
+        </button>
+      </div>
       <table className="panel__table">
         <thead>
           <tr>
@@ -110,9 +114,11 @@ function CostPanel({ state }: CostPanelProps) {
         <p className="panel__empty">製造オーダはありません。計画オーダを確定してください。</p>
       ) : (
         <>
-          <button type="button" onClick={downloadMfgOrderCostsCsv}>
-            CSVダウンロード
-          </button>
+          <div className="panel__toolbar">
+            <button type="button" aria-label="製造オーダ別原価差異をCSVでエクスポート" onClick={downloadMfgOrderCostsCsv}>
+              CSVでエクスポート
+            </button>
+          </div>
           <table className="panel__table">
             <thead>
               <tr>

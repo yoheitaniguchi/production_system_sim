@@ -44,9 +44,11 @@ function CapacityPanel({ state }: CapacityPanelProps) {
         <p className="panel__empty">製造オーダはありません。計画オーダを確定してください。</p>
       ) : (
         <>
-          <button type="button" onClick={downloadLoadCsv}>
-            CSVダウンロード
-          </button>
+          <div className="panel__toolbar">
+            <button type="button" aria-label="山積み表をCSVでエクスポート" onClick={downloadLoadCsv}>
+              CSVでエクスポート
+            </button>
+          </div>
           <table className="panel__table">
           <thead>
             <tr>

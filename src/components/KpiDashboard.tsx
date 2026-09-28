@@ -184,15 +184,23 @@ function KpiDashboard({ state }: KpiDashboardProps) {
       </p>
 
       <h3>組織目線</h3>
-      <button type="button" onClick={() => downloadMetricsCsv("kpi_org", orgMetrics)}>
-        CSVダウンロード
-      </button>
+      <div className="panel__toolbar">
+        <button type="button" aria-label="組織目線KPIをCSVでエクスポート" onClick={() => downloadMetricsCsv("kpi_org", orgMetrics)}>
+          CSVでエクスポート
+        </button>
+      </div>
       {renderTable(orgMetrics)}
 
       <h3>現場目線</h3>
-      <button type="button" onClick={() => downloadMetricsCsv("kpi_floor", floorMetrics)}>
-        CSVダウンロード
-      </button>
+      <div className="panel__toolbar">
+        <button
+          type="button"
+          aria-label="現場目線KPIをCSVでエクスポート"
+          onClick={() => downloadMetricsCsv("kpi_floor", floorMetrics)}
+        >
+          CSVでエクスポート
+        </button>
+      </div>
       {renderTable(floorMetrics)}
     </div>
   );
