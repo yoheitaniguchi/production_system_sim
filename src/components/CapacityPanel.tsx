@@ -58,7 +58,7 @@ function CapacityPanel({ state }: CapacityPanelProps) {
         </p>
       ) : (
         <>
-          <CapacityLoadChart entries={load} />
+          <CapacityLoadChart entries={load} workCenterOrder={state.workCenters.map((w) => w.workCenter)} />
           <div className="panel__toolbar">
             <button type="button" aria-label="山積み表をCSVでエクスポート" onClick={downloadLoadCsv}>
               CSVでエクスポート

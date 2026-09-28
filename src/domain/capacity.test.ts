@@ -389,7 +389,9 @@ describe("buildCapacityChartModel（Issue #67：山積みバーグラフ用の�
     expect(model.rows.map((r) => r.workCenter)).toEqual([WORK_CENTERS.ASM, WORK_CENTERS.CUT, WORK_CENTERS.INS]);
     const asm = model.rows.find((r) => r.workCenter === WORK_CENTERS.ASM)!;
     expect(asm).toMatchObject({ capacityMin: 240 });
-    expect(asm.cells).toEqual([{ day: 13, plannedMin: 300, actualMin: 0, overloadMin: 60 }]);
+    expect(asm.cells).toEqual([
+      { day: 13, plannedMin: 300, actualMin: 0, overloadMin: 60, plannedOverloaded: true, actualOverloaded: false },
+    ]);
     // 超過しているのはWC-ASMだけで、表の「超過（N分）」・capacityOverloads()と同じ判定になる
     const overloaded = model.rows.flatMap((r) => r.cells.filter((c) => c.overloadMin > 0).map((c) => `${r.workCenter}@${c.day}`));
     expect(overloaded).toEqual(capacityOverloads(state).map((e) => `${e.workCenter}@${e.day}`));
@@ -405,7 +407,7 @@ describe("buildCapacityChartModel（Issue #67：山積みバーグラフ用の�
     expect(model.maxMin).toBe(300);
   });
 
-  it("[単体][機能テスト][境界] 作業区ごとに負荷のある日が違っても、日軸は和集合になり各セルは自分の日だけを持つ", () => {
+  it("[単体][機能テスト][正常] 作業区ごとに負荷のある日が違っても、日軸は和集合になり各セルは自分の日だけを持つ", () => {
     const model = buildCapacityChartModel([
       { workCenter: "WC-B", day: 20, plannedMin: 50, actualMin: 0, capacityMin: 100 },
       { workCenter: "WC-A", day: 12, plannedMin: 10, actualMin: 0, capacityMin: 100 },
@@ -421,6 +423,61 @@ describe("buildCapacityChartModel（Issue #67：山積みバーグラフ用の�
 
   it("[単体][機能テスト][境界] 負荷が1件も無ければ空のモデルを返す", () => {
     expect(buildCapacityChartModel([])).toEqual({ days: [], rows: [], maxMin: 0 });
+  });
+
+  it("[単体][機能テスト][正常] 作業区の並びは渡したマスタ順が優先で、無指定・未掲載の作業区はコード順になる", () => {
+    const { state } = firmChairOrder();
+    const entries = computeCapacityLoad(state);
+    const masterOrder = state.workCenters.map((w) => w.workCenter);
+
+    expect(buildCapacityChartModel(entries).rows.map((r) => r.workCenter)).toEqual([
+      WORK_CENTERS.ASM,
+      WORK_CENTERS.CUT,
+      WORK_CENTERS.INS,
+    ]); // 無指定：コード順
+    expect(buildCapacityChartModel(entries, masterOrder).rows.map((r) => r.workCenter)).toEqual([
+      WORK_CENTERS.CUT,
+      WORK_CENTERS.ASM,
+      WORK_CENTERS.INS,
+    ]); // マスタ順（工程の流れ）
+    expect(buildCapacityChartModel(entries, [WORK_CENTERS.INS]).rows.map((r) => r.workCenter)).toEqual([
+      WORK_CENTERS.INS, // 指定した作業区が先頭、未掲載はその後ろにコード順
+      WORK_CENTERS.ASM,
+      WORK_CENTERS.CUT,
+    ]);
+  });
+
+  it("[単体][機能テスト][境界] 縦軸の上限は能力と負荷の大きい方で決まる（能力の方が大きければ能力）", () => {
+    const model = buildCapacityChartModel([{ workCenter: "WC-X", day: 1, plannedMin: 50, actualMin: 0, capacityMin: 100 }]);
+    expect(model.maxMin).toBe(100);
+    expect(model.rows[0].cells[0]).toMatchObject({ overloadMin: 0, plannedOverloaded: false, actualOverloaded: false });
+  });
+
+  it("[単体][機能テスト][境界] 能力0・負荷0の行だけでも縦軸の上限は1以上になる（縮尺のゼロ除算を避ける）", () => {
+    const model = buildCapacityChartModel([{ workCenter: "WC-Z", day: 1, plannedMin: 0, actualMin: 0, capacityMin: 0 }]);
+    expect(model.maxMin).toBe(1);
+    expect(model.rows[0].cells[0]).toMatchObject({ overloadMin: 0 });
+  });
+
+  it("[単体][機能テスト][境界] 能力0の作業区に負荷があれば、表・AlertBarと同じく常に超過扱いになる", () => {
+    const model = buildCapacityChartModel([{ workCenter: "WC-Z", day: 1, plannedMin: 30, actualMin: 0, capacityMin: 0 }]);
+    expect(model.rows[0].cells[0]).toMatchObject({ overloadMin: 30, plannedOverloaded: true });
+  });
+
+  it("[単体][機能テスト][正常] 超過の判定はcapacityOverloads()（表・AlertBarの元）と、境界・計画実績の共存を含めて一致する", () => {
+    const entries = [
+      { workCenter: "WC-A", day: 1, plannedMin: 240, actualMin: 0, capacityMin: 240 }, // ちょうど能力
+      { workCenter: "WC-A", day: 2, plannedMin: 100, actualMin: 300, capacityMin: 240 }, // 計画・実績が共存し実績のみ超過
+      { workCenter: "WC-B", day: 1, plannedMin: 241, actualMin: 241, capacityMin: 240 }, // 両方が超過
+    ];
+    const fromModel = buildCapacityChartModel(entries).rows.flatMap((r) =>
+      r.cells.filter((c) => c.overloadMin > 0).map((c) => `${r.workCenter}@${c.day}`),
+    );
+    // capacityOverloads()と同じ述語を、同じ入力へ直接当てはめた結果
+    const fromPredicate = entries
+      .filter((e) => e.plannedMin > e.capacityMin || e.actualMin > e.capacityMin)
+      .map((e) => `${e.workCenter}@${e.day}`);
+    expect(fromModel.sort()).toEqual(fromPredicate.sort());
   });
 });
 

@@ -1712,12 +1712,47 @@ textarea {
   border: 2px solid var(--warn-border);
 }
 
-.capacity-chart__scroll {
-  overflow-x: auto;
+/* 作業区名の固定列（HTML）と、横スクロールするグラフ本体（SVG）を横に並べる。帯の網掛けは両者で揃える */
+.capacity-chart__frame {
+  display: flex;
   border: 1px solid var(--border);
   border-radius: var(--radius);
   background: var(--color-surface);
+  overflow: hidden;
   margin-bottom: 0.5rem;
+}
+
+.capacity-chart__labels {
+  flex: 0 0 auto;
+}
+
+.capacity-chart__label-row {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-end;
+  padding-right: 10px;
+  font-size: 12px;
+}
+
+.capacity-chart__label-row--shaded {
+  background: color-mix(in srgb, var(--bg-subtle) 50%, transparent);
+}
+
+.capacity-chart__label {
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.capacity-chart__sub-label {
+  color: var(--color-text-muted);
+}
+
+.capacity-chart__scroll {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow-x: auto;
 }
 
 .capacity-chart__svg {
@@ -1729,8 +1764,6 @@ textarea {
   opacity: 0.5;
 }
 
-.capacity-chart__label,
-.capacity-chart__sub-label,
 .capacity-chart__value,
 .capacity-chart__axis-label,
 .capacity-chart__overload-label {
@@ -1738,9 +1771,13 @@ textarea {
   fill: var(--color-text);
 }
 
-.capacity-chart__sub-label,
 .capacity-chart__axis-label {
   fill: var(--color-text-muted);
+}
+
+.capacity-chart__axis-label--overload {
+  fill: var(--warn-text);
+  font-weight: 700;
 }
 
 /* 値ラベルは能力線・超過セルの背景に重なりうるため、背景色の縁取りを文字の下に敷く */
@@ -1751,12 +1788,8 @@ textarea {
   stroke-linejoin: round;
 }
 
-.capacity-chart__label,
 .capacity-chart__overload-label {
   font-weight: 700;
-}
-
-.capacity-chart__overload-label {
   fill: var(--warn-text);
 }
 
@@ -1790,13 +1823,13 @@ textarea {
   fill: var(--pf-active);
 }
 
-.capacity-chart__bar--plan.capacity-chart__bar--over {
+.capacity-chart__bar--plan.capacity-chart__bar--overload {
   fill: var(--warn-border);
   fill-opacity: 0.45;
   stroke: var(--warn-text);
 }
 
-.capacity-chart__bar--actual.capacity-chart__bar--over {
+.capacity-chart__bar--actual.capacity-chart__bar--overload {
   fill: var(--warn-border);
   stroke: var(--warn-text);
   stroke-width: 1.5;
