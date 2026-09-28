@@ -245,7 +245,7 @@ function assertRoutingStructureEditable(state: SimulationState, itemId: string):
   const open = openMfgOrdersOf(state, itemId);
   if (open.length > 0) {
     throw new MasterDataError(
-      `未完了の製造オーダ（${open.join(", ")}）があるため工順の追加・削除はできません（標準時間・作業区の変更は可能です）`,
+      `未完了の製造オーダ（${open.join(", ")}）があるため工順の追加・削除はできません（標準時間・段取り時間・作業区の変更は可能です）`,
     );
   }
 }

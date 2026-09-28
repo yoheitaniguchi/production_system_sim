@@ -48,6 +48,7 @@ function RoutingTable({ state, dispatch }: Props) {
   return (
     <>
       <h3>工順マスタ（BOP）</h3>
+      <div className="panel__table-scroll">
       <table className="panel__table">
         <thead>
           <tr>
@@ -187,6 +188,7 @@ function RoutingTable({ state, dispatch }: Props) {
           </tr>
         </tbody>
       </table>
+      </div>
       {state.workCenters.length === 0 && (
         <p className="master__note master__note--warn">
           作業区が1件も登録されていないため、工順を追加できません。先に作業区マスタで作業区を登録してください。
@@ -197,8 +199,9 @@ function RoutingTable({ state, dispatch }: Props) {
         未完了の製造オーダがある品目は、工順の追加・削除ができません（標準時間・段取り時間・作業区の変更は可能です）。
       </p>
       <p className="master__note">
-        段取り時間は、能力（山積み）の負荷に「製造オーダ1件の当該工程につき1回だけ」加算されます
-        （数量には比例しません。0のときは加算されません）。原価には反映されません。
+        標準時間は1個あたり、段取り時間は製造オーダ1件のこの工程につき1回だけかかる時間です。
+        能力（山積み）の負荷は「数量×標準時間＋段取り時間」で計算されます（段取り時間は数量に比例しません。
+        未設定＝0分なら標準時間だけで計算されます）。原価には反映されません。
       </p>
     </>
   );
