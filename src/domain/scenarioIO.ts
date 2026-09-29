@@ -213,6 +213,19 @@ const TABLE_SPECS: Array<[keyof SimulationState, RowSpec]> = [
 /** 検査結果として一度に列挙するエラー数の上限（巨大な壊れたファイルで画面が埋まらないようにする） */
 const MAX_REPORTED_ERRORS = 12;
 
+/**
+ * 宣言されたキー以外が無いことを検査する（SEC-002）。`__proto__`等を名乗る未知キーを含め、
+ * 素通りさせず一律で拒否する。masterIO.tsのparseMasterSnapshotが行フィールドを個別に取り出して
+ * 新規オブジェクトを組み立てる安全な作りなのに対し、こちらは検証を通った`raw.state`をそのまま
+ * 返す実装のため、この明示的な許可リスト検査で埋め合わせる。
+ */
+function checkNoExtraKeys(row: unknown, allowedKeys: readonly string[], where: string): string[] {
+  if (!isRecord(row)) return [];
+  const allowed = new Set(allowedKeys);
+  const extraKeys = Object.keys(row).filter((key) => !allowed.has(key));
+  return extraKeys.length > 0 ? [`${where}: 未知のフィールドがあります: ${extraKeys.join(", ")}`] : [];
+}
+
 function collectSchemaErrors(state: Record<string, unknown>): string[] {
   const errors: string[] = [];
 
@@ -229,6 +242,7 @@ function collectSchemaErrors(state: Record<string, unknown>): string[] {
     }
     rows.forEach((row, i) => {
       for (const message of checkRow(row, spec)) errors.push(`state.${key}[${i}].${message}`);
+      errors.push(...checkNoExtraKeys(row, Object.keys(spec), `state.${key}[${i}]`));
     });
   }
 
@@ -238,6 +252,10 @@ function collectSchemaErrors(state: Record<string, unknown>): string[] {
       errors.push(`state.${key}: 1以上の整数が必要です`);
     }
   }
+
+  const allowedTopLevelKeys = ["day", ...TABLE_SPECS.map(([key]) => key), ...SEQUENCES.map(([key]) => key)];
+  errors.push(...checkNoExtraKeys(state, allowedTopLevelKeys, "state"));
+
   return errors;
 }
 

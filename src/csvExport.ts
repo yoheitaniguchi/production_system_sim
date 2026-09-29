@@ -3,12 +3,18 @@
 // 各パネルが既に保持する構造化データ（headers/rows）を受け取ってCSV文字列を組み立てるだけで、
 // DOM（.panel__table）を直接走査することはしない。
 
+// セル先頭が=/+/-/@（またはタブ・CR）だと、Excel/Google Sheets等が数式として評価してしまう
+// 「CSV数式インジェクション」対策。品目名・作業区コード等ユーザーが自由に設定できる値がそのまま
+// セルに載る画面があるため、無害化のための`'`を1文字だけ先頭に挿入する（SEC-001）。
+const FORMULA_INJECTION_PATTERN = /^[=+\-@\t\r]/;
+
 function escapeCsvField(field: string | number): string {
   const text = String(field);
-  if (/[",\r\n]/.test(text)) {
-    return `"${text.replace(/"/g, '""')}"`;
+  const neutralized = FORMULA_INJECTION_PATTERN.test(text) ? `'${text}` : text;
+  if (/[",\r\n]/.test(neutralized)) {
+    return `"${neutralized.replace(/"/g, '""')}"`;
   }
-  return text;
+  return neutralized;
 }
 
 /** headers・rowsからCSV文字列を組み立てる（RFC4180ふうにCRLF区切り・必要なフィールドのみ引用符で囲む） */
