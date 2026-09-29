@@ -5,8 +5,9 @@
 `docs/v5-spec.md`（業務仕様の一次資料）、`docs/architecture-flow.html`（全体アーキテクチャ・データフローの可視化）、
 `docs/issue-workflow.md`（Issue駆動開発プロセスの手順）、`docs/test-tagging.md`
 （`domain/*.test.ts`への要件ID・工程・テストの種類・観点タグの付与書式）、
-`docs/test-process-standard.md`（テスト工程の定義と自動化の方針の標準）、および
-`docs/test-management-app-requirements.md`（自動テスト管理アプリの要件定義書）を参照すること。
+`docs/test-process-standard.md`（テスト工程の定義と自動化の方針の標準）、
+`docs/test-management-app-requirements.md`（自動テスト管理アプリの要件定義書）、および
+`docs/security/checklist.md`（セキュリティレビューのチェック観点の正本）を参照すること。
 
 ## プロジェクト概要
 
@@ -139,6 +140,9 @@ npm run lint         # ESLint（eslint.config.js）。CIのtestジョブにも�
 npm run preview      # build成果物をGitHub Pages相当のbaseパスで動作確認
 npm run test:a11y    # Playwright＋axe-coreによるアクセシビリティ自動検査（ライト・ダーク2テーマ×15タブ。
                      # npm run devのdevサーバーを自動起動して実行。初回は npx playwright install --with-deps chromium が必要）
+npm run test:security       # @securityタグ付きvitestテストのみ実行（docs/security/checklist.md参照）
+npm run test:e2e:security   # セキュリティ観点のE2Eテスト（e2e/security.spec.ts。存在する場合のみ）
+npm run audit:security      # npm audit（本番依存はhigh/critical 0件を必須化）＋依存ライセンス一覧の出力
 ```
 
 ## デプロイ
@@ -459,3 +463,23 @@ CLAUDE.md記載の「永続化なし・単一セッション」という設計�
 - Issue駆動開発向けのSkillも用意している：`issue-workflow`（`.claude/skills/issue-workflow/SKILL.md`）：
   要望・要件のIssue化からPR作成（`Closes #`連携）・マージ後の対応までの手順を定型化。詳細は
   `docs/issue-workflow.md`参照
+
+## セキュリティレビュー
+
+**まとまった実装（Issue1件分の機能追加・依存関係の変更・CI設定の変更等）を終えたら、`/security-review`
+スラッシュコマンド（`.claude/commands/security-review.md`）を実行すること。** 引数無しなら
+`git diff main...HEAD`の変更ファイルのみ、`--all`ならリポジトリ全体（src・設定ファイル・CI・依存関係）を
+対象にする。
+
+- チェック観点の正本は`docs/security/checklist.md`（コードレベル／E2Eレベル／非機能面の3部構成）
+- レビューは`security-reviewer`（`.claude/agents/security-reviewer.md`）が行う。読み取り専用
+  （Bashはサブエージェント自身のフックで監査コマンドのみに制限済み）で、本番コードは変更できない
+- 指摘（severityがInfo以外）ごとに`security-test-writer`（`.claude/agents/security-test-writer.md`）が
+  再現・回帰用テストを追加する。テストファイル以外は編集できない（フックで強制）ため、こちらも本番コードは
+  変更できない
+- `npm run test:security`（`@securityタグ`付きvitestテストのみ実行）・`npm run test:e2e:security`
+  （`e2e/security.spec.ts`が存在する場合）・`npm run audit:security`（`npm audit`のhigh/critical
+  ゲート＋依存ライセンス一覧）で検証する
+- テスト失敗＝脆弱性の顕在化として扱い、修正案を提示して**人の承認を得てから**本番コードを修正する
+  （承認前に自動修正はしない）
+- レビュー結果は`docs/security/reports/review-YYYYMMDD-HHMM.md`に出力する

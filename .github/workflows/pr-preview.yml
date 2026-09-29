@@ -38,7 +38,8 @@ jobs:
           BASE_PATH: /production_system_sim/pr-preview/pr-${{ github.event.number }}/
 
       - name: Deploy or remove PR preview
-        uses: rossjrw/pr-preview-action@v1
+        # サードパーティActionはコミットSHAで固定する（SEC-005）。ffa7509... = v1.8.1（v1タグの指す先）
+        uses: rossjrw/pr-preview-action@ffa7509e91a3ec8dfc2e5536c4d5c1acdf7a6de9 # v1.8.1
         with:
           source-dir: ./dist
           action: auto

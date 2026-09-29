@@ -20,3 +20,8 @@ dist-ssr
 .idea
 
 npm-debug.log*
+
+# 環境変数（現状未使用だが、将来の誤コミット防止。SEC-004）
+.env
+.env.*
+!.env.example
