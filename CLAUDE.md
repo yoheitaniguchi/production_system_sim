@@ -53,8 +53,7 @@ production_system_sim/
 │   ├── test-process-standard.md # テスト工程の定義と自動化の方針
 │   ├── test-management-app-requirements.md # 自動テスト管理アプリの要件定義書
 │   ├── security/           # checklist.md（セキュリティレビュー観点の正本）・reports/（レビュー結果）
-│   ├── issue-drafts/       # 過去に起票したIssueの下書き（記録用）
-│   └── *-report.md         # 調査・検証レポート（記録用。現行仕様の正本ではない）
+│   └── report/             # 調査・検証レポート *-report.md（記録用。現行仕様の正本ではない）
 ├── .claude/
 │   ├── agents/             # レビュー用サブエージェント（logic/ux/issue-spec/security-reviewer、security-test-writer）
 │   ├── commands/           # /security-review
