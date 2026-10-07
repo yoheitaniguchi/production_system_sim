@@ -47,7 +47,26 @@ production_system_sim/
 │   ├── v5-spec.md          # v5仕様書（業務仕様の一次資料。原文のまま格納、直接編集しない）
 │   ├── design.md           # v5仕様書との差分・未規定点への追加決定・実装方針（★まず読む）
 │   ├── implementation-plan.md # 初期の全体計画（Phase 0〜8）。Issueごとの開発計画は下書きPRの本文に書く
-│   └── architecture-flow.html # アーキテクチャ・データフロー可視化ページ
+│   ├── architecture-flow.html # アーキテクチャ・データフロー可視化ページ
+│   ├── issue-workflow.md   # Issue駆動開発プロセス（Issue起票〜開発計画〜各レビュー〜マージ）
+│   ├── test-tagging.md     # テストへの要件ID・工程・種類・観点タグの付与書式
+│   ├── test-process-standard.md # テスト工程の定義と自動化の方針
+│   ├── test-management-app-requirements.md # 自動テスト管理アプリの要件定義書
+│   ├── security/           # checklist.md（セキュリティレビュー観点の正本）・reports/（レビュー結果）
+│   ├── issue-drafts/       # 過去に起票したIssueの下書き（記録用）
+│   └── *-report.md         # 調査・検証レポート（記録用。現行仕様の正本ではない）
+├── .claude/
+│   ├── agents/             # レビュー用サブエージェント（logic/ux/issue-spec/security-reviewer、security-test-writer）
+│   ├── commands/           # /security-review
+│   ├── hooks/              # security系サブエージェントの権限ガード
+│   └── skills/issue-workflow/ # Issue駆動開発の手順（docs/issue-workflow.mdの要約）
+├── .github/
+│   ├── workflows/          # test.yml（test・a11y・e2e-scenario）・deploy.yml・pr-preview.yml・flaky-check.yml
+│   ├── ISSUE_TEMPLATE/feature_request.md
+│   └── PULL_REQUEST_TEMPLATE.md # 開発計画・計画レビュー結果・受け入れ条件の充足などの欄を持つ
+├── e2e/                    # Playwright：a11y.spec.ts・scenario.spec.ts・security.spec.ts
+├── scripts/                # CI連携（aggregate-test-results.mjs）・依存監査（security-audit.mjs）
+├── security/               # リポジトリ設定・依存関係のセキュリティテスト（@securityタグ）
 ├── package.json
 ├── tsconfig.json
 ├── vite.config.ts
@@ -122,7 +141,8 @@ production_system_sim/
         ├── ExerciseGuidePanel.tsx # 分析：演習ガイド（TC-01〜18の進行状況と次の操作）
         ├── ProcessFlowDiagram.tsx # 受注〜出荷プロセス連携図（BPMN風。ペギング追跡とは別画面）
         ├── ProcessFlowPopup.tsx   # プロセス連携図フローティングポップアップ（ドラッグ移動対応）
-        └── EventLogPanel.tsx      # データ増分ログ（テーブル別行数差分＋業務メッセージ）
+        ├── EventLogPanel.tsx      # データ増分ログ（テーブル別行数差分＋業務メッセージ）
+        └── ErrorBoundary.tsx      # ルートのError Boundary（描画時の例外でフォールバック画面を出す。main.tsxで使用）
 ```
 
 ## コマンド
@@ -140,6 +160,7 @@ npm run lint         # ESLint（eslint.config.js）。CIのtestジョブにも�
 npm run preview      # build成果物をGitHub Pages相当のbaseパスで動作確認
 npm run test:a11y    # Playwright＋axe-coreによるアクセシビリティ自動検査（ライト・ダーク2テーマ×15タブ。
                      # npm run devのdevサーバーを自動起動して実行。初回は npx playwright install --with-deps chromium が必要）
+npm run test:e2e:scenario  # 業務シナリオのE2Eテスト（e2e/scenario.spec.ts。CIのe2e-scenarioジョブ）
 npm run test:security       # @securityタグ付きvitestテストのみ実行（docs/security/checklist.md参照）
 npm run test:e2e:security   # セキュリティ観点のE2Eテスト（e2e/security.spec.ts。存在する場合のみ）
 npm run audit:security      # npm audit（本番依存はhigh/critical 0件を必須化）＋依存ライセンス一覧の出力
@@ -188,7 +209,7 @@ KPIサマリーカード、アラート件数の可視化。`domain/dashboard.ts
   統一し、原価タブの算出方法と食い違わないようにしている。`reducer.ts`の`upsertDashboardSnapshot()`が
   `applyAction()`とADVANCE_DAYの末尾で毎回呼ばれ、`state.dashboardHistory`の当日分を上書き・日を跨いだら
   追記する（EventLogEntryと同じ「状態に保持する記録」だが、永続化はしない）
-- `src/domain/*.test.ts`ほか（`npm test`全体で286件）：v5-spec.md §9のTC-01〜18・TC-E1〜E3の全シナリオ、
+- `src/domain/*.test.ts`ほか（`npm test`全体で34ファイル・311件）：v5-spec.md §9のTC-01〜18・TC-E1〜E3の全シナリオ、
   reducerの委譲・不変性・エラーハンドリング・RESET時のマスタ保持、`processFlow.ts`のフロー判定、
   §11.2の原価計算例・§11.3のロット系譜（後方/前方追跡）を検証済み。design.md §6の複数受注演習も
   TC-M1として`multiOrderExercise.test.ts`で検証済み。マスタ自由登録は`masterData.test.ts`・
@@ -386,6 +407,23 @@ SVGバー化（Issue #67、EXT-42）も完了した。いずれも`logic-reviewe
   同様に付与）。負荷ありの能力タブをaxeへ通すe2eケースを`e2e/a11y.spec.ts`に追加した（初期状態ではグラフが描画
   されず従来の検査対象外だったため）
 
+セキュリティレビュー基盤の構築と初回の全体レビュー（PR #118）も完了した。`security-reviewer`・
+`security-test-writer`サブエージェントと`/security-review`コマンドを新設し（詳細は下の「セキュリティレビュー」節）、
+初回レビューの指摘（Medium 1件・Low 4件。`docs/security/reports/review-20260929-0340.md`）に対し、承認を得て
+次の本番コードを修正した：CSV数式インジェクション対策（`csvExport.ts`でセル先頭の`=`/`+`/`-`/`@`を無害化）、
+シナリオJSONの未知キー（`__proto__`含む）の拒否（`scenarioIO.ts`）、localStorageアクセス例外の保護（`theme.ts`）と
+ルートへのError Boundary導入（`ErrorBoundary.tsx`・`main.tsx`）、`.gitignore`への`.env`追加、サードパーティActionの
+コミットSHA固定（`deploy.yml`・`pr-preview.yml`）。回帰テストは`*.security.test.ts`・`security/`配下・
+`e2e/security.spec.ts`にある
+
+開発フローの改訂（PR #119）も完了した。Issue起票後に、開発計画を**下書き（draft）PRの本文**に書き、
+`logic-reviewer`（要件との整合性・合理性）・`ux-reviewer`（UI/UX）・`security-reviewer`（安全性・堅牢性）で
+計画レビューしてから実装する。実装後は実装レビュー（`/security-review`を含む）を経てReady for reviewにし、
+PRレビューはClaude（`/code-review`＋5観点の確認結果コメント）とユーザーの両方が行い、マージはユーザーが行う。
+3つのレビュアーには「計画レビュー」のモードを追加し、PRテンプレートに開発計画・計画レビュー結果・受け入れ条件の
+充足などの欄を追加した。手順の正本は`docs/issue-workflow.md`（Skillは`issue-workflow`）。なお計画レビューの
+モードは実際のIssueでの運用実績がまだ無いため、最初に適用するIssueで機能するかを確認すること
+
 ## 次にやるべきこと（優先順）
 
 `docs/implementation-plan.md` §5「Phase 7（先送り事項）」・マスタ自由登録・§6「Phase 8：能力計画（CRP）」・
@@ -397,7 +435,8 @@ CI基盤の新設。検出された実違反の修正は個別Issue化して別�
 表データのCSVエクスポート（Issue #54）・計画オーダ段階での山積みプレビュー（Issue #57）・複数受注の競合
 における優先順位付け（Issue #58）・ボトルネック作業区の推移ハイライト（Issue #59）・KPIのトレンド化
 （Issue #60）・複数プリセットの同梱（Issue #56）・原価パネルのグラフ化（Issue #62）・シナリオのフルスナップ
-ショット保存・復元（Issue #61）・段取り時間の追加（Issue #66）・山積み表のSVGバー化（Issue #67）は全項目完了した。
+ショット保存・復元（Issue #61）・段取り時間の追加（Issue #66）・山積み表のSVGバー化（Issue #67）・セキュリティレビュー
+基盤の構築（PR #118）・開発フローの改訂（PR #119）は全項目完了した。
 残るオープンIssueは5件（#55・#64・#65・#68・#69）で、いずれもIssue自身の「レビュー時の確認事項」が着手前の
 ユーザー判断を明示的に求めているため、実装に着手せず判断待ちとしている。マスタのlocalStorage永続化（Issue #55）は、
 CLAUDE.md記載の「永続化なし・単一セッション」という設計方針そのものの転換と、複数学習者が同一ブラウザを共有する場合の
@@ -411,7 +450,7 @@ CLAUDE.md記載の「永続化なし・単一セッション」という設計�
 
 | ドメイン | 件名 | 費用対効果 | 概要 |
 |---|---|---|---|
-| 基盤（CI） | CI継続確認 | 高（追加実装コストがほぼゼロで、リグレッション検知という効果を維持できる） | `.github/workflows/`（test.yml・deploy.yml・pr-preview.yml）が全PRで正しく動作し続けているかの継続確認。実装ではなく運用確認タスク |
+| 基盤（CI） | CI継続確認 | 高（追加実装コストがほぼゼロで、リグレッション検知という効果を維持できる） | `.github/workflows/`（test.yml［test・a11y・e2e-scenario］・deploy.yml・pr-preview.yml・flaky-check.yml）が全PRで正しく動作し続けているかの継続確認。実装ではなく運用確認タスク |
 | マスタ／基盤 | マスタのlocalStorage永続化（Issue #55、保留中） | 中（実装コスト自体は中程度だが、CLAUDE.md記載の「永続化なし・単一セッション」という設計方針そのものの転換になるため、着手前に方針変更の可否をユーザーに確認する必要がある） | ブラウザリロードでマスタ編集内容が失われる現状を、localStorageへの自動保存で解消する案。JSON入出力（`masterIO.ts`）を土台にできる |
 | マスタ | 品目コードの改名機能（Issue #64、要否検討・判断待ち） | 低（実装コスト大：BOM・工順・受注・各種オーダ等、全参照箇所への一括カスケード更新が必要／効果小：EXT-24で「削除→再登録」という代替運用が既に確立しており実用上困らない） | EXT-24で一度カスケード更新を断念した経緯がある。改めて着手する場合は全参照テーブルの一括更新ロジックが必要 |
 | 演習ガイド／マスタ | 演習ガイドのマスタ非依存化（Issue #65、EXT-27・判断待ち） | 低〜中（現状はCHAIR_PRESETの品目コード・数量に依存したハードコード判定のため、`exerciseGuide.ts`の判定ロジック全面書き換えが必要。複数プリセットは同梱済み（EXT-34）で、自転車プリセットでは演習ガイドが判定不能になるため、一般化の価値が出る状態になっている） | TC-01〜18の自動判定を、マスタが自由に差し替わっても機能するよう一般化する |
