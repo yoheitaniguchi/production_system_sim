@@ -216,38 +216,9 @@ v5仕様書 §8.1（共通シェル／ドメイン画面／分析画面）をそ
 
 ## §8 ディレクトリ構成
 
-```
-production_system_sim/
-├── CLAUDE.md
-├── README.md
-├── docs/
-│   ├── v5-spec.md            # v5仕様書（一次資料、原文のまま）
-│   ├── design.md             # 本書（v5との差分・追加決定・実装方針）
-│   └── implementation-plan.md
-├── src/
-│   ├── types.ts              # §4のデータモデル対応をそのまま型定義に
-│   ├── data/
-│   │   └── masterData.ts     # v5仕様書 §1.1（木製イス）＝既定プリセット CHAIR_PRESET（EXT-26）
-│   └── domain/
-│       ├── masterData.ts     # マスタCRUD（v5 §3.7、EXT-20〜EXT-24）
-│       ├── masterIntegrity.ts # BOM循環・参照検査・健全性チェック（v5 §3.7 最小機能5、EXT-19/21/22）
-│       ├── masterIO.ts       # マスタ一式のJSON入出力（EXT-26）
-│       ├── mrp.ts            # runMRP/explode/firmAllPlannedOrders（v5 §7.1）
-│       ├── production.ts     # startStep/completeStep（バックフラッシュ、v5 §7.3、EXT-10）
-│       ├── procurement.ts    # PO納期回答・入荷計上（v5 §6.5、EXT-4）
-│       ├── shipment.ts       # allocate/shipOut/shippableQty（v5 §7.2、EXT-5）
-│       ├── salesOrder.ts     # 受注登録・納期回答・取消（v5 §6.1、EXT-2/3/7）
-│       ├── pegging.ts        # traceFromOrder（v5 §7.4）
-│       ├── schedule.ts       # checkSchedule/unmetDemand（v5 §7.5）
-│       ├── inventory.ts      # 棚卸調整（v5 UC-17。実装時に8モジュール構成では収まらないと判明し追加）
-│       ├── kpi.ts            # v5 §10のKPI算出（EXT-11）
-│       ├── gantt.ts          # 受注ごとの進捗ガントチャート用データ計算（EXT-29）
-│       ├── capacity.ts       # 能力計画（CRP）の山積み計算（未実装・§9で計画のみ確定、EXT-30〜32）
-│       ├── processFlow.ts    # プロセス連携図
-│       └── reducer.ts        # 上記モジュールをactionへディスパッチ
-│       （各ファイルに対応する `*.test.ts` を併設）
-└── components/                # §5の対応表のとおり
-```
+ディレクトリ構成と各モジュールの役割（対応するv5仕様書の節・EXT番号）は、`CLAUDE.md`「ディレクトリ構成」を正とする
+（二重管理による乖離を避けるため、本節では管理しない。2026-10-08、`docs/process/review-report.md` B-6）。
+ドメインロジックをドメインごとのファイルに分割し、単一の巨大な`logic.ts`にしない方針も、`CLAUDE.md`「技術スタック・アーキテクチャ」に書いてある。
 
 ---
 

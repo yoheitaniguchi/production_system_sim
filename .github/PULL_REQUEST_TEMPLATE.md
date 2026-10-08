@@ -84,7 +84,7 @@ Closes #
 ## 確認事項
 
 - [ ] `docs/design.md`の更新要否を確認した（D6）
-- [ ] `CLAUDE.md`「現在の実装状況」「次にやるべきこと」の更新要否を確認した（D8）
+- [ ] `CHANGELOG.md`に追記した。`CLAUDE.md`「現在の実装状況」「次にやるべきこと」の更新要否を確認した（D8）
 - [ ] `docs/process/poc-definition.md`の更新要否を確認した（D8）
 
 ## 人の確認（DoD D7）

@@ -16,7 +16,7 @@
 | D5 | 実装レビュー（`src/domain/`変更時は`logic-reviewer`、`src/components/`変更時は`ux-reviewer`）と`/security-review`の指摘に対応した | PR本文「テスト」 |
 | D6 | 新しい仕様の解釈・設計判断を`docs/design.md` §3（EXT-xx）に記録した。仕様書（`docs/v5-spec.md`）は直接編集していない | PR本文「確認事項」 |
 | D7 | **人の確認**：マージする人が、下記「人が確認する範囲」を確認した | PR本文「人の確認」 |
-| D8 | 必要な文書（`CLAUDE.md`・`README.md`・`docs/process/poc-definition.md`）の更新要否を判断した | PR本文「確認事項」 |
+| D8 | `CHANGELOG.md`に追記し、必要な文書（`CLAUDE.md`・`README.md`・`docs/process/poc-definition.md`）の更新要否を判断した | PR本文「確認事項」 |
 
 ## 人が確認する範囲（D7）
 
