@@ -1,5 +1,7 @@
 # ブラウザからのGitHub Actions成果物（artifact）直接取得検証レポート
 
+> **注記**：本レポートは作成時点のスナップショットであり、以後は更新しない。現行の状態は`CLAUDE.md`・`CHANGELOG.md`を参照すること。
+
 検証日時：2026-09-27（UTC）／検証者：Claude Code
 
 > **前提の注記**：本検証の実施を依頼された`docs/test-management-app-requirements.md`は、本リポジトリの

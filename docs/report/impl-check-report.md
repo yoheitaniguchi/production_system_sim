@@ -1,5 +1,7 @@
 # 実装確認レポート（design-additions-draft.md §19〜§21 の【要確認】7件＋追加確認3件）
 
+> **注記**：本レポートは作成時点のスナップショットであり、以後は更新しない。現行の状態は`CLAUDE.md`・`CHANGELOG.md`を参照すること。
+
 **確認方法**：`src/`配下のソースコード・`docs/v5-spec.md`・`docs/design.md`を読み、事実の断定が必要な箇所は
 一時的な検証コード（`src/domain/__tmp_verify_cancel.test.ts`。確認後に削除済み、リポジトリには残していない）を
 `npx vitest run`で実行して確認した。ソースコード・テスト・設定ファイルは変更していない。
