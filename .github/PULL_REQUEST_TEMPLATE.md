@@ -73,14 +73,25 @@ Closes #
 
 ## テスト
 
-- [ ] `npm test`
-- [ ] `npm run lint`
-- [ ] `npm run build`（`npx tsc --noEmit`を含む）
+<!-- 完了の定義（DoD）は docs/process/dod.md。CIの必須チェック（D2）はRulesetで強制されるため、ここには書かない -->
+
+- [ ] `npm test`・`npm run lint`・`npm run build`（`npx tsc --noEmit`を含む）がローカルで通った（D3）
+- [ ] 追加・変更したテストに`docs/test-tagging.md`の書式でタグを付けた（D4）
 - [ ] UI変更がある場合、ブラウザでライト・ダーク両テーマの動作を確認した
-- [ ] 実装レビュー（`src/domain/`変更時は`logic-reviewer`、`src/components/`変更時は`ux-reviewer`）の指摘に対応した
-- [ ] `/security-review`を実行し、指摘に対応した
+- [ ] 実装レビュー（`src/domain/`変更時は`logic-reviewer`、`src/components/`変更時は`ux-reviewer`）の指摘に対応した（D5）
+- [ ] `/security-review`を実行し、指摘に対応した（D5）
 
 ## 確認事項
 
-- [ ] `docs/design.md`の更新要否を確認した
-- [ ] `CLAUDE.md`「現在の実装状況」「次にやるべきこと」の更新要否を確認した
+- [ ] `docs/design.md`の更新要否を確認した（D6）
+- [ ] `CLAUDE.md`「現在の実装状況」「次にやるべきこと」の更新要否を確認した（D8）
+- [ ] `docs/process/poc-definition.md`の更新要否を確認した（D8）
+
+## 人の確認（DoD D7）
+
+<!-- マージする人が記入する。AIが代わりにチェックを付けない -->
+
+- [ ] テストの期待値が仕様（v5-spec.md・Issue・design.md）から来ている
+- [ ] design.mdに追加・変更したEXT-xxの内容に納得した（無ければ「なし」）
+- [ ] UI変更がある場合、PRプレビューで主要な操作を1回通した
+- [ ] このPRが寄与する仮説（poc-definition.md 1章の①〜③）：

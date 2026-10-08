@@ -30,7 +30,8 @@ description: 要望・要件をGitHub Issueとして起票し、そのIssueを�
 8. **実装レビュー**（8）：`src/domain/`を変更したら`logic-reviewer`、`src/components/`を変更したら
    `ux-reviewer`でレビューし、`/security-review`を実行する
 9. **実装結果の記録・Ready for review**（9）：PR本文の「実装結果」「受け入れ条件の充足」「テスト」「確認事項」を
-   埋める（実装結果はコメントではなく本文に書く）。CI（`test`・`a11y`・`e2e-scenario`）がgreenであることを
+   埋める（実装結果はコメントではなく本文に書く。各項目は`docs/process/dod.md`のD1〜D8に対応し、
+   「人の確認」欄はユーザーが記入するので埋めない）。CI（`test`・`a11y`・`e2e-scenario`）がgreenであることを
    確認してから下書きを解除する
 10. **PRレビュー**（10）：`/code-review --comment`で差分を検査し、あわせてPRと実装の整合性／計画タスクの実施／
     受け入れ条件の充足／品質ゲート／確認事項の5観点の確認結果をPRコメントに投稿する。ユーザーも同じ観点で
