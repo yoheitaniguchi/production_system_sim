@@ -6,7 +6,9 @@
 `docs/issue-workflow.md`（Issue駆動開発プロセスの手順）、`docs/test-tagging.md`
 （`domain/*.test.ts`への要件ID・工程・テストの種類・観点タグの付与書式）、
 `docs/test-process-standard.md`（テスト工程の定義と自動化の方針の標準）、
-`docs/test-management-app-requirements.md`（自動テスト管理アプリの要件定義書）、および
+`docs/test-management-app-requirements.md`（自動テスト管理アプリの要件定義書）、
+`docs/process/poc-definition.md`（PoCの目的・仮説・検証しない範囲の正本。機能の優先順位はこれで判断する）、
+`docs/process/dod.md`（完了の定義。PRをマージしてよい条件の正本）、および
 `docs/security/checklist.md`（セキュリティレビューのチェック観点の正本）を参照すること。
 
 ## プロジェクト概要
@@ -52,6 +54,7 @@ production_system_sim/
 │   ├── test-tagging.md     # テストへの要件ID・工程・種類・観点タグの付与書式
 │   ├── test-process-standard.md # テスト工程の定義と自動化の方針
 │   ├── test-management-app-requirements.md # 自動テスト管理アプリの要件定義書
+│   ├── process/            # poc-definition.md（PoC定義）・dod.md（完了の定義）・review-report.md（プロセスレビュー）
 │   ├── security/           # checklist.md（セキュリティレビュー観点の正本）・reports/（レビュー結果）
 │   └── report/             # 調査・検証レポート *-report.md（記録用。現行仕様の正本ではない）
 ├── .claude/
