@@ -1,5 +1,7 @@
 Closes #
 
+経路：標準 <!-- 標準／軽量（docs/issue-workflow.md 1.1節）。軽量経路ではIssueを省略でき、「計画レビュー結果」は「軽量経路のため省略」と書く -->
+
 <!--
 手順は docs/issue-workflow.md を参照。
 1. 下書き（draft）PRとして作成し、まず「開発計画」を書く（5節）

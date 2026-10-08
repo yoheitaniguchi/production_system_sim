@@ -201,7 +201,7 @@ npm run audit:security      # npm audit（本番依存はhigh/critical 0件を�
 - **CI**：`.github/workflows/test.yml`の`test`・`a11y`・`e2e-scenario`の3ジョブは、`main`のRulesetにより
   マージ前の成功が必須。`test`ジョブはテスト結果をJSONに集約して`data`ブランチへ書き込む
 - **開発プロセス**：Issue → 下書きPRに開発計画 → 計画レビュー → 実装 → 実装レビュー → PRレビュー → マージ
-  （`docs/issue-workflow.md`）。マージ条件は`docs/process/dod.md`。計画レビューのモードは運用実績がまだ少ないため、
+  （`docs/issue-workflow.md`の標準経路）。小さく低リスクな変更は軽量経路（同 1.1節。Issue省略可・計画レビューなし）で進める。マージ条件は`docs/process/dod.md`。計画レビューのモードは運用実績がまだ少ないため、
   適用したIssueで機能したかを確認すること
 
 ## 次にやるべきこと（優先順）
