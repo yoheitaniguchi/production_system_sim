@@ -287,7 +287,7 @@
 | F-1 | ⚠️ | 計画レビューに`security-reviewer`（PR #119）、`docs/security/checklist.md` | 運用実績なし |
 | F-2 | ⚠️ | ESLint、CodeQL（`codeql.yml`）、Dependabot（`dependabot.yml`）、`npm audit`ゲート（`test.yml`の`dependency-audit`ジョブ）、Action SHA固定テスト | 2026-10-08にCodeQL・Dependabotを追加し、`npm audit`をvitestから分離。Secret scanning・Push protectionの有効化（リポジトリ設定）を確認できたら✅にする |
 | F-3 | ✅ | `poc-definition.md` 4章（性能・構成・a11y・セキュリティの目標値） | 2026-10-08確定。性能の実測はF-4で行う（旧❌） |
-| F-4 | ❌ | 計測記録なし | F-3の目標決定後に実施 |
+| F-4 | ✅ | `src/domain/mrpPerformance.test.ts`、`poc-definition.md` 4章「現状」欄 | 2026-10-13再判定（旧❌）。目標値を閾値とする性能テストを`npm test`に追加 |
 | F-5 | ⚠️ | axe-core自動検査・`ux-reviewer`（AI）、本人の試用のみ（回答） | 第三者評価は「検証しない範囲」として明記を提案 |
 | F-6 | ✅ | `poc-definition.md` 4章・5章 | 2026-10-08再判定（旧⚠️） |
 | G-1 | ✅ | `test.yml`（pull_request・main push） | |

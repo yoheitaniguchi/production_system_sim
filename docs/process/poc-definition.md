@@ -37,7 +37,7 @@
 
 | 項目 | 目標値 | 検証方法 | 現状 |
 |---|---|---|---|
-| 性能（計算） | 既定プリセット（木製イス）・受注20件でMRP実行が1秒以内。4階層BOM・品目100件で3秒以内 | vitestで大きめのマスタを生成し`runMRP()`の実行時間を計測するテストを追加する（レビューレポートF-4） | 未計測 |
+| 性能（計算） | 既定プリセット（木製イス）・受注20件でMRP実行が1秒以内。4階層BOM・品目100件で3秒以内 | `src/domain/mrpPerformance.test.ts`（`npm test`に含まれ、CIの`test`ジョブで毎回実行。目標値を閾値とし劣化を検知する） | 目標達成（2026-10-13実測：木製イス・受注20件で約1.4ms、4階層・品目100件・受注20件で約3.7ms、同・確定済み20件＋新規20件で約15ms。いずれも5回の最大値） |
 | 構成 | Chromium系ブラウザ（Chrome・Edge）の最新版、横幅1366px以上 | CIのPlaywright（Chromium）で検証。他のブラウザは検証しない | CIで実施中 |
 | アクセシビリティ | axe-coreのcritical／serious相当の違反0件（ライト・ダーク両テーマ×全タブ） | `npm run test:a11y`（CIの`a11y`ジョブ） | CIで実施中 |
 | セキュリティ | 本番依存のhigh／critical脆弱性0件。シークレットをリポジトリに含めない | `npm run audit:security`（CIの`dependency-audit`ジョブ）、`@security`タグ付きテスト、CodeQL（`codeql.yml`）、Dependabot、GitHubのSecret scanning | 一部実施中（Secret scanningはリポジトリ設定の確認待ち） |

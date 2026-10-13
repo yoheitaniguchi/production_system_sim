@@ -294,3 +294,6 @@ CI基盤の新設。検出された実違反の修正は個別Issue化して別�
   `security/ci-workflows.security.test.ts`で検査するようにした。`dependency-audit`をmainのRulesetの必須チェックに加えた（SEC-001）
 - 最初の振り返り（`docs/process/retrospectives/2026-10-13.md`）を記録し、`docs/process/findings.md`にこれまでの判断を遡って記録した
   （`docs/process/review-report.md` C-3・C-4）
+- MRP性能のベンチマーク（`docs/process/review-report.md` F-4）として`src/domain/mrpPerformance.test.ts`を追加した。`poc-definition.md` 4章の
+  性能目標（木製イス・受注20件で1秒以内、4階層BOM・品目100件で3秒以内）をそのまま閾値とし、確定済みオーダがある状態での再実行も測る。
+  実測は目標の数百分の1以下（数ms〜十数ms）で、`npm test`の一部としてCIで劣化を検知する
