@@ -67,7 +67,8 @@ production_system_sim/
 │   ├── hooks/              # security系サブエージェントの権限ガード
 │   └── skills/issue-workflow/ # Issue駆動開発の手順（docs/issue-workflow.mdの要約）
 ├── .github/
-│   ├── workflows/          # test.yml（test・a11y・e2e-scenario）・deploy.yml・pr-preview.yml・flaky-check.yml
+│   ├── workflows/          # test.yml（test・dependency-audit・a11y・e2e-scenario）・codeql.yml・deploy.yml・pr-preview.yml・flaky-check.yml
+│   ├── dependabot.yml      # npm・GitHub Actionsの依存更新提案（週1回）
 │   ├── ISSUE_TEMPLATE/feature_request.md
 │   └── PULL_REQUEST_TEMPLATE.md # 開発計画・計画レビュー結果・受け入れ条件の充足などの欄を持つ
 ├── e2e/                    # Playwright：a11y.spec.ts・scenario.spec.ts・security.spec.ts
@@ -169,7 +170,7 @@ npm run test:a11y    # Playwright＋axe-coreによるアクセシビリティ自
 npm run test:e2e:scenario  # 業務シナリオのE2Eテスト（e2e/scenario.spec.ts。CIのe2e-scenarioジョブ）
 npm run test:security       # @securityタグ付きvitestテストのみ実行（docs/security/checklist.md参照）
 npm run test:e2e:security   # セキュリティ観点のE2Eテスト（e2e/security.spec.ts。存在する場合のみ）
-npm run audit:security      # npm audit（本番依存はhigh/critical 0件を必須化）＋依存ライセンス一覧の出力
+npm run audit:security      # npm audit（本番依存はhigh/critical 0件を必須化）＋依存ライセンス一覧の出力（CIのdependency-auditジョブ）
 ```
 
 ## デプロイ
@@ -198,8 +199,9 @@ npm run audit:security      # npm audit（本番依存はhigh/critical 0件を�
   木製イスでのみ動く（EXT-27）
 - **テスト**：`npm test`（vitest、約300件）が、v5-spec.md §9のTC-01〜18・TC-E1〜E3、design.md §6の複数受注演習（TC-M1）、
   4階層BOMの通し演習などを検証する。E2Eは`e2e/`配下（a11y・業務シナリオ・セキュリティ）
-- **CI**：`.github/workflows/test.yml`の`test`・`a11y`・`e2e-scenario`の3ジョブは、`main`のRulesetにより
-  マージ前の成功が必須。`test`ジョブはテスト結果をJSONに集約して`data`ブランチへ書き込む
+- **CI**：`.github/workflows/test.yml`の`test`・`dependency-audit`・`a11y`・`e2e-scenario`の4ジョブは、`main`のRulesetにより
+  マージ前の成功が必須。`test`ジョブはテスト結果をJSONに集約して`data`ブランチへ書き込む。`dependency-audit`は
+  本番依存のhigh/critical脆弱性ゲート（ネットワーク依存のためvitestから分離）。静的解析は`codeql.yml`、依存更新はDependabot
 - **開発プロセス**：Issue → 下書きPRに開発計画 → 計画レビュー → 実装 → 実装レビュー → PRレビュー → マージ
   （`docs/issue-workflow.md`の標準経路）。小さく低リスクな変更は軽量経路（同 1.1節。Issue省略可・計画レビューなし）で進める。マージ条件は`docs/process/dod.md`。計画レビューのモードは運用実績がまだ少ないため、
   適用したIssueで機能したかを確認すること
@@ -222,7 +224,7 @@ npm run audit:security      # npm audit（本番依存はhigh/critical 0件を�
 
 | ドメイン | 件名 | 費用対効果 | 概要 |
 |---|---|---|---|
-| 基盤（CI） | CI継続確認 | 高（追加実装コストがほぼゼロで、リグレッション検知という効果を維持できる） | `.github/workflows/`（test.yml［test・a11y・e2e-scenario］・deploy.yml・pr-preview.yml・flaky-check.yml）が全PRで正しく動作し続けているかの継続確認。実装ではなく運用確認タスク |
+| 基盤（CI） | CI継続確認 | 高（追加実装コストがほぼゼロで、リグレッション検知という効果を維持できる） | `.github/workflows/`（test.yml［test・dependency-audit・a11y・e2e-scenario］・codeql.yml・deploy.yml・pr-preview.yml・flaky-check.yml）が全PRで正しく動作し続けているかの継続確認。実装ではなく運用確認タスク |
 | マスタ／基盤 | マスタのlocalStorage永続化（Issue #55、保留中） | 中（実装コスト自体は中程度だが、CLAUDE.md記載の「永続化なし・単一セッション」という設計方針そのものの転換になるため、着手前に方針変更の可否をユーザーに確認する必要がある） | ブラウザリロードでマスタ編集内容が失われる現状を、localStorageへの自動保存で解消する案。JSON入出力（`masterIO.ts`）を土台にできる |
 | マスタ | 品目コードの改名機能（Issue #64、要否検討・判断待ち） | 低（実装コスト大：BOM・工順・受注・各種オーダ等、全参照箇所への一括カスケード更新が必要／効果小：EXT-24で「削除→再登録」という代替運用が既に確立しており実用上困らない） | EXT-24で一度カスケード更新を断念した経緯がある。改めて着手する場合は全参照テーブルの一括更新ロジックが必要 |
 | 演習ガイド／マスタ | 演習ガイドのマスタ非依存化（Issue #65、EXT-27・判断待ち） | 低〜中（現状はCHAIR_PRESETの品目コード・数量に依存したハードコード判定のため、`exerciseGuide.ts`の判定ロジック全面書き換えが必要。複数プリセットは同梱済み（EXT-34）で、自転車プリセットでは演習ガイドが判定不能になるため、一般化の価値が出る状態になっている） | TC-01〜18の自動判定を、マスタが自由に差し替わっても機能するよう一般化する |
@@ -259,8 +261,10 @@ npm run audit:security      # npm audit（本番依存はhigh/critical 0件を�
   （シナリオJSONの復元が未知キーとして拒否する。design.md EXT-40）
 - **テーマ（色）**：新しい色は`index.css`のデザイントークンとして6テーマすべてに定義する。`--warn-border`は枠線用で、
   警告の文字色には`--warn-text`を使う（コントラスト不足の再発防止。Issue #72）
-- **CIの権限**：`permissions.contents: write`は`test.yml`の`test`ジョブ（`data`ブランチへのテスト結果書き込み）だけに
-  付与している。他のジョブ・ワークフローへ広げないこと（Issue #98）
+- **CIの権限**：各ワークフローはトップレベルで最小権限（`contents: read`）を明示し、書き込みが必要な箇所だけに付与する
+  （`security/ci-workflows.security.test.ts`のSEC-002で検査）。`contents: write`を持つのは、`test.yml`の`test`ジョブ
+  （`data`ブランチへのテスト結果書き込み。Issue #98）と、gh-pagesへ配信する`deploy.yml`・`pr-preview.yml`だけ。
+  `security-events: write`は`codeql.yml`の解析ジョブだけ。これ以外へ書き込み権限を広げないこと
 - `docs/v5-spec.md` は原文のまま保持する一次資料であり、直接編集しない。v5仕様書自体への疑問・矛盾点が
   見つかった場合は`docs/design.md` §3（追加決定）に解釈を追記する形で解消する
 

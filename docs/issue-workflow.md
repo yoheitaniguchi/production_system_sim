@@ -157,7 +157,7 @@ PoCの目的は早く学ぶことであり（`docs/process/poc-definition.md`）
   - `a11y`：Playwright＋axe-coreによるアクセシビリティ検査（`npm run test:a11y`）
   - `e2e-scenario`：業務シナリオのE2Eテスト（`npm run test:e2e:scenario`）
 - UI変更がある場合は、PRに自動でコメントされるPRプレビューURL（`pr-preview.yml`）で動作を確認できる
-- `main`はRulesetで`test`・`a11y`・`e2e-scenario`の成功を必須にしているため、CIが完了・成功するまでマージできない
+- `main`はRulesetで`test`・`dependency-audit`・`a11y`・`e2e-scenario`の成功を必須にしているため、CIが完了・成功するまでマージできない
 - 上記がそろったら下書きを解除し、Ready for reviewにする
 
 ## 10. PRレビュー

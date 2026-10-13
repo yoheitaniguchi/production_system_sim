@@ -40,7 +40,7 @@
 | 性能（計算） | 既定プリセット（木製イス）・受注20件でMRP実行が1秒以内。4階層BOM・品目100件で3秒以内 | vitestで大きめのマスタを生成し`runMRP()`の実行時間を計測するテストを追加する（レビューレポートF-4） | 未計測 |
 | 構成 | Chromium系ブラウザ（Chrome・Edge）の最新版、横幅1366px以上 | CIのPlaywright（Chromium）で検証。他のブラウザは検証しない | CIで実施中 |
 | アクセシビリティ | axe-coreのcritical／serious相当の違反0件（ライト・ダーク両テーマ×全タブ） | `npm run test:a11y`（CIの`a11y`ジョブ） | CIで実施中 |
-| セキュリティ | 本番依存のhigh／critical脆弱性0件。シークレットをリポジトリに含めない | `npm run audit:security`、`@security`タグ付きテスト、GitHubのSecret scanning | 一部実施中（Secret scanningは設定待ち） |
+| セキュリティ | 本番依存のhigh／critical脆弱性0件。シークレットをリポジトリに含めない | `npm run audit:security`（CIの`dependency-audit`ジョブ）、`@security`タグ付きテスト、CodeQL（`codeql.yml`）、Dependabot、GitHubのSecret scanning | 一部実施中（Secret scanningはリポジトリ設定の確認待ち） |
 
 ## 5. 検証しない範囲
 

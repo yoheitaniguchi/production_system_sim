@@ -6,6 +6,10 @@ on:
     branches: [main]
   workflow_dispatch:
 
+# トークンの既定権限は読み取りのみにする（SEC-002）。書き込みが必要なジョブだけジョブ単位で付与する
+permissions:
+  contents: read
+
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -62,6 +66,25 @@ jobs:
           name: vitest-junit-report
           path: test-results/junit.xml
           retention-days: 14
+
+  # 依存パッケージの脆弱性ゲート（本番依存のhigh/critical 0件）とライセンス一覧。npm registryへの通信を伴うため、
+  # vitest（testジョブ）から分離し、レジストリ障害が単体テストの結果に混ざらないようにした
+  # （docs/process/review-report.md F-2。旧：security/dependencies.security.test.ts の SEC-006）
+  dependency-audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Audit dependencies (vulnerabilities and licenses)
+        run: npm run audit:security
 
   a11y:
     runs-on: ubuntu-latest

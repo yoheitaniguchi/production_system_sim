@@ -112,7 +112,7 @@ E2Eツール（Playwright、既存の`e2e/`配下の流儀に合わせる）で�
   GitHub Pages公開という前提を明記）
 - 更新が長期間停止した依存、メジャーバージョン遅れの一覧
 - ロックファイルの整合性、`npm ci`で再現可能であること
-- Dependabot等の自動更新設定の有無（現状未設定）
+- Dependabot等の自動更新設定の有無（`.github/dependabot.yml`で設定済み。npm・GitHub Actionsを週1回）
 
 ### シークレット・設定不備
 - コミット履歴を含むシークレットスキャン（gitleaks等、未導入。導入案は提示するが導入は承認後）

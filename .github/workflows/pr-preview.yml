@@ -16,6 +16,9 @@ concurrency:
 jobs:
   preview:
     runs-on: ubuntu-latest
+    # DependabotのPRはGITHUB_TOKENが読み取り専用になりgh-pagesへ配信できないため、プレビューを作らない
+    # （依存更新は画面の見た目を変えないため、プレビューが無くても確認に支障はない）
+    if: github.event.pull_request.user.login != 'dependabot[bot]'
     steps:
       - uses: actions/checkout@v7
 

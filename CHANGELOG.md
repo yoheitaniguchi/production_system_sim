@@ -285,3 +285,10 @@ CI基盤の新設。検出された実違反の修正は個別Issue化して別�
 - 開発フローに軽量経路を追加した（`docs/issue-workflow.md` 1.1節）。差分300行未満で、ドメインロジック・依存関係・CI・
   `.claude/`設定・外部入力の扱い・EXT-xxに触れない変更は、Issue省略可・計画レビューなし・実装レビューはUI変更時のみで進める。
   CI・DoD・本ファイルへの追記は経路によらず必須。PRテンプレートに経路の記入欄を設けた
+- 依存とコードのセキュリティ検査を自動化した（`docs/process/review-report.md` F-2）。Dependabot（`.github/dependabot.yml`：
+  npm・GitHub Actionsを週1回、minor/patchはまとめる）とCodeQL（`.github/workflows/codeql.yml`：JavaScript/TypeScript）を追加。
+  `npm audit`による本番依存のhigh/critical脆弱性ゲート（SEC-006）は、ネットワーク依存のためvitestから外し、`test.yml`の
+  `dependency-audit`ジョブ（`npm run audit:security`）へ移した。DependabotのPRではPRプレビューを作らない
+- セキュリティレビュー（`docs/security/reports/review-20261013-0422.md`）の指摘に対応した。`test.yml`・`flaky-check.yml`の
+  トップレベルに`permissions: contents: read`を明示し（SEC-002）、全ワークフローがトップレベルで権限を明示していることを
+  `security/ci-workflows.security.test.ts`で検査するようにした。`dependency-audit`をmainのRulesetの必須チェックに加えた（SEC-001）

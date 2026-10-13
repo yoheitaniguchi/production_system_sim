@@ -6,7 +6,7 @@
   テストコードの構成、直近30件のクローズ済みPR（作成〜マージの時刻・差分量）
 - 前提：小規模・PoC／契約混在／アジャイル転換も視野
 - 本レポートの性質：調査と改善案の提示のみ。プロセス文書・CI設定などの既存ファイルは変更していない（改善作業はユーザー承認後に行う）
-- 更新履歴：2026-10-07 初版／同日 質問事項への回答を反映し、❓の項目を再判定（§4に回答を記録）／2026-10-08 PoC定義書・DoDの追加（`docs/process/poc-definition.md`・`dod.md`）を受けてA・C-2・D-2・D-5・F-3・F-6を再判定、`main`のRuleset設定（ユーザー回答）を受けてE-9を再判定／同日 `CLAUDE.md`の実装履歴の`CHANGELOG.md`への移設などを受けてB-6を再判定／同日 開発フローへの軽量経路の追加を受けてC-1・D-1の備考を更新（§6）
+- 更新履歴：2026-10-07 初版／同日 質問事項への回答を反映し、❓の項目を再判定（§4に回答を記録）／2026-10-08 PoC定義書・DoDの追加（`docs/process/poc-definition.md`・`dod.md`）を受けてA・C-2・D-2・D-5・F-3・F-6を再判定、`main`のRuleset設定（ユーザー回答）を受けてE-9を再判定／同日 `CLAUDE.md`の実装履歴の`CHANGELOG.md`への移設などを受けてB-6を再判定／同日 開発フローへの軽量経路の追加を受けてC-1・D-1の備考を更新／同日 Dependabot・CodeQLの追加と`npm audit`のCIジョブ化を受けてF-2の備考を更新（§6）
 
 ## 1. 総評
 
@@ -285,7 +285,7 @@
 | E-8 | ⚠️ | `flaky-check.yml`（vitestのみ3回） | E2E対象外・通知なし |
 | E-9 | ✅ | CIは全テストを自動実行し、`main`のRulesetで`test`・`a11y`・`e2e-scenario`の成功を必須化（2026-10-08設定済み、ユーザー回答） | 2026-10-08再判定（旧❌） |
 | F-1 | ⚠️ | 計画レビューに`security-reviewer`（PR #119）、`docs/security/checklist.md` | 運用実績なし |
-| F-2 | ⚠️ | ESLint、`npm audit`ゲート（vitest内）、Action SHA固定テスト | シークレット検知・Dependabot・CodeQLなし（公開リポジトリのため無料で導入可能） |
+| F-2 | ⚠️ | ESLint、CodeQL（`codeql.yml`）、Dependabot（`dependabot.yml`）、`npm audit`ゲート（`test.yml`の`dependency-audit`ジョブ）、Action SHA固定テスト | 2026-10-08にCodeQL・Dependabotを追加し、`npm audit`をvitestから分離。Secret scanning・Push protectionの有効化（リポジトリ設定）を確認できたら✅にする |
 | F-3 | ✅ | `poc-definition.md` 4章（性能・構成・a11y・セキュリティの目標値） | 2026-10-08確定。性能の実測はF-4で行う（旧❌） |
 | F-4 | ❌ | 計測記録なし | F-3の目標決定後に実施 |
 | F-5 | ⚠️ | axe-core自動検査・`ux-reviewer`（AI）、本人の試用のみ（回答） | 第三者評価は「検証しない範囲」として明記を提案 |

@@ -1,0 +1,39 @@
+name: CodeQL
+
+# 静的解析（SAST）。docs/process/review-report.md F-2。公開リポジトリのためGitHub Code Scanningを無料で使える。
+# 結果はリポジトリのSecurityタブ（Code scanning alerts）に表示される。mainのRulesetの必須チェックには
+# 含めていない（指摘の扱いは人が判断する）。
+# 注意：リポジトリ設定でCodeQLの「Default setup」を有効にしている場合は、本ワークフロー（Advanced setup）と
+# 競合するため、Default setupを無効にすること。
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    # 依存やクエリの更新を拾うため週1回（月曜 05:17 UTC）も実行する
+    - cron: "17 5 * * 1"
+
+permissions:
+  contents: read
+
+jobs:
+  analyze:
+    runs-on: ubuntu-latest
+    # 解析結果のアップロードに security-events: write が必要（この権限はこのジョブだけに付与する）
+    permissions:
+      contents: read
+      security-events: write
+      actions: read
+    steps:
+      - uses: actions/checkout@v7
+
+      # JavaScript/TypeScriptはビルド不要（build-mode: none）。GitHub公式Actionのためタグ参照
+      # （SHA固定の対象はサードパーティのみ。security/ci-workflows.security.test.ts参照）
+      - uses: github/codeql-action/init@v4
+        with:
+          languages: javascript-typescript
+          build-mode: none
+
+      - uses: github/codeql-action/analyze@v4
+        with:
+          category: "/language:javascript-typescript"

@@ -1,0 +1,26 @@
+# 依存関係の自動更新提案（docs/process/review-report.md F-2）。
+# 開発者が1名のため、PRの数を抑えるようにminor/patchはまとめ、週1回に限定する。
+# DependabotのPRも通常のPRと同じく、mainのRulesetの必須チェック（test・dependency-audit・a11y・e2e-scenario）と
+# docs/process/dod.mdの人の確認を経てからマージする（自動マージはしない）。
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    groups:
+      npm-minor-and-patch:
+        update-types: [minor, patch]
+
+  # ワークフロー内のActionも更新対象にする。SHA固定（SEC-005）したサードパーティActionは、
+  # Dependabotがコミット SHA と末尾のバージョンコメントをまとめて更新する
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    groups:
+      github-actions:
+        patterns: ["*"]
