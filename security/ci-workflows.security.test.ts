@@ -113,7 +113,14 @@ describe("GitHub Actionsワークフロー（SEC-001: 依存脆弱性ゲート�
   });
 
   it("[@security][異常] test.ymlはpull_requestトリガーで起動する（PR時に脆弱性ゲートが走る）", () => {
-    expect(content).toMatch(/^on:\s*\n(?:\s+.*\n)*?\s+pull_request:/m);
+    // トップレベル`on:`ブロック（次のインデント0の行まで）を行単位で走査する。複数行にまたがる正規表現は
+    // バックトラックが指数的に増えうる（CodeQL js/redos）ため使わない
+    const lines = stripComments(content);
+    const onStart = lines.findIndex((l) => /^on:\s*$/.test(l));
+    expect(onStart, "test.ymlにトップレベルのon:ブロックが無い").toBeGreaterThanOrEqual(0);
+    const onBlock: string[] = [];
+    for (let i = onStart + 1; i < lines.length && !/^\S/.test(lines[i]); i++) onBlock.push(lines[i]);
+    expect(onBlock.some((l) => /^ {2}pull_request:/.test(l))).toBe(true);
   });
 
   it("[@security][異常] 脆弱性ゲートのジョブ・ステップは失敗を握りつぶしていない（continue-on-error・|| true・if条件なし）", () => {
