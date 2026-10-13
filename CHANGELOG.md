@@ -292,3 +292,5 @@ CI基盤の新設。検出された実違反の修正は個別Issue化して別�
 - セキュリティレビュー（`docs/security/reports/review-20261013-0422.md`）の指摘に対応した。`test.yml`・`flaky-check.yml`の
   トップレベルに`permissions: contents: read`を明示し（SEC-002）、全ワークフローがトップレベルで権限を明示していることを
   `security/ci-workflows.security.test.ts`で検査するようにした。`dependency-audit`をmainのRulesetの必須チェックに加えた（SEC-001）
+- 最初の振り返り（`docs/process/retrospectives/2026-10-13.md`）を記録し、`docs/process/findings.md`にこれまでの判断を遡って記録した
+  （`docs/process/review-report.md` C-3・C-4）
