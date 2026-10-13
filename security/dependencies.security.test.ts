@@ -1,8 +1,6 @@
-import { spawnSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
-import { summarizeAuditReport } from "../scripts/security-audit.mjs";
 
 const REPO_ROOT = path.resolve(__dirname, "..");
 
@@ -20,15 +18,6 @@ describe(".gitignore（SEC-004: .env系ファイルの除外漏れ）", () => {
   });
 });
 
-// SEC-006（Info、docs/security/reports参照）：本番依存（--omit=dev）にhigh/critical脆弱性が
-// 無いことを、audit:securityと同じ集計ロジック（summarizeAuditReport）を使って回帰的に検証する。
-// dev依存のみの脆弱性は現時点では許容する（checklist.md §6.3参照）ため、このテストはfailさせない。
-describe("npm audit（SEC-006: 本番依存のhigh/critical脆弱性ゲート）", () => {
-  it("[@security][正常] 本番依存（--omit=dev）にhigh/critical脆弱性が無い", () => {
-    // npm auditは脆弱性検出時に非ゼロで終了するため、spawnSyncでexit codeを無視しJSON本文だけを見る
-    // （scripts/security-audit.mjsのrunNpmAuditと同じ方針）
-    const result = spawnSync("npm", ["audit", "--omit=dev", "--json"], { cwd: REPO_ROOT, encoding: "utf-8" });
-    const summary = summarizeAuditReport(JSON.parse(result.stdout));
-    expect(summary.hasBlockingVulnerabilities).toBe(false);
-  });
-});
+// SEC-006（本番依存のhigh/critical脆弱性ゲート）は、npm registryへの通信を伴うためvitestから外し、
+// CIの dependency-audit ジョブ（.github/workflows/test.yml、`npm run audit:security`）で検証する。
+// 集計ロジック（summarizeAuditReport）の単体テストは scripts/security-audit.test.mjs にある。

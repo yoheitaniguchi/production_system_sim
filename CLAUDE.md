@@ -67,7 +67,8 @@ production_system_sim/
 │   ├── hooks/              # security系サブエージェントの権限ガード
 │   └── skills/issue-workflow/ # Issue駆動開発の手順（docs/issue-workflow.mdの要約）
 ├── .github/
-│   ├── workflows/          # test.yml（test・a11y・e2e-scenario）・deploy.yml・pr-preview.yml・flaky-check.yml
+│   ├── workflows/          # test.yml（test・dependency-audit・a11y・e2e-scenario）・codeql.yml・deploy.yml・pr-preview.yml・flaky-check.yml
+│   ├── dependabot.yml      # npm・GitHub Actionsの依存更新提案（週1回）
 │   ├── ISSUE_TEMPLATE/feature_request.md
 │   └── PULL_REQUEST_TEMPLATE.md # 開発計画・計画レビュー結果・受け入れ条件の充足などの欄を持つ
 ├── e2e/                    # Playwright：a11y.spec.ts・scenario.spec.ts・security.spec.ts
@@ -169,7 +170,7 @@ npm run test:a11y    # Playwright＋axe-coreによるアクセシビリティ自
 npm run test:e2e:scenario  # 業務シナリオのE2Eテスト（e2e/scenario.spec.ts。CIのe2e-scenarioジョブ）
 npm run test:security       # @securityタグ付きvitestテストのみ実行（docs/security/checklist.md参照）
 npm run test:e2e:security   # セキュリティ観点のE2Eテスト（e2e/security.spec.ts。存在する場合のみ）
-npm run audit:security      # npm audit（本番依存はhigh/critical 0件を必須化）＋依存ライセンス一覧の出力
+npm run audit:security      # npm audit（本番依存はhigh/critical 0件を必須化）＋依存ライセンス一覧の出力（CIのdependency-auditジョブ）
 ```
 
 ## デプロイ
@@ -199,7 +200,8 @@ npm run audit:security      # npm audit（本番依存はhigh/critical 0件を�
 - **テスト**：`npm test`（vitest、約300件）が、v5-spec.md §9のTC-01〜18・TC-E1〜E3、design.md §6の複数受注演習（TC-M1）、
   4階層BOMの通し演習などを検証する。E2Eは`e2e/`配下（a11y・業務シナリオ・セキュリティ）
 - **CI**：`.github/workflows/test.yml`の`test`・`a11y`・`e2e-scenario`の3ジョブは、`main`のRulesetにより
-  マージ前の成功が必須。`test`ジョブはテスト結果をJSONに集約して`data`ブランチへ書き込む
+  マージ前の成功が必須。`test`ジョブはテスト結果をJSONに集約して`data`ブランチへ書き込む。依存の脆弱性ゲートは
+  `dependency-audit`ジョブ（ネットワーク依存のためvitestから分離）、静的解析は`codeql.yml`、依存更新はDependabot
 - **開発プロセス**：Issue → 下書きPRに開発計画 → 計画レビュー → 実装 → 実装レビュー → PRレビュー → マージ
   （`docs/issue-workflow.md`の標準経路）。小さく低リスクな変更は軽量経路（同 1.1節。Issue省略可・計画レビューなし）で進める。マージ条件は`docs/process/dod.md`。計画レビューのモードは運用実績がまだ少ないため、
   適用したIssueで機能したかを確認すること
@@ -260,7 +262,8 @@ npm run audit:security      # npm audit（本番依存はhigh/critical 0件を�
 - **テーマ（色）**：新しい色は`index.css`のデザイントークンとして6テーマすべてに定義する。`--warn-border`は枠線用で、
   警告の文字色には`--warn-text`を使う（コントラスト不足の再発防止。Issue #72）
 - **CIの権限**：`permissions.contents: write`は`test.yml`の`test`ジョブ（`data`ブランチへのテスト結果書き込み）だけに
-  付与している。他のジョブ・ワークフローへ広げないこと（Issue #98）
+  付与している。他のジョブ・ワークフローへ広げないこと（Issue #98）。`security-events: write`は`codeql.yml`の
+  解析ジョブだけに付与している
 - `docs/v5-spec.md` は原文のまま保持する一次資料であり、直接編集しない。v5仕様書自体への疑問・矛盾点が
   見つかった場合は`docs/design.md` §3（追加決定）に解釈を追記する形で解消する
 
