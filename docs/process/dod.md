@@ -10,7 +10,7 @@
 | # | 条件 | 確かめ方 |
 |---|---|---|
 | D1 | Issueの受け入れ条件1件ごとに、それを確かめるテスト（自動テスト、またはPRに記録した操作手順）がある | PR本文「受け入れ条件の充足」 |
-| D2 | CIの必須チェック（`test`・`a11y`・`e2e-scenario`）がすべて成功している | `main`のRulesetで機械的に強制（成功するまでマージできない） |
+| D2 | CIの必須チェック（`test`・`dependency-audit`・`a11y`・`e2e-scenario`）がすべて成功している | `main`のRulesetで機械的に強制（成功するまでマージできない） |
 | D3 | ローカルで`npm run lint`・`npm run build`・`npm test`が通っている | PR本文「テスト」 |
 | D4 | 追加・変更したテストのタイトルに、`docs/test-tagging.md`の書式でタグ（工程・種類・観点、該当すればUC番号）が付いている | 差分を目視 |
 | D5 | 実装レビュー（`src/domain/`変更時は`logic-reviewer`、`src/components/`変更時は`ux-reviewer`）と`/security-review`の指摘に対応した | PR本文「テスト」 |

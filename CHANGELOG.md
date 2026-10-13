@@ -289,3 +289,6 @@ CI基盤の新設。検出された実違反の修正は個別Issue化して別�
   npm・GitHub Actionsを週1回、minor/patchはまとめる）とCodeQL（`.github/workflows/codeql.yml`：JavaScript/TypeScript）を追加。
   `npm audit`による本番依存のhigh/critical脆弱性ゲート（SEC-006）は、ネットワーク依存のためvitestから外し、`test.yml`の
   `dependency-audit`ジョブ（`npm run audit:security`）へ移した。DependabotのPRではPRプレビューを作らない
+- セキュリティレビュー（`docs/security/reports/review-20261013-0422.md`）の指摘に対応した。`test.yml`・`flaky-check.yml`の
+  トップレベルに`permissions: contents: read`を明示し（SEC-002）、全ワークフローがトップレベルで権限を明示していることを
+  `security/ci-workflows.security.test.ts`で検査するようにした。`dependency-audit`をmainのRulesetの必須チェックに加えた（SEC-001）

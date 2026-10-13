@@ -6,6 +6,10 @@ on:
     branches: [main]
   workflow_dispatch:
 
+# トークンの既定権限は読み取りのみにする（SEC-002）。書き込みが必要なジョブだけジョブ単位で付与する
+permissions:
+  contents: read
+
 jobs:
   test:
     runs-on: ubuntu-latest
