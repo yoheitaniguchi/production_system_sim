@@ -11,7 +11,7 @@ import { createTestState } from "./testUtils";
 import type { DashboardKpiHighlights, DashboardSnapshot } from "../types";
 
 describe("computeDashboardSnapshot", () => {
-  it("受注も操作もない初期状態では全ての残高が0、KPIハイライトはnull", () => {
+  it("[単体][機能テスト][境界] 受注も操作もない初期状態では全ての残高が0、KPIハイライトはnull", () => {
     const state = createTestState(0);
     const snap = computeDashboardSnapshot(state);
 
@@ -42,7 +42,7 @@ describe("computeDashboardSnapshot", () => {
     });
   });
 
-  it("MRP実行直後は計画残に正味所要量が乗り、確定後は発注残・製造残へ振り替わる", () => {
+  it("[単体][機能テスト][正常] MRP実行直後は計画残に正味所要量が乗り、確定後は発注残・製造残へ振り替わる", () => {
     const state = createTestState(0);
     const soNo = createSalesOrder(state, { customerId: "CUST-A", itemId: ITEM_IDS.FG_CHAIR, qty: 10, requestDay: 15 }, 0);
     confirmDelivery(state, soNo, 15);
@@ -82,7 +82,7 @@ describe("computeDashboardSnapshot", () => {
     expect(afterFirm.backlog.order).toEqual({ qty: 10, amount: 60000 });
   });
 
-  it("入荷計上すると発注残が減り、在庫金額（inventoryValue相当）が増える", () => {
+  it("[単体][機能テスト][正常] 入荷計上すると発注残が減り、在庫金額（inventoryValue相当）が増える", () => {
     const state = createTestState(0);
     const soNo = createSalesOrder(state, { customerId: "CUST-A", itemId: ITEM_IDS.FG_CHAIR, qty: 10, requestDay: 15 }, 0);
     confirmDelivery(state, soNo, 15);

@@ -19,7 +19,7 @@ describe("createSalesOrder / confirmDelivery / cancelSalesOrder（v5-spec.md §6
     expect(state.soLines[0]).toMatchObject({ confirmDay: 15, status: "CONFIRMED" });
   });
 
-  it("着手実績・入荷実績が無ければ取消でき、ペグ先のオーダも連鎖的にCANCELEDになる（design.md EXT-2）", () => {
+  it("[単体][機能テスト][正常] 着手実績・入荷実績が無ければ取消でき、ペグ先のオーダも連鎖的にCANCELEDになる（design.md EXT-2）", () => {
     const state = createTestState(0);
     const soNo = createSalesOrder(state, { customerId: "CUST-A", itemId: ITEM_IDS.FG_CHAIR, qty: 10, requestDay: 15 }, 0);
     confirmDelivery(state, soNo, 15);
@@ -33,7 +33,7 @@ describe("createSalesOrder / confirmDelivery / cancelSalesOrder（v5-spec.md §6
     expect(state.purchaseOrders.every((po) => po.status === "CANCELED")).toBe(true);
   });
 
-  it("design.md EXT-3: 1件でも着手実績があれば取消できない", () => {
+  it("[単体][機能テスト][異常] design.md EXT-3: 1件でも着手実績があれば取消できない", () => {
     const state = createTestState(0);
     const soNo = createSalesOrder(state, { customerId: "CUST-A", itemId: ITEM_IDS.FG_CHAIR, qty: 10, requestDay: 15 }, 0);
     confirmDelivery(state, soNo, 15);
@@ -47,7 +47,7 @@ describe("createSalesOrder / confirmDelivery / cancelSalesOrder（v5-spec.md §6
     expect(() => cancelSalesOrder(state, soNo)).toThrow(SalesOrderError);
   });
 
-  it("受付（RECEIVED）以外は納期回答できない", () => {
+  it("[UC-05][単体][機能テスト][異常] 受付（RECEIVED）以外は納期回答できない", () => {
     const state = createTestState(0);
     const soNo = createSalesOrder(state, { customerId: "CUST-A", itemId: ITEM_IDS.FG_CHAIR, qty: 10, requestDay: 15 }, 0);
     confirmDelivery(state, soNo, 15);

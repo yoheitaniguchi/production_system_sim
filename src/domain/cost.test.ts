@@ -16,24 +16,24 @@ import {
 import { createTestState } from "./testUtils";
 
 describe("rollupCost（v5-spec.md §11.2の計算例どおりの標準原価積上げ）", () => {
-  it("BUY品目は購入単価がそのまま材料費・標準原価になる", () => {
+  it("[単体][機能テスト][正常] BUY品目は購入単価がそのまま材料費・標準原価になる", () => {
     const state = createTestState(0);
     expect(rollupCost(state, ITEM_IDS.RM_BOARD)).toEqual({ material: 800, labor: 0, standardCost: 800 });
     expect(rollupCost(state, ITEM_IDS.PT_LEG)).toEqual({ material: 250, labor: 0, standardCost: 250 });
     expect(rollupCost(state, ITEM_IDS.PT_SCREW)).toEqual({ material: 20, labor: 0, standardCost: 20 });
   });
 
-  it("MAKE品目はBOM×子品目原価が材料費、工順×賃率が加工費になる（座面ASSY）", () => {
+  it("[単体][機能テスト][正常] MAKE品目はBOM×子品目原価が材料費、工順×賃率が加工費になる（座面ASSY）", () => {
     const state = createTestState(0);
     expect(rollupCost(state, ITEM_IDS.SA_SEAT)).toEqual({ material: 800, labor: 600, standardCost: 1400 });
   });
 
-  it("木製イスは §11.2 の例のとおり材料費2,560・加工費1,400・標準原価3,960になる", () => {
+  it("[単体][機能テスト][正常] 木製イスは §11.2 の例のとおり材料費2,560・加工費1,400・標準原価3,960になる", () => {
     const state = createTestState(0);
     expect(rollupCost(state, ITEM_IDS.FG_CHAIR)).toEqual({ material: 2560, labor: 1400, standardCost: 3960 });
   });
 
-  it("computeAllItemCostsは全品目分をitemId付きで返す", () => {
+  it("[単体][機能テスト][正常] computeAllItemCostsは全品目分をitemId付きで返す", () => {
     const state = createTestState(0);
     const costs = computeAllItemCosts(state);
     expect(costs).toHaveLength(5);
@@ -53,7 +53,7 @@ describe("段取り時間（Issue #66、design.md EXT-41）は原価に反映し
 });
 
 describe("computeMfgOrderCost（v5-spec.md §11.2「原価差異の可視化」の不良1個の例）", () => {
-  it("第1工程完了直後は投入額のみ計上され、完成振替は0（未完了）", () => {
+  it("[単体][機能テスト][境界] 第1工程完了直後は投入額のみ計上され、完成振替は0（未完了）", () => {
     const state = createTestState(0);
     const soNo = createSalesOrder(state, { customerId: "CUST-A", itemId: ITEM_IDS.FG_CHAIR, qty: 10, requestDay: 15 }, 0);
     confirmDelivery(state, soNo, 15);
@@ -79,7 +79,7 @@ describe("computeMfgOrderCost（v5-spec.md §11.2「原価差異の可視化」�
     });
   });
 
-  it("最終工程で不良1個が出ると、原価差異は3,960円（＝標準原価×不良数）になる", () => {
+  it("[単体][機能テスト][異常] 最終工程で不良1個が出ると、原価差異は3,960円（＝標準原価×不良数）になる", () => {
     const state = createTestState(0);
     const soNo = createSalesOrder(state, { customerId: "CUST-A", itemId: ITEM_IDS.FG_CHAIR, qty: 10, requestDay: 15 }, 0);
     confirmDelivery(state, soNo, 15);
@@ -205,18 +205,18 @@ describe("computeMfgOrderVarianceSeries（Issue #62）", () => {
 });
 
 describe("inventoryValue / backlogValue / scrapLossValue", () => {
-  it("在庫が無ければ在庫金額は0", () => {
+  it("[単体][機能テスト][境界] 在庫が無ければ在庫金額は0", () => {
     const state = createTestState(0);
     expect(inventoryValue(state)).toBe(0);
   });
 
-  it("在庫金額は現在庫数量×標準原価の合計になる", () => {
+  it("[単体][機能テスト][正常] 在庫金額は現在庫数量×標準原価の合計になる", () => {
     const state = createTestState(0);
     state.stocks.push({ itemId: ITEM_IDS.RM_BOARD, onHand: 5, allocated: 0 });
     expect(inventoryValue(state)).toBe(5 * 800);
   });
 
-  it("受注残高（金額）は未出荷の受注残数量×売価の合計になる（RECEIVEDは含めない）", () => {
+  it("[単体][機能テスト][正常] 受注残高（金額）は未出荷の受注残数量×売価の合計になる（RECEIVEDは含めない）", () => {
     const state = createTestState(0);
     const soNo = createSalesOrder(state, { customerId: "CUST-A", itemId: ITEM_IDS.FG_CHAIR, qty: 10, requestDay: 15 }, 0);
     expect(backlogValue(state)).toBe(0); // 納期回答前はCONFIRMEDでないため対象外
@@ -224,7 +224,7 @@ describe("inventoryValue / backlogValue / scrapLossValue", () => {
     expect(backlogValue(state)).toBe(10 * 6000);
   });
 
-  it("不良損失額は製造オーダの不良数量×標準原価の合計になる", () => {
+  it("[単体][機能テスト][異常] 不良損失額は製造オーダの不良数量×標準原価の合計になる", () => {
     const state = createTestState(0);
     const soNo = createSalesOrder(state, { customerId: "CUST-A", itemId: ITEM_IDS.FG_CHAIR, qty: 10, requestDay: 15 }, 0);
     confirmDelivery(state, soNo, 15);

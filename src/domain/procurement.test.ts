@@ -25,7 +25,7 @@ describe("ackPurchaseOrder / receivePurchaseOrder（v5-spec.md §6.5）", () => 
     });
   });
 
-  it("design.md EXT-4: 入荷予定日より前は入荷計上できない", () => {
+  it("[UC-11][単体][機能テスト][境界] design.md EXT-4: 入荷予定日より前は入荷計上できない", () => {
     const { state } = setupPurchaseOrder();
     const po = state.purchaseOrders.find((p) => p.itemId === ITEM_IDS.RM_BOARD)!;
     ackPurchaseOrder(state, po.poNo, po.dueDay);
@@ -48,7 +48,7 @@ describe("ackPurchaseOrder / receivePurchaseOrder（v5-spec.md §6.5）", () => 
     expect(txn).toMatchObject({ txnType: "RCV", qty: 10, itemId: ITEM_IDS.RM_BOARD });
   });
 
-  it("納期回答前（ORDERED状態）は入荷計上できない", () => {
+  it("[UC-11][単体][機能テスト][異常] 納期回答前（ORDERED状態）は入荷計上できない", () => {
     const { state } = setupPurchaseOrder();
     const po = state.purchaseOrders.find((p) => p.itemId === ITEM_IDS.RM_BOARD)!;
     expect(() => receivePurchaseOrder(state, po.poNo, po.dueDay)).toThrow(ProcurementError);

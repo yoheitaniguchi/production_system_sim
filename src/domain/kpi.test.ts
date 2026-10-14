@@ -56,7 +56,7 @@ describe("computeKpi（v5-spec.md §10）", () => {
     expect(kpi.inventoryTurnover).toBeNull();
   });
 
-  it("design.md EXT-13: 在庫回転は現在の総在庫数量を分母とした近似値になる", () => {
+  it("[UC-20][単体][機能テスト][正常] design.md EXT-13: 在庫回転は現在の総在庫数量を分母とした近似値になる", () => {
     const state = createTestState(0);
     const soNo = createSalesOrder(state, { customerId: "CUST-A", itemId: ITEM_IDS.FG_CHAIR, qty: 10, requestDay: 15 }, 0);
     confirmDelivery(state, soNo, 15);
@@ -78,7 +78,7 @@ describe("computeKpi（v5-spec.md §10）", () => {
     expect(kpi.inventoryTurnover).toBeCloseTo(1);
   });
 
-  it("何も起きていない初期状態では大半のKPIがnullまたは0になる", () => {
+  it("[UC-20][単体][機能テスト][境界] 何も起きていない初期状態では大半のKPIがnullまたは0になる", () => {
     const state = createTestState(0);
     const kpi = computeKpi(state);
     expect(kpi.deliveryComplianceRate).toBeNull();
