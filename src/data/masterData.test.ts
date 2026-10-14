@@ -12,7 +12,7 @@ import {
 } from "./masterData";
 
 describe("初期マスタデータ（v5-spec.md §1.1：木製イス）", () => {
-  it("TC-01: 品目5・BOM行4・工順3行。取引先は顧客2件+仕入先3件（design.md DEV-1によりPARTNER3行ではなく分離）", () => {
+  it("[単体][機能テスト][正常] TC-01: 品目5・BOM行4・工順3行。取引先は顧客2件+仕入先3件（design.md DEV-1によりPARTNER3行ではなく分離）", () => {
     // v5-spec.md TC-01は「ITEM 5行 / BOM_LINE 4行 / ROUTING_STEP 3行 / PARTNER 3行」を期待するが、
     // design.md DEV-1によりPARTNERはCustomer/Supplierに分離しているため、本実装では
     // 「顧客2件（複数受注演習用）＋仕入先3件（BUY品目ごとに1件）」の計5件が対応する期待値になる
@@ -23,7 +23,7 @@ describe("初期マスタデータ（v5-spec.md §1.1：木製イス）", () => 
     expect(initialSuppliers).toHaveLength(3);
   });
 
-  it("BOMの親子はすべて実在する品目を参照する", () => {
+  it("[単体][機能テスト][正常] BOMの親子はすべて実在する品目を参照する", () => {
     const itemIds = new Set(initialItems.map((item) => item.itemId));
     for (const line of initialBom) {
       expect(itemIds.has(line.parentItemId)).toBe(true);
@@ -31,7 +31,7 @@ describe("初期マスタデータ（v5-spec.md §1.1：木製イス）", () => 
     }
   });
 
-  it("BOMに循環参照が無い（v5-spec.md §3.7）", () => {
+  it("[単体][機能テスト][正常] BOMに循環参照が無い（v5-spec.md §3.7）", () => {
     const childrenOf = new Map<string, string[]>();
     for (const line of initialBom) {
       childrenOf.set(line.parentItemId, [...(childrenOf.get(line.parentItemId) ?? []), line.childItemId]);
@@ -48,7 +48,7 @@ describe("初期マスタデータ（v5-spec.md §1.1：木製イス）", () => 
     }
   });
 
-  it("工順を持つのはMAKE品目（FG-100・SA-200）のみ", () => {
+  it("[単体][機能テスト][正常] 工順を持つのはMAKE品目（FG-100・SA-200）のみ", () => {
     const makeItemIds = new Set(
       initialItems.filter((item) => item.makeBuy === "MAKE").map((item) => item.itemId),
     );
@@ -57,7 +57,7 @@ describe("初期マスタデータ（v5-spec.md §1.1：木製イス）", () => 
     }
   });
 
-  it("木製イスの完成には座面ASSY x1・脚 x4・ネジ x8・木板(座面経由) x1が必要", () => {
+  it("[単体][機能テスト][正常] 木製イスの完成には座面ASSY x1・脚 x4・ネジ x8・木板(座面経由) x1が必要", () => {
     const qtyPer = (parent: string, child: string) =>
       initialBom.find((line) => line.parentItemId === parent && line.childItemId === child)?.qtyPer;
     expect(qtyPer(ITEM_IDS.FG_CHAIR, ITEM_IDS.SA_SEAT)).toBe(1);
@@ -68,15 +68,15 @@ describe("初期マスタデータ（v5-spec.md §1.1：木製イス）", () => 
 });
 
 describe("resolveActivePresetId（design.md EXT-34：現在のマスタがどのプリセットと一致するか）", () => {
-  it("木製イスの品目集合はCHAIRと一致する", () => {
+  it("[単体][機能テスト][正常] 木製イスの品目集合はCHAIRと一致する", () => {
     expect(resolveActivePresetId({ items: initialItems })).toBe("CHAIR");
   });
 
-  it("自転車の品目集合はBICYCLEと一致する", () => {
+  it("[単体][機能テスト][正常] 自転車の品目集合はBICYCLEと一致する", () => {
     expect(resolveActivePresetId({ items: BICYCLE_PRESET.items })).toBe("BICYCLE");
   });
 
-  it("どのプリセットとも一致しない品目集合はnullを返す（マスタCRUD編集後の状態を想定）", () => {
+  it("[単体][機能テスト][異常] どのプリセットとも一致しない品目集合はnullを返す（マスタCRUD編集後の状態を想定）", () => {
     expect(resolveActivePresetId({ items: [...initialItems, { itemId: "FG-999" }] })).toBeNull();
     expect(resolveActivePresetId({ items: [{ itemId: BIKE_ITEM_IDS.FG_BIKE }] })).toBeNull();
   });

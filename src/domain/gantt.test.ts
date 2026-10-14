@@ -9,7 +9,7 @@ import { allocateShipment, shipOut } from "./shipment";
 import { createTestState } from "./testUtils";
 
 describe("computeGanttRows（受注ごとの進捗ガントチャート）", () => {
-  it("受注登録直後は計画のみで、実績は受注日から今日までの進行中として表示される", () => {
+  it("[単体][機能テスト][正常] 受注登録直後は計画のみで、実績は受注日から今日までの進行中として表示される", () => {
     const state = createTestState(0);
     const soNo = createSalesOrder(state, { customerId: "CUST-A", itemId: ITEM_IDS.FG_CHAIR, qty: 10, requestDay: 15 }, 0);
 
@@ -27,7 +27,7 @@ describe("computeGanttRows（受注ごとの進捗ガントチャート）", () 
     });
   });
 
-  it("納期回答後は計画終了日が回答納期に更新される", () => {
+  it("[単体][機能テスト][正常] 納期回答後は計画終了日が回答納期に更新される", () => {
     const state = createTestState(0);
     const soNo = createSalesOrder(state, { customerId: "CUST-A", itemId: ITEM_IDS.FG_CHAIR, qty: 10, requestDay: 20 }, 0);
     confirmDelivery(state, soNo, 15);
@@ -36,7 +36,7 @@ describe("computeGanttRows（受注ごとの進捗ガントチャート）", () 
     expect(row.summary.planEnd).toBe(15);
   });
 
-  it("回答納期を過ぎても出荷できていなければDELAYEDになる", () => {
+  it("[単体][機能テスト][異常] 回答納期を過ぎても出荷できていなければDELAYEDになる", () => {
     const state = createTestState(0);
     const soNo = createSalesOrder(state, { customerId: "CUST-A", itemId: ITEM_IDS.FG_CHAIR, qty: 10, requestDay: 15 }, 0);
     confirmDelivery(state, soNo, 15);
@@ -46,7 +46,7 @@ describe("computeGanttRows（受注ごとの進捗ガントチャート）", () 
     expect(row.summary.barState).toBe("DELAYED");
   });
 
-  it("design.md EXT-2/3：MRP未実行のまま取消した受注はCANCELED表示になり、子タスクも無い（計画オーダが1件も無いため）", () => {
+  it("[単体][機能テスト][正常] design.md EXT-2/3：MRP未実行のまま取消した受注はCANCELED表示になり、子タスクも無い（計画オーダが1件も無いため）", () => {
     const state = createTestState(0);
     const soNo = createSalesOrder(state, { customerId: "CUST-A", itemId: ITEM_IDS.FG_CHAIR, qty: 10, requestDay: 15 }, 0);
     cancelSalesOrder(state, soNo);
@@ -56,7 +56,7 @@ describe("computeGanttRows（受注ごとの進捗ガントチャート）", () 
     expect(row.children).toHaveLength(0);
   });
 
-  it("design.md EXT-2：計画オーダ確定後に取消した受注は、カスケードでCANCELEDになった購買/製造オーダが子タスクとして残る", () => {
+  it("[単体][機能テスト][正常] design.md EXT-2：計画オーダ確定後に取消した受注は、カスケードでCANCELEDになった購買/製造オーダが子タスクとして残る", () => {
     const state = createTestState(0);
     const soNo = createSalesOrder(state, { customerId: "CUST-A", itemId: ITEM_IDS.FG_CHAIR, qty: 10, requestDay: 15 }, 0);
     confirmDelivery(state, soNo, 15);
@@ -70,7 +70,7 @@ describe("computeGanttRows（受注ごとの進捗ガントチャート）", () 
     expect(row.children.every((c) => c.barState === "CANCELED")).toBe(true);
   });
 
-  it("v5-spec.md §9.3 TC-01〜16を通しで進めると、購買/製造/出荷の子タスクが計画・実績どおりになる", () => {
+  it("[単体][機能テスト][正常] v5-spec.md §9.3 TC-01〜16を通しで進めると、購買/製造/出荷の子タスクが計画・実績どおりになる", () => {
     const state = createTestState(0);
     const soNo = createSalesOrder(state, { customerId: "CUST-A", itemId: ITEM_IDS.FG_CHAIR, qty: 10, requestDay: 15 }, 0);
     confirmDelivery(state, soNo, 15);
@@ -167,7 +167,7 @@ describe("computeGanttRows（受注ごとの進捗ガントチャート）", () 
 });
 
 describe("ganttDayRange", () => {
-  it("表示対象の計画・実績・今日を包含する範囲を返す", () => {
+  it("[単体][機能テスト][正常] 表示対象の計画・実績・今日を包含する範囲を返す", () => {
     const state = createTestState(20);
     createSalesOrder(state, { customerId: "CUST-A", itemId: ITEM_IDS.FG_CHAIR, qty: 10, requestDay: 15 }, 0);
 
@@ -175,7 +175,7 @@ describe("ganttDayRange", () => {
     expect(range).toEqual({ minDay: 0, maxDay: 20 });
   });
 
-  it("受注が1件も無ければnullを返す", () => {
+  it("[単体][機能テスト][境界] 受注が1件も無ければnullを返す", () => {
     const state = createTestState(0);
     expect(ganttDayRange(computeGanttRows(state), state.day)).toBeNull();
   });

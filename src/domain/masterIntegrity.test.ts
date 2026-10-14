@@ -21,23 +21,23 @@ describe("BOM循環参照チェック（v5-spec.md §3.7 最小機能5）", () =
     { parentItemId: "B", childItemId: "C", qtyPer: 1 },
   ];
 
-  it("自己参照（A -> A）は循環と判定する", () => {
+  it("[単体][機能テスト][異常] 自己参照（A -> A）は循環と判定する", () => {
     expect(wouldCreateBomCycle(chain, "A", "A")).toBe(true);
   });
 
-  it("祖先を子にする（C -> A）と循環になる", () => {
+  it("[単体][機能テスト][異常] 祖先を子にする（C -> A）と循環になる", () => {
     expect(wouldCreateBomCycle(chain, "C", "A")).toBe(true);
   });
 
-  it("孫を直接の子にする（A -> C）のは循環ではない（重複構成だが閉路にはならない）", () => {
+  it("[単体][機能テスト][境界] 孫を直接の子にする（A -> C）のは循環ではない（重複構成だが閉路にはならない）", () => {
     expect(wouldCreateBomCycle(chain, "A", "C")).toBe(false);
   });
 
-  it("無関係な品目の追加は循環にならない", () => {
+  it("[単体][機能テスト][正常] 無関係な品目の追加は循環にならない", () => {
     expect(wouldCreateBomCycle(chain, "A", "D")).toBe(false);
   });
 
-  it("reachesDownwardは既存BOMが循環していても停止する", () => {
+  it("[単体][機能テスト][異常] reachesDownwardは既存BOMが循環していても停止する", () => {
     const cyclic: BomLine[] = [
       { parentItemId: "A", childItemId: "B", qtyPer: 1 },
       { parentItemId: "B", childItemId: "A", qtyPer: 1 },
@@ -45,7 +45,7 @@ describe("BOM循環参照チェック（v5-spec.md §3.7 最小機能5）", () =
     expect(reachesDownward(cyclic, "A", "Z")).toBe(false);
   });
 
-  it("findBomCyclesは循環している品目を列挙する（インポートの一括検査用）", () => {
+  it("[単体][機能テスト][異常] findBomCyclesは循環している品目を列挙する（インポートの一括検査用）", () => {
     const cyclic: BomLine[] = [
       { parentItemId: "A", childItemId: "B", qtyPer: 1 },
       { parentItemId: "B", childItemId: "C", qtyPer: 1 },
@@ -58,19 +58,19 @@ describe("BOM循環参照チェック（v5-spec.md §3.7 最小機能5）", () =
 });
 
 describe("削除ガード（design.md EXT-21：参照中は削除禁止）", () => {
-  it("プリセットの品目はBOM・工順から参照されているため削除できない", () => {
+  it("[単体][機能テスト][異常] プリセットの品目はBOM・工順から参照されているため削除できない", () => {
     const state = createTestState();
     expect(findItemReferences(state, ITEM_IDS.FG_CHAIR)).not.toEqual([]);
     expect(findItemReferences(state, ITEM_IDS.RM_BOARD)).not.toEqual([]);
   });
 
-  it("どこからも参照されていない品目は削除できる", () => {
+  it("[単体][機能テスト][正常] どこからも参照されていない品目は削除できる", () => {
     const state = createTestState();
     state.items.push({ itemId: "NEW-1", name: "新品目", makeBuy: "MAKE", leadTimeDays: 1 });
     expect(findItemReferences(state, "NEW-1")).toEqual([]);
   });
 
-  it("残高0・引当0のSTOCK空行は削除の妨げにならない", () => {
+  it("[単体][機能テスト][境界] 残高0・引当0のSTOCK空行は削除の妨げにならない", () => {
     const state = createTestState();
     state.items.push({ itemId: "NEW-1", name: "新品目", makeBuy: "MAKE", leadTimeDays: 1 });
     state.stocks.push({ itemId: "NEW-1", onHand: 0, allocated: 0 });
@@ -80,7 +80,7 @@ describe("削除ガード（design.md EXT-21：参照中は削除禁止）", () 
     expect(findItemReferences(state, "NEW-1")).not.toEqual([]);
   });
 
-  it("作業区・仕入先・得意先の参照も検出する", () => {
+  it("[単体][機能テスト][異常] 作業区・仕入先・得意先の参照も検出する", () => {
     const state = createTestState();
     expect(findWorkCenterReferences(state, WORK_CENTERS.CUT)).not.toEqual([]);
     expect(findSupplierReferences(state, SUPPLIER_IDS.RM_BOARD)).not.toEqual([]);
@@ -90,7 +90,7 @@ describe("削除ガード（design.md EXT-21：参照中は削除禁止）", () 
     expect(findCustomerReferences(state, "CUST-A")).not.toEqual([]);
   });
 
-  it("openMfgOrdersOfは未完了（DONE/CANCELED以外）の製造オーダのみ返す", () => {
+  it("[単体][機能テスト][正常] openMfgOrdersOfは未完了（DONE/CANCELED以外）の製造オーダのみ返す", () => {
     const state = createTestState();
     const base = {
       ploNo: "PLO-001",
@@ -112,18 +112,18 @@ describe("削除ガード（design.md EXT-21：参照中は削除禁止）", () 
 });
 
 describe("マスタ健全性チェック（design.md EXT-22）", () => {
-  it("プリセットは不整合ゼロ", () => {
+  it("[単体][機能テスト][正常] プリセットは不整合ゼロ", () => {
     expect(validateMaster(createTestState())).toEqual([]);
   });
 
-  it("工順が0行の内製品目をエラーとして検出する", () => {
+  it("[単体][機能テスト][異常] 工順が0行の内製品目をエラーとして検出する", () => {
     const state = createTestState();
     state.routingSteps = state.routingSteps.filter((s) => s.itemId !== ITEM_IDS.SA_SEAT);
     const issues = validateMaster(state);
     expect(issues.some((i) => i.subject === ITEM_IDS.SA_SEAT && i.message.includes("工順が1行もありません"))).toBe(true);
   });
 
-  it("既定仕入先が未設定の購買品目をエラーとして検出する", () => {
+  it("[単体][機能テスト][異常] 既定仕入先が未設定の購買品目をエラーとして検出する", () => {
     const state = createTestState();
     const item = state.items.find((i) => i.itemId === ITEM_IDS.PT_LEG)!;
     item.defaultSupplierId = undefined;
@@ -131,14 +131,14 @@ describe("マスタ健全性チェック（design.md EXT-22）", () => {
     expect(issues.some((i) => i.subject === ITEM_IDS.PT_LEG && i.message.includes("既定仕入先"))).toBe(true);
   });
 
-  it("存在しない作業区を参照する工順をエラーとして検出する", () => {
+  it("[単体][機能テスト][異常] 存在しない作業区を参照する工順をエラーとして検出する", () => {
     const state = createTestState();
     state.routingSteps[0].workCenter = "WC-NOT-EXIST";
     const issues = validateMaster(state);
     expect(issues.some((i) => i.subject === "WC-NOT-EXIST")).toBe(true);
   });
 
-  it("購入単価の無い購買品目は警告（エラーではない）", () => {
+  it("[単体][機能テスト][境界] 購入単価の無い購買品目は警告（エラーではない）", () => {
     const state = createTestState();
     const item = state.items.find((i) => i.itemId === ITEM_IDS.PT_SCREW)!;
     item.purchasePrice = undefined;

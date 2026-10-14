@@ -46,7 +46,7 @@ function produceAllSteps(state: SimulationState, itemId: string, expectedGoodQty
 }
 
 describe("自転車プリセット（BICYCLE_PRESET）へ切り替える", () => {
-  it("品目・BOM・工順・作業区・取引先がすべて自転車プリセットの内容に置き換わる", () => {
+  it("[結合][機能テスト][正常] 品目・BOM・工順・作業区・取引先がすべて自転車プリセットの内容に置き換わる", () => {
     const state = switchToBicyclePreset();
 
     expect(state.items).toEqual(BICYCLE_PRESET.items);
@@ -63,7 +63,7 @@ describe("自転車プリセット（BICYCLE_PRESET）へ切り替える", () =>
 });
 
 describe("自転車プリセットで4階層BOMのMRPを展開する", () => {
-  it("数量・BOMレベル・日程が階層どおりに逆算される", () => {
+  it("[UC-06][結合][機能テスト][正常] 数量・BOMレベル・日程が階層どおりに逆算される", () => {
     let state = switchToBicyclePreset();
 
     state = dispatch(state, {
@@ -85,7 +85,7 @@ describe("自転車プリセットで4階層BOMのMRPを展開する", () => {
 });
 
 describe("自転車プリセットで標準原価を4階層にわたって積み上げる", () => {
-  it("EXT-34が売価の仮置き根拠として引用する原価内訳と一致する", () => {
+  it("[単体][機能テスト][正常] EXT-34が売価の仮置き根拠として引用する原価内訳と一致する", () => {
     const state = switchToBicyclePreset();
 
     // アルミリム材（購買）300
@@ -100,7 +100,7 @@ describe("自転車プリセットで標準原価を4階層にわたって積み
 });
 
 describe("自転車プリセットで受注から出荷までを通す", () => {
-  it("在庫・ペギング・受注状態が整合したまま出荷まで完了する", () => {
+  it("[総合][機能テスト] 在庫・ペギング・受注状態が整合したまま出荷まで完了する", () => {
     let state = switchToBicyclePreset();
 
     state = dispatch(state, {

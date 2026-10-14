@@ -6,7 +6,7 @@ import { createInitialState, simulationReducer } from "./reducer";
 import { createTestState } from "./testUtils";
 
 describe("エクスポート／インポートの往復", () => {
-  it("プリセットを書き出して読み直すと同じ内容になる", () => {
+  it("[単体][機能テスト][正常] プリセットを書き出して読み直すと同じ内容になる", () => {
     const state = createTestState();
     const parsed = parseMasterSnapshot(serializeMasterSnapshot(state));
     expect(parsed.items).toEqual(exportMasterSnapshot(state).items);
@@ -14,7 +14,7 @@ describe("エクスポート／インポートの往復", () => {
     expect(parsed.routingSteps).toEqual(CHAIR_PRESET.routingSteps);
   });
 
-  it("エクスポートは現在の状態のコピーであり、後の編集に影響されない", () => {
+  it("[単体][機能テスト][正常] エクスポートは現在の状態のコピーであり、後の編集に影響されない", () => {
     const state = createTestState();
     const snapshot = exportMasterSnapshot(state);
     state.items[0].leadTimeDays = 99;
@@ -23,20 +23,20 @@ describe("エクスポート／インポートの往復", () => {
 });
 
 describe("スキーマ検証", () => {
-  it("JSONとして壊れている入力を拒否する", () => {
+  it("[単体][機能テスト][異常] JSONとして壊れている入力を拒否する", () => {
     expect(() => parseMasterSnapshot("{")).toThrow(/JSONとして解釈できません/);
   });
 
-  it("versionが異なる入力を拒否する", () => {
+  it("[単体][機能テスト][異常] versionが異なる入力を拒否する", () => {
     expect(() => parseMasterSnapshot(JSON.stringify({ version: 2 }))).toThrow(/未対応のversion/);
   });
 
-  it("必須フィールドが欠けた行を、位置を示して拒否する", () => {
+  it("[単体][機能テスト][異常] 必須フィールドが欠けた行を、位置を示して拒否する", () => {
     const broken = { ...CHAIR_PRESET, items: [{ itemId: "X", makeBuy: "MAKE", leadTimeDays: 1 }] };
     expect(() => parseMasterSnapshot(JSON.stringify(broken))).toThrow(/items\[0\]: name/);
   });
 
-  it("makeBuyが不正な値の行を拒否する", () => {
+  it("[単体][機能テスト][異常] makeBuyが不正な値の行を拒否する", () => {
     const broken = {
       ...CHAIR_PRESET,
       items: [{ itemId: "X", name: "X", makeBuy: "SUBCONTRACT", leadTimeDays: 1 }],
@@ -48,27 +48,27 @@ describe("スキーマ検証", () => {
 describe("数値の範囲検証（CRUD側と同じ強さで課す）", () => {
   // CRUD経路（domain/masterData.ts）が拒否する値が、JSON取り込みだけを素通りしないことを確認する。
   // 特にqtyPer<=0はproduction.tsのバックフラッシュで「在庫が減るはずが増える」実害に繋がるため重要
-  it("負の員数（qtyPer）を拒否する", () => {
+  it("[単体][機能テスト][異常] 負の員数（qtyPer）を拒否する", () => {
     const broken = { ...CHAIR_PRESET, bom: [{ ...CHAIR_PRESET.bom[0], qtyPer: -1 }] };
     expect(() => parseMasterSnapshot(JSON.stringify(broken))).toThrow(/qtyPer は正の数/);
   });
 
-  it("qtyPer=0を拒否する", () => {
+  it("[単体][機能テスト][境界] qtyPer=0を拒否する", () => {
     const broken = { ...CHAIR_PRESET, bom: [{ ...CHAIR_PRESET.bom[0], qtyPer: 0 }] };
     expect(() => parseMasterSnapshot(JSON.stringify(broken))).toThrow(/qtyPer は正の数/);
   });
 
-  it("負の標準リードタイムを拒否する", () => {
+  it("[単体][機能テスト][異常] 負の標準リードタイムを拒否する", () => {
     const broken = { ...CHAIR_PRESET, items: [{ ...CHAIR_PRESET.items[0], leadTimeDays: -1 }] };
     expect(() => parseMasterSnapshot(JSON.stringify(broken))).toThrow(/leadTimeDays は0以上/);
   });
 
-  it("非整数の標準リードタイムを拒否する", () => {
+  it("[単体][機能テスト][異常] 非整数の標準リードタイムを拒否する", () => {
     const broken = { ...CHAIR_PRESET, items: [{ ...CHAIR_PRESET.items[0], leadTimeDays: 1.5 }] };
     expect(() => parseMasterSnapshot(JSON.stringify(broken))).toThrow(/leadTimeDays は整数/);
   });
 
-  it("負の購入単価・売価を拒否する", () => {
+  it("[単体][機能テスト][異常] 負の購入単価・売価を拒否する", () => {
     const negativePurchase = {
       ...CHAIR_PRESET,
       items: CHAIR_PRESET.items.map((i) => (i.itemId === ITEM_IDS.RM_BOARD ? { ...i, purchasePrice: -1 } : i)),
@@ -82,7 +82,7 @@ describe("数値の範囲検証（CRUD側と同じ強さで課す）", () => {
     expect(() => parseMasterSnapshot(JSON.stringify(negativeSales))).toThrow(/salesPrice は0以上/);
   });
 
-  it("工程順序（stepNo）が0以下・非整数の行を拒否する", () => {
+  it("[単体][機能テスト][境界] 工程順序（stepNo）が0以下・非整数の行を拒否する", () => {
     const zero = { ...CHAIR_PRESET, routingSteps: [{ ...CHAIR_PRESET.routingSteps[0], stepNo: 0 }] };
     expect(() => parseMasterSnapshot(JSON.stringify(zero))).toThrow(/stepNo は正の数/);
 
@@ -90,7 +90,7 @@ describe("数値の範囲検証（CRUD側と同じ強さで課す）", () => {
     expect(() => parseMasterSnapshot(JSON.stringify(fractional))).toThrow(/stepNo は整数/);
   });
 
-  it("負の標準時間・賃率を拒否する", () => {
+  it("[単体][機能テスト][異常] 負の標準時間・賃率を拒否する", () => {
     const negativeStdTime = { ...CHAIR_PRESET, routingSteps: [{ ...CHAIR_PRESET.routingSteps[0], stdTimeMin: -1 }] };
     expect(() => parseMasterSnapshot(JSON.stringify(negativeStdTime))).toThrow(/stdTimeMin は0以上/);
 
@@ -98,7 +98,7 @@ describe("数値の範囲検証（CRUD側と同じ強さで課す）", () => {
     expect(() => parseMasterSnapshot(JSON.stringify(negativeRate))).toThrow(/ratePerHour は0以上/);
   });
 
-  it("負の段取り時間（setupMin）・数値以外の段取り時間を拒否する（Issue #66）", () => {
+  it("[単体][機能テスト][異常] 負の段取り時間（setupMin）・数値以外の段取り時間を拒否する（Issue #66）", () => {
     const negative = { ...CHAIR_PRESET, routingSteps: [{ ...CHAIR_PRESET.routingSteps[0], setupMin: -1 }] };
     expect(() => parseMasterSnapshot(JSON.stringify(negative))).toThrow(/setupMin は0以上/);
 
@@ -106,7 +106,7 @@ describe("数値の範囲検証（CRUD側と同じ強さで課す）", () => {
     expect(() => parseMasterSnapshot(JSON.stringify(notNumber))).toThrow(/setupMin は数値/);
   });
 
-  it("段取り時間（setupMin）が欠落・nullの工順は許容し未設定として扱い、あれば取り込みで値が保たれる（design.md EXT-41）", () => {
+  it("[単体][機能テスト][境界] 段取り時間（setupMin）が欠落・nullの工順は許容し未設定として扱い、あれば取り込みで値が保たれる（design.md EXT-41）", () => {
     // 欠落（CHAIR_PRESETはsetupMinを持たない＝過去のエクスポートJSONと同じ形）
     const legacy = parseMasterSnapshot(JSON.stringify(CHAIR_PRESET));
     expect(legacy.routingSteps.every((s) => s.setupMin === undefined)).toBe(true);
@@ -135,7 +135,7 @@ describe("数値の範囲検証（CRUD側と同じ強さで課す）", () => {
     expect(parsed.routingSteps.find((s) => s.itemId === ITEM_IDS.FG_CHAIR && s.stepNo === 20)?.setupMin).toBeUndefined();
   });
 
-  it("負の稼働能力（capacityMinPerDay）を拒否する", () => {
+  it("[単体][機能テスト][異常] 負の稼働能力（capacityMinPerDay）を拒否する", () => {
     const negativeCapacity = {
       ...CHAIR_PRESET,
       workCenters: [{ ...CHAIR_PRESET.workCenters[0], capacityMinPerDay: -1 }],
@@ -143,7 +143,7 @@ describe("数値の範囲検証（CRUD側と同じ強さで課す）", () => {
     expect(() => parseMasterSnapshot(JSON.stringify(negativeCapacity))).toThrow(/capacityMinPerDay は0以上/);
   });
 
-  it("稼働能力（capacityMinPerDay）が欠落した作業区を拒否する（design.md EXT-32：欠落時の既定補完はしない）", () => {
+  it("[単体][機能テスト][異常] 稼働能力（capacityMinPerDay）が欠落した作業区を拒否する（design.md EXT-32：欠落時の既定補完はしない）", () => {
     const wc = CHAIR_PRESET.workCenters[0];
     const missingCapacity = {
       ...CHAIR_PRESET,
@@ -154,12 +154,12 @@ describe("数値の範囲検証（CRUD側と同じ強さで課す）", () => {
 });
 
 describe("業務的な整合性検証（all-or-nothing）", () => {
-  it("主キーが重複する入力を拒否する", () => {
+  it("[単体][機能テスト][異常] 主キーが重複する入力を拒否する", () => {
     const broken = { ...CHAIR_PRESET, items: [...CHAIR_PRESET.items, CHAIR_PRESET.items[0]] };
     expect(() => parseMasterSnapshot(JSON.stringify(broken))).toThrow(/品目コードが重複/);
   });
 
-  it("循環したBOMを含む入力を拒否する（登録時チェックの抜け道を塞ぐ）", () => {
+  it("[単体][機能テスト][異常] 循環したBOMを含む入力を拒否する（登録時チェックの抜け道を塞ぐ）", () => {
     const broken = {
       ...CHAIR_PRESET,
       bom: [...CHAIR_PRESET.bom, { parentItemId: ITEM_IDS.SA_SEAT, childItemId: ITEM_IDS.FG_CHAIR, qtyPer: 1 }],
@@ -167,7 +167,7 @@ describe("業務的な整合性検証（all-or-nothing）", () => {
     expect(() => parseMasterSnapshot(JSON.stringify(broken))).toThrow(/循環/);
   });
 
-  it("工順が0行の内製品目を含む入力を拒否する", () => {
+  it("[単体][機能テスト][異常] 工順が0行の内製品目を含む入力を拒否する", () => {
     const broken = {
       ...CHAIR_PRESET,
       routingSteps: CHAIR_PRESET.routingSteps.filter((s) => s.itemId !== ITEM_IDS.SA_SEAT),
@@ -175,13 +175,13 @@ describe("業務的な整合性検証（all-or-nothing）", () => {
     expect(() => parseMasterSnapshot(JSON.stringify(broken))).toThrow(/工順が1行もありません/);
   });
 
-  it("MasterIOErrorとして投げる（呼び出し側が画面に出せる）", () => {
+  it("[単体][機能テスト][異常] MasterIOErrorとして投げる（呼び出し側が画面に出せる）", () => {
     expect(() => parseMasterSnapshot("{")).toThrow(MasterIOError);
   });
 });
 
 describe("reducer経由の取り込み", () => {
-  it("MASTER_IMPORTはマスタを差し替え、全トランザクションを初期化する", () => {
+  it("[結合][機能テスト][正常] MASTER_IMPORTはマスタを差し替え、全トランザクションを初期化する", () => {
     let state = createInitialState();
     state = simulationReducer(state, {
       type: "SO_CREATE",
@@ -211,7 +211,7 @@ describe("reducer経由の取り込み", () => {
     expect(state.eventLog.at(-1)?.message).toContain("マスタをインポートした");
   });
 
-  it("MASTER_RESET_TO_PRESETで木製イスへ戻せる（ペイロード省略時は既定プリセット）", () => {
+  it("[結合][機能テスト][正常] MASTER_RESET_TO_PRESETで木製イスへ戻せる（ペイロード省略時は既定プリセット）", () => {
     let state = createInitialState();
     state = simulationReducer(state, { type: "MASTER_DELETE_BOM_LINE", payload: { parentItemId: ITEM_IDS.FG_CHAIR, childItemId: ITEM_IDS.PT_SCREW } });
     expect(state.bom).toHaveLength(3);
@@ -221,7 +221,7 @@ describe("reducer経由の取り込み", () => {
     expect(state.items).toHaveLength(5);
   });
 
-  it("MASTER_RESET_TO_PRESETはpresetIdでプリセットを選べる（design.md EXT-34）", () => {
+  it("[結合][機能テスト][正常] MASTER_RESET_TO_PRESETはpresetIdでプリセットを選べる（design.md EXT-34）", () => {
     let state = createInitialState();
 
     state = simulationReducer(state, { type: "MASTER_RESET_TO_PRESET", payload: { presetId: "BICYCLE" } });
@@ -240,7 +240,7 @@ describe("reducer経由の取り込み", () => {
     expect(state.items.some((i) => i.itemId === ITEM_IDS.FG_CHAIR)).toBe(true);
   });
 
-  it("未知のpresetIdは既定プリセット（木製イス）へフォールバックする", () => {
+  it("[結合][機能テスト][異常] 未知のpresetIdは既定プリセット（木製イス）へフォールバックする", () => {
     let state = createInitialState();
     state = simulationReducer(state, { type: "MASTER_RESET_TO_PRESET", payload: { presetId: "BICYCLE" } });
 
@@ -249,7 +249,7 @@ describe("reducer経由の取り込み", () => {
     expect(state.items.some((i) => i.itemId === ITEM_IDS.FG_CHAIR)).toBe(true);
   });
 
-  it("取り込めないスナップショットはエラーログに残り、状態は変わらない", () => {
+  it("[結合][機能テスト][異常] 取り込めないスナップショットはエラーログに残り、状態は変わらない", () => {
     const state = createInitialState();
     const next = simulationReducer(state, {
       type: "MASTER_IMPORT",

@@ -100,7 +100,7 @@ function produce(state: SimulationState, itemId: string, expectedGoodQty: number
 }
 
 describe("4階層BOMをマスタ操作だけで組み立てて通す", () => {
-  it("MRPは4階層すべてを展開し、BOMレベルと日程を階層どおりに逆算する", () => {
+  it("[UC-06][結合][機能テスト][正常] MRPは4階層すべてを展開し、BOMレベルと日程を階層どおりに逆算する", () => {
     let state = buildFourLevelMaster();
 
     state = dispatch(state, {
@@ -122,7 +122,7 @@ describe("4階層BOMをマスタ操作だけで組み立てて通す", () => {
     expect(byItem["PT-Z"]).toMatchObject({ qty: 6, bomLevel: 1, dueDay: 8, startDay: 6, orderType: "BUY" });
   });
 
-  it("標準原価を4階層にわたって積み上げる", () => {
+  it("[単体][機能テスト][正常] 標準原価を4階層にわたって積み上げる", () => {
     const state = buildFourLevelMaster();
 
     // RM-1（購買）100
@@ -135,7 +135,7 @@ describe("4階層BOMをマスタ操作だけで組み立てて通す", () => {
     expect(rollupCost(state, "FG-X")).toEqual({ material: 6550, labor: 2000, standardCost: 8550 });
   });
 
-  it("受注から出荷までを通し、在庫・ペギング・受注状態が整合する", () => {
+  it("[総合][機能テスト] 受注から出荷までを通し、在庫・ペギング・受注状態が整合する", () => {
     let state = buildFourLevelMaster();
 
     state = dispatch(state, {
@@ -192,7 +192,7 @@ describe("4階層BOMをマスタ操作だけで組み立てて通す", () => {
 });
 
 describe("マスタが壊れているときエンジンが黙って壊れない（design.md EXT-19・EXT-22）", () => {
-  it("循環BOMを直接注入してMRPを実行すると、無限再帰ではなく例外になる", () => {
+  it("[UC-06][単体][機能テスト][異常] 循環BOMを直接注入してMRPを実行すると、無限再帰ではなく例外になる", () => {
     const state = buildFourLevelMaster();
     // 登録時チェックは通らないので、壊れたデータを直接注入して保険側のガードを検証する
     state.bom.push({ parentItemId: "SA-B", childItemId: "FG-X", qtyPer: 1 });
@@ -211,7 +211,7 @@ describe("マスタが壊れているときエンジンが黙って壊れない�
     expect(() => rollupCost(state, "FG-X")).toThrow(/循環/);
   });
 
-  it("工順が0行の内製品目は計画オーダを確定できない（完了不能な製造オーダを作らない）", () => {
+  it("[UC-07][結合][機能テスト][異常] 工順が0行の内製品目は計画オーダを確定できない（完了不能な製造オーダを作らない）", () => {
     let state = buildFourLevelMaster();
     state = dispatch(state, { type: "MASTER_DELETE_ROUTING_STEP", payload: { itemId: "SA-B", stepNo: 10 } });
     state = dispatch(state, {
