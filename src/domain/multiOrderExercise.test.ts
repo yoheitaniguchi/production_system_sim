@@ -40,7 +40,7 @@ describe("複数受注の資源競合演習（design.md §6 TC-M1）", () => {
     expect(yRmPlo).toMatchObject({ qty: 2, orderType: "BUY" });
   });
 
-  it("受注登録順ではなく納期昇順で展開されることを確認する（design.md EXT-1）", () => {
+  it("[UC-06][単体][機能テスト][正常] 受注登録順ではなく納期昇順で展開されることを確認する（design.md EXT-1）", () => {
     // 上のテストと数量関係を入れ替え、Zの方が登録は後でも需要処理が先であることを別角度から確認する。
     // Yを先に登録しても、Yの木板所要が先に在庫を使い切ってしまう「登録順」処理にはなっていないことを見る。
     const state = createTestState(0);

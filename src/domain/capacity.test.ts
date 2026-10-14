@@ -28,7 +28,7 @@ function firmChairOrder() {
 }
 
 describe("computeCapacityLoad（design.md §9.5の計算例）", () => {
-  it("TC-04〜05の確定結果だけで、WC-CUT/WC-INSは能力内・WC-ASMのみ山積み超過になる", () => {
+  it("[単体][機能テスト][正常] TC-04〜05の確定結果だけで、WC-CUT/WC-INSは能力内・WC-ASMのみ山積み超過になる", () => {
     const { state } = firmChairOrder();
 
     const load = computeCapacityLoad(state);
@@ -46,7 +46,7 @@ describe("computeCapacityLoad（design.md §9.5の計算例）", () => {
     expect(overloads[0]).toMatchObject({ workCenter: WORK_CENTERS.ASM, day: 13, plannedMin: 300, capacityMin: 240 });
   });
 
-  it("design.md C2-1の回帰：未着手の後工程（inputQtyがまだ0）でも計画負荷はmo.planQty基準で計上される", () => {
+  it("[単体][機能テスト][境界] design.md C2-1の回帰：未着手の後工程（inputQtyがまだ0）でも計画負荷はmo.planQty基準で計上される", () => {
     const { state } = firmChairOrder();
     const fgOrder = state.mfgOrders.find((mo) => mo.itemId === ITEM_IDS.FG_CHAIR)!;
     const step20 = state.workInstructions.find((wi) => wi.moNo === fgOrder.moNo && wi.stepNo === 20)!;
@@ -59,7 +59,7 @@ describe("computeCapacityLoad（design.md §9.5の計算例）", () => {
     expect(insEntry?.plannedMin).toBe(120);
   });
 
-  it("着手した工程は計画負荷ではなく実績負荷（実着手日）へ移り、二重計上されない", () => {
+  it("[結合][機能テスト][正常] 着手した工程は計画負荷ではなく実績負荷（実着手日）へ移り、二重計上されない", () => {
     const { state } = firmChairOrder();
     const saOrder = state.mfgOrders.find((mo) => mo.itemId === ITEM_IDS.SA_SEAT)!;
 
@@ -71,7 +71,7 @@ describe("computeCapacityLoad（design.md §9.5の計算例）", () => {
     expect(cutEntry).toMatchObject({ plannedMin: 0, actualMin: 180 });
   });
 
-  it("完了（DONE）後も実績負荷は実着手日に残り続ける", () => {
+  it("[結合][機能テスト][正常] 完了（DONE）後も実績負荷は実着手日に残り続ける", () => {
     const { state } = firmChairOrder();
     const rmPo = state.purchaseOrders.find((po) => po.itemId === ITEM_IDS.RM_BOARD)!;
     ackPurchaseOrder(state, rmPo.poNo, rmPo.dueDay);
@@ -87,7 +87,7 @@ describe("computeCapacityLoad（design.md §9.5の計算例）", () => {
     expect(cutEntry).toMatchObject({ plannedMin: 0, actualMin: 180 });
   });
 
-  it("取消（CANCELED）された製造オーダは計画負荷に算入されない", () => {
+  it("[結合][機能テスト][境界] 取消（CANCELED）された製造オーダは計画負荷に算入されない", () => {
     const { state, soNo } = firmChairOrder();
     cancelSalesOrder(state, soNo);
 
@@ -97,7 +97,7 @@ describe("computeCapacityLoad（design.md §9.5の計算例）", () => {
 
   // design.md EXT-33：WC-ASMのD+13山積み超過（FG-100 x10、300分 > 240分）を、製造オーダの分割
   // （数量を分けて別の着手日へ振り分ける人による操作）で解消できることを検証する
-  it("山積み超過のオーダを分割して別日へ振り分けると、超過が解消される", () => {
+  it("[結合][機能テスト][正常] 山積み超過のオーダを分割して別日へ振り分けると、超過が解消される", () => {
     const { state } = firmChairOrder();
     const fgOrder = state.mfgOrders.find((mo) => mo.itemId === ITEM_IDS.FG_CHAIR)!;
     expect(capacityOverloads(state)).toHaveLength(1); // 分割前：WC-ASM D+13が超過

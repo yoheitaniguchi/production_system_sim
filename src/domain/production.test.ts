@@ -18,7 +18,7 @@ function setupFirmOrder(qty: number): { state: SimulationState; soNo: string } {
 }
 
 describe("startStep / completeStep（v5-spec.md §7.3）", () => {
-  it("リリース前の製造オーダは第1工程を着手できない", () => {
+  it("[UC-13][単体][機能テスト][異常] リリース前の製造オーダは第1工程を着手できない", () => {
     const { state } = setupFirmOrder(10);
     const saOrder = state.mfgOrders.find((mo) => mo.itemId === ITEM_IDS.SA_SEAT)!;
     expect(() => startStep(state, saOrder.moNo, 10, 12)).toThrow(ProductionError);
@@ -41,7 +41,7 @@ describe("startStep / completeStep（v5-spec.md §7.3）", () => {
     expect(state.stockTxns.map((t) => t.txnType)).toEqual(expect.arrayContaining(["ISS", "PRD"]));
   });
 
-  it("部品不足時はHOLDになり、部品充足後に同じ操作を再実行すると復帰する（design.md EXT-10）", () => {
+  it("[UC-13][単体][機能テスト][異常] 部品不足時はHOLDになり、部品充足後に同じ操作を再実行すると復帰する（design.md EXT-10）", () => {
     const { state } = setupFirmOrder(10);
     const saOrder = state.mfgOrders.find((mo) => mo.itemId === ITEM_IDS.SA_SEAT)!;
     state.stocks.push({ itemId: ITEM_IDS.RM_BOARD, onHand: 5, allocated: 0 });
@@ -88,7 +88,7 @@ describe("startStep / completeStep（v5-spec.md §7.3）", () => {
     expect(updatedFg).toMatchObject({ status: "DONE", goodQty: 9, scrapQty: 1 });
   });
 
-  it("良品数＋不良数が投入数と一致しない場合は完了できない", () => {
+  it("[UC-14][単体][機能テスト][異常] 良品数＋不良数が投入数と一致しない場合は完了できない", () => {
     const { state } = setupFirmOrder(10);
     const saOrder = state.mfgOrders.find((mo) => mo.itemId === ITEM_IDS.SA_SEAT)!;
     state.stocks.push({ itemId: ITEM_IDS.RM_BOARD, onHand: 10, allocated: 0 });
@@ -97,7 +97,7 @@ describe("startStep / completeStep（v5-spec.md §7.3）", () => {
     expect(() => completeStep(state, saOrder.moNo, 10, 8, 1, 13)).toThrow(ProductionError);
   });
 
-  it("前工程が完了していないと次工程には着手できない（未完了のまま投入数0で完成入庫されるのを防ぐ）", () => {
+  it("[UC-13][単体][機能テスト][異常] 前工程が完了していないと次工程には着手できない（未完了のまま投入数0で完成入庫されるのを防ぐ）", () => {
     const { state } = setupFirmOrder(10);
     state.stocks.push(
       { itemId: ITEM_IDS.SA_SEAT, onHand: 10, allocated: 0 },
@@ -130,7 +130,7 @@ describe("startStep / completeStep（v5-spec.md §7.3）", () => {
 });
 
 describe("splitMfgOrder（design.md EXT-33：能力超過解消のための分割）", () => {
-  it("FIRMのオーダを数量で分割し、元オーダの残数量・第1工程投入数を減らし、新オーダを別日で新設する", () => {
+  it("[単体][機能テスト][正常] FIRMのオーダを数量で分割し、元オーダの残数量・第1工程投入数を減らし、新オーダを別日で新設する", () => {
     const { state } = setupFirmOrder(10);
     const fgOrder = state.mfgOrders.find((mo) => mo.itemId === ITEM_IDS.FG_CHAIR)!;
 
@@ -160,21 +160,21 @@ describe("splitMfgOrder（design.md EXT-33：能力超過解消のための分�
     expect(createdSteps[1]).toMatchObject({ stepNo: 20, inputQty: 0, status: "WAIT" });
   });
 
-  it("FIRM以外（リリース済み）は分割できない", () => {
+  it("[単体][機能テスト][異常] FIRM以外（リリース済み）は分割できない", () => {
     const { state } = setupFirmOrder(10);
     const fgOrder = state.mfgOrders.find((mo) => mo.itemId === ITEM_IDS.FG_CHAIR)!;
     releaseMfgOrder(state, fgOrder.moNo);
     expect(() => splitMfgOrder(state, fgOrder.moNo, 4, 14, 15)).toThrow(ProductionError);
   });
 
-  it("分割数量が0以下・元数量以上は拒否される", () => {
+  it("[単体][機能テスト][境界] 分割数量が0以下・元数量以上は拒否される", () => {
     const { state } = setupFirmOrder(10);
     const fgOrder = state.mfgOrders.find((mo) => mo.itemId === ITEM_IDS.FG_CHAIR)!;
     expect(() => splitMfgOrder(state, fgOrder.moNo, 0, 14, 15)).toThrow(ProductionError);
     expect(() => splitMfgOrder(state, fgOrder.moNo, 10, 14, 15)).toThrow(ProductionError);
   });
 
-  it("分割先の完了予定日が着手日より前は拒否される", () => {
+  it("[単体][機能テスト][異常] 分割先の完了予定日が着手日より前は拒否される", () => {
     const { state } = setupFirmOrder(10);
     const fgOrder = state.mfgOrders.find((mo) => mo.itemId === ITEM_IDS.FG_CHAIR)!;
     expect(() => splitMfgOrder(state, fgOrder.moNo, 4, 15, 14)).toThrow(ProductionError);

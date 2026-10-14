@@ -263,7 +263,7 @@
 | B-2 | ✅ | `.github/ISSUE_TEMPLATE/feature_request.md`の受け入れ条件欄、`docs/issue-workflow.md` §3.1 | Given/When/Then形式ではないが検証可能な粒度を要求 |
 | B-3 | ⚠️ | `docs/design.md` §3 EXT-1〜42 | 実質ADR。状態・棄却案が不揃い |
 | B-4 | ➖ | バックエンド・外部APIなし | シナリオJSONは`scenarioIO.ts`の`TABLE_SPECS`で機械検証済み |
-| B-5 | ⚠️ | `docs/test-tagging.md`、タグ付与10ファイル・101件 | 付与途中。2026-10-14にマスタ系・reducer・todayActions・processFlow・gantt（10ファイル・117件）を付与。残り約50件は次のPR |
+| B-5 | ✅ | `docs/test-tagging.md`、`src/`配下の全テスト（`it()`）にタグ付与済み | 2026-10-14再判定（旧⚠️）。PR #135と後続PRで残り約170件を付与。UC番号の無いタグが集計スクリプトの`TAG_PATTERN`で拾われない点は別途（`findings.md` 2026-10-14） |
 | B-6 | ✅ | 実装履歴を`CHANGELOG.md`へ移し`CLAUDE.md`は作業ルールと現状の要約に絞った。記録はPRの中で追記し、記録だけの別PRは作らない（`dod.md` D8）。design.md §8のディレクトリ構成は`CLAUDE.md`へ一本化。`docs/report/`各ファイルに「スナップショットであり更新しない」旨を明記 | 2026-10-08再判定（旧⚠️） |
 | C-1 | ✅ | PRごとに`main`へマージし`deploy.yml`で即時公開、PRプレビュー | 反復の区切り（2週間）は`poc-definition.md` 2章で定義。2026-10-08に小さな変更向けの軽量経路を追加（`docs/issue-workflow.md` 1.1節） |
 | C-2 | ⚠️ | `docs/process/dod.md`（D1〜D8）、PRテンプレートの各チェックがDoDの番号に対応 | 仕組みはできたが運用実績はまだ無い |

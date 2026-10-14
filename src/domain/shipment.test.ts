@@ -5,7 +5,7 @@ import { allocateShipment, cancelShipmentAllocation, shipOut, ShipmentError, shi
 import { createTestState } from "./testUtils";
 
 describe("allocateShipment / shipOut（v5-spec.md §7.2）", () => {
-  it("出荷可能量が無ければ引当できない", () => {
+  it("[UC-18][単体][機能テスト][異常] 出荷可能量が無ければ引当できない", () => {
     const state = createTestState(0);
     const soNo = createSalesOrder(state, { customerId: "CUST-A", itemId: ITEM_IDS.FG_CHAIR, qty: 10, requestDay: 15 }, 0);
     confirmDelivery(state, soNo, 15);
@@ -31,7 +31,7 @@ describe("allocateShipment / shipOut（v5-spec.md §7.2）", () => {
     expect(txn).toMatchObject({ txnType: "SHP", qty: -9 });
   });
 
-  it("受注残と出荷可能量が一致すればCLOSEDになる", () => {
+  it("[UC-19][単体][機能テスト][境界] 受注残と出荷可能量が一致すればCLOSEDになる", () => {
     const state = createTestState(0);
     const soNo = createSalesOrder(state, { customerId: "CUST-A", itemId: ITEM_IDS.FG_CHAIR, qty: 9, requestDay: 15 }, 0);
     confirmDelivery(state, soNo, 15);
@@ -43,7 +43,7 @@ describe("allocateShipment / shipOut（v5-spec.md §7.2）", () => {
     expect(state.soLines.find((l) => l.soNo === soNo)).toMatchObject({ shippedQty: 9, status: "CLOSED" });
   });
 
-  it("引当を解除すると引当済数量が戻る", () => {
+  it("[単体][機能テスト][正常] 引当を解除すると引当済数量が戻る", () => {
     const state = createTestState(0);
     const soNo = createSalesOrder(state, { customerId: "CUST-A", itemId: ITEM_IDS.FG_CHAIR, qty: 5, requestDay: 15 }, 0);
     confirmDelivery(state, soNo, 15);

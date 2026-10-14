@@ -77,7 +77,7 @@ describe("unmetDemand（v5-spec.md §7.5）", () => {
     expect(result).toEqual([{ itemId: ITEM_IDS.FG_CHAIR, shortage: 1 }]);
   });
 
-  it("需要を満たしていれば空配列を返す", () => {
+  it("[UC-09][単体][機能テスト][正常] 需要を満たしていれば空配列を返す", () => {
     const state = createTestState(0);
     const soNo = createSalesOrder(state, { customerId: "CUST-A", itemId: ITEM_IDS.FG_CHAIR, qty: 10, requestDay: 15 }, 0);
     confirmDelivery(state, soNo, 15);

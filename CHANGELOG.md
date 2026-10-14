@@ -300,3 +300,5 @@ CI基盤の新設。検出された実違反の修正は個別Issue化して別�
 - テストタグ付与の完了（`docs/process/review-report.md` B-5）の前半として、マスタ系（`data/masterData`・`masterData`・`masterIO`・`masterIntegrity`・
   `bicyclePreset`・`multiLevelBom`）と`reducer`・`todayActions`・`processFlow`・`gantt`のテスト117件にタグを付けた。reducer経由のテストの工程
   （受注〜出荷の連鎖は総合、それ以外は結合）とタグをit()に付ける規則を`docs/test-tagging.md`に追記した
+- テストタグ付与の後半として、`cost`・`capacity`・`production`・`lot`・`dashboard`ほか14ファイルの52件にタグを付け、`src/`配下の全テストのit()にタグが揃った
+  （`docs/process/review-report.md` B-5を✅に再判定）

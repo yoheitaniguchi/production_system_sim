@@ -87,7 +87,7 @@ describe("runMRP / firmAllPlannedOrders", () => {
     expect(state.plannedOrders).toHaveLength(0);
   });
 
-  it("木製イスの工順どおりWORK_INSTRUCTIONが生成される（第1工程の投入数のみ確定済み）", () => {
+  it("[UC-07][単体][機能テスト][正常] 木製イスの工順どおりWORK_INSTRUCTIONが生成される（第1工程の投入数のみ確定済み）", () => {
     const state = createTestState(0);
     const soNo = createSalesOrder(state, { customerId: "CUST-A", itemId: ITEM_IDS.FG_CHAIR, qty: 10, requestDay: 15 }, 0);
     confirmDelivery(state, soNo, 15);
@@ -145,7 +145,7 @@ describe("runMRP / firmAllPlannedOrders", () => {
     });
   });
 
-  it("仕掛品（SA-200）の工程で不良が出た場合も、MRP再実行でその分の補充オーダが生成される", () => {
+  it("[UC-06][単体][機能テスト][異常] 仕掛品（SA-200）の工程で不良が出た場合も、MRP再実行でその分の補充オーダが生成される", () => {
     const state = createTestState(0);
     const soNo = createSalesOrder(state, { customerId: "CUST-A", itemId: ITEM_IDS.FG_CHAIR, qty: 10, requestDay: 15 }, 0);
     confirmDelivery(state, soNo, 15);

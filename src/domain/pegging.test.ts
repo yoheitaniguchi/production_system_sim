@@ -23,11 +23,11 @@ describe("traceFromOrder（v5-spec.md §7.4）", () => {
     );
   });
 
-  it("pegKeyは'SO番号-明細番号'形式", () => {
+  it("[単体][機能テスト][正常] pegKeyは'SO番号-明細番号'形式", () => {
     expect(pegKey("SO-001", 1)).toBe("SO-001-1");
   });
 
-  it("何もペグされていない受注はtraceFromOrderが空を返す", () => {
+  it("[UC-21][単体][機能テスト][境界] 何もペグされていない受注はtraceFromOrderが空を返す", () => {
     const state = createTestState(0);
     const soNo = createSalesOrder(state, { customerId: "CUST-A", itemId: ITEM_IDS.FG_CHAIR, qty: 10, requestDay: 15 }, 0);
     const result = traceFromOrder(state, soNo, 1);

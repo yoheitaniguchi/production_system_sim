@@ -11,13 +11,13 @@ function dispatch(state: SimulationState, action: SimulationAction): SimulationS
 }
 
 describe("createLot / consumeFifo（v5-spec.md §11.3 Phase 2-B）", () => {
-  it("ロットが無い品目を消費しても、lotNo未設定の1件としてエラーにならない（design.md EXT-18）", () => {
+  it("[単体][機能テスト][境界] ロットが無い品目を消費しても、lotNo未設定の1件としてエラーにならない（design.md EXT-18）", () => {
     const state = createTestState(0);
     const result = consumeFifo(state, ITEM_IDS.RM_BOARD, 5);
     expect(result).toEqual([{ lotNo: undefined, qty: 5 }]);
   });
 
-  it("複数ロットにまたがる場合、作成日が古い順（FIFO）に分割して消費する", () => {
+  it("[単体][機能テスト][正常] 複数ロットにまたがる場合、作成日が古い順（FIFO）に分割して消費する", () => {
     const state = createTestState(0);
     const lot1 = createLot(state, ITEM_IDS.RM_BOARD, 3, 1, "PO-001");
     const lot2 = createLot(state, ITEM_IDS.RM_BOARD, 5, 2, "PO-002");
@@ -32,7 +32,7 @@ describe("createLot / consumeFifo（v5-spec.md §11.3 Phase 2-B）", () => {
     expect(state.lots.find((l) => l.lotNo === lot2.lotNo)?.qty).toBe(2);
   });
 
-  it("ロット台帳の残数量で不足する分はlotNo未設定として扱う（不足分もエラーにしない）", () => {
+  it("[単体][機能テスト][境界] ロット台帳の残数量で不足する分はlotNo未設定として扱う（不足分もエラーにしない）", () => {
     const state = createTestState(0);
     const lot1 = createLot(state, ITEM_IDS.RM_BOARD, 2, 1, "PO-001");
 
@@ -46,7 +46,7 @@ describe("createLot / consumeFifo（v5-spec.md §11.3 Phase 2-B）", () => {
 });
 
 describe("adjustStock経由のロット生成・FIFO消費・分割TXN起票", () => {
-  it("プラス調整はロットを1件生成し、マイナス調整はFIFOで消費して複数ロットにまたがればTXNを分割する", () => {
+  it("[UC-17][単体][機能テスト][正常] プラス調整はロットを1件生成し、マイナス調整はFIFOで消費して複数ロットにまたがればTXNを分割する", () => {
     const state = createTestState(0);
     adjustStock(state, ITEM_IDS.RM_BOARD, 3, 1);
     adjustStock(state, ITEM_IDS.RM_BOARD, 5, 2);
@@ -64,7 +64,7 @@ describe("adjustStock経由のロット生成・FIFO消費・分割TXN起票", (
 });
 
 describe("生産・出荷を通したロット系譜の記録と追跡（v5-spec.md §11.3の後方/前方追跡）", () => {
-  it("入荷→製造→出荷の一連の流れで、後方追跡は消費した部品ロットを、前方追跡は生成した製品ロットを返す", () => {
+  it("[結合][機能テスト][正常] 入荷→製造→出荷の一連の流れで、後方追跡は消費した部品ロットを、前方追跡は生成した製品ロットを返す", () => {
     let state = createInitialState();
     state = dispatch(state, {
       type: "SO_CREATE",
@@ -132,7 +132,7 @@ function assertLotStockConsistency(state: SimulationState) {
 }
 
 describe("STOCK.onHandとLOT残数量合計の整合性（在庫モデルの厳密化検討、design.md EXT-18追記）", () => {
-  it("v5-spec.md §9.1のTC-01〜18を一通り流しても、各チェックポイントで品目ごとのonHandとロット残数量合計が一致する", () => {
+  it("[総合][機能テスト] v5-spec.md §9.1のTC-01〜18を一通り流しても、各チェックポイントで品目ごとのonHandとロット残数量合計が一致する", () => {
     let state = createInitialState();
     assertLotStockConsistency(state);
 
@@ -205,7 +205,7 @@ describe("STOCK.onHandとLOT残数量合計の整合性（在庫モデルの厳�
     expect(state.stocks.find((s) => s.itemId === ITEM_IDS.FG_CHAIR)?.onHand).toBe(0);
   });
 
-  it("部品消費が複数ロットにまたがる場合、生成ロットの系譜に消費した全ロットが記録される", () => {
+  it("[結合][機能テスト][境界] 部品消費が複数ロットにまたがる場合、生成ロットの系譜に消費した全ロットが記録される", () => {
     let state = createInitialState();
     state = dispatch(state, {
       type: "SO_CREATE",
