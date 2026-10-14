@@ -297,3 +297,6 @@ CI基盤の新設。検出された実違反の修正は個別Issue化して別�
 - MRP性能のベンチマーク（`docs/process/review-report.md` F-4）として`src/domain/mrpPerformance.test.ts`を追加した。`poc-definition.md` 4章の
   性能目標（木製イス・受注20件で1秒以内、4階層BOM・品目100件で3秒以内）をそのまま閾値とし、確定済みオーダがある状態での再実行も測る。
   実測は目標の数百分の1以下（数ms〜十数ms）で、`npm test`の一部としてCIで劣化を検知する
+- テストタグ付与の完了（`docs/process/review-report.md` B-5）の前半として、マスタ系（`data/masterData`・`masterData`・`masterIO`・`masterIntegrity`・
+  `bicyclePreset`・`multiLevelBom`）と`reducer`・`todayActions`・`processFlow`・`gantt`のテスト117件にタグを付けた。reducer経由のテストの工程
+  （受注〜出荷の連鎖は総合、それ以外は結合）とタグをit()に付ける規則を`docs/test-tagging.md`に追記した

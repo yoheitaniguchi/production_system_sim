@@ -9,7 +9,7 @@ function dispatch(state: SimulationState, action: SimulationAction): SimulationS
 }
 
 describe("computeActiveFlows", () => {
-  it("まだ何も操作していなければ何もハイライトしない", () => {
+  it("[結合][機能テスト][境界] まだ何も操作していなければ何もハイライトしない", () => {
     const state = createInitialState();
     const result = computeActiveFlows(state);
     expect(result.lastMessage).toBeNull();
@@ -17,7 +17,7 @@ describe("computeActiveFlows", () => {
     expect(result.activeDomains.size).toBe(0);
   });
 
-  it("受注登録は受注ドメインのみをハイライトする", () => {
+  it("[結合][機能テスト][正常] 受注登録は受注ドメインのみをハイライトする", () => {
     let state = createInitialState();
     state = dispatch(state, {
       type: "SO_CREATE",
@@ -28,7 +28,7 @@ describe("computeActiveFlows", () => {
     expect(result.flowIds.size).toBe(0);
   });
 
-  it("MRP実行は受注・在庫・発注・工程から計画への4本をハイライトする", () => {
+  it("[結合][機能テスト][正常] MRP実行は受注・在庫・発注・工程から計画への4本をハイライトする", () => {
     let state = createInitialState();
     state = dispatch(state, { type: "MRP_RUN" });
     const result = computeActiveFlows(state);
@@ -38,7 +38,7 @@ describe("computeActiveFlows", () => {
     expect(result.activeDomains).toEqual(new Set(["salesOrder", "inventory", "procurement", "production", "planning"]));
   });
 
-  it("計画オーダ確定は実際に生成されたテーブルに応じて計画→発注／計画→工程をハイライトする", () => {
+  it("[結合][機能テスト][正常] 計画オーダ確定は実際に生成されたテーブルに応じて計画→発注／計画→工程をハイライトする", () => {
     let state = createInitialState();
     state = dispatch(state, {
       type: "SO_CREATE",
@@ -53,7 +53,7 @@ describe("computeActiveFlows", () => {
     expect(result.flowIds).toEqual(new Set(["planning-production", "planning-procurement"]));
   });
 
-  it("入荷計上は発注→在庫をハイライトする", () => {
+  it("[結合][機能テスト][正常] 入荷計上は発注→在庫をハイライトする", () => {
     let state = createInitialState();
     state = dispatch(state, {
       type: "SO_CREATE",
@@ -72,7 +72,7 @@ describe("computeActiveFlows", () => {
     expect(result.flowIds).toEqual(new Set(["procurement-inventory"]));
   });
 
-  it("工程完了は工程→在庫をハイライトする", () => {
+  it("[結合][機能テスト][正常] 工程完了は工程→在庫をハイライトする", () => {
     let state = createInitialState();
     state = dispatch(state, {
       type: "SO_CREATE",
@@ -95,7 +95,7 @@ describe("computeActiveFlows", () => {
     expect(result.flowIds).toEqual(new Set(["production-inventory"]));
   });
 
-  it("マスタ変更はマスタドメインのみをハイライトし、フローは動かさない", () => {
+  it("[結合][機能テスト][正常] マスタ変更はマスタドメインのみをハイライトし、フローは動かさない", () => {
     let state = createInitialState();
     state = dispatch(state, {
       type: "MASTER_UPDATE_ITEM",
@@ -106,7 +106,7 @@ describe("computeActiveFlows", () => {
     expect(result.flowIds.size).toBe(0);
   });
 
-  it("indexを指定すると、その時点の操作のフローを返す（戻る/進むボタン用）", () => {
+  it("[結合][機能テスト][正常] indexを指定すると、その時点の操作のフローを返す（戻る/進むボタン用）", () => {
     let state = createInitialState();
     state = dispatch(state, {
       type: "SO_CREATE",
@@ -130,7 +130,7 @@ describe("computeActiveFlows", () => {
     expect(defaulted.day).toBe(latest.day);
   });
 
-  it("エラーログはハイライトしない", () => {
+  it("[結合][機能テスト][異常] エラーログはハイライトしない", () => {
     let state = createInitialState();
     state = dispatch(state, { type: "SO_CONFIRM_DELIVERY", payload: { soNo: "SO-999", confirmDay: 10 } });
     expect(state.eventLog[0].message).toMatch(/^\[エラー\]/);

@@ -8,7 +8,7 @@ function dispatch(state: SimulationState, action: SimulationAction): SimulationS
 }
 
 describe("simulationReducer", () => {
-  it("元のstateを書き換えず、新しいstateを返す", () => {
+  it("[結合][機能テスト][正常] 元のstateを書き換えず、新しいstateを返す", () => {
     const state = createInitialState();
     const frozen = structuredClone(state);
     const next = dispatch(state, { type: "ADVANCE_DAY" });
@@ -17,21 +17,21 @@ describe("simulationReducer", () => {
     expect(next.day).toBe(1);
   });
 
-  it("未知のactionはstateをそのまま返す", () => {
+  it("[結合][機能テスト][異常] 未知のactionはstateをそのまま返す", () => {
     const state = createInitialState();
     // @ts-expect-error 型のガードが機能していることを確認するための意図的な不正値
     const next = dispatch(state, { type: "UNKNOWN_ACTION" });
     expect(next).toBe(state);
   });
 
-  it("ADVANCE_DAYは日付だけを進める", () => {
+  it("[UC-22][結合][機能テスト][正常] ADVANCE_DAYは日付だけを進める", () => {
     const state = createInitialState();
     const next = dispatch(state, { type: "ADVANCE_DAY" });
     expect(next.day).toBe(1);
     expect(next.soLines).toEqual(state.soLines);
   });
 
-  it("dashboardHistoryは初期状態でday0の1件を持ち、同日の操作は上書き・ADVANCE_DAYで追記する", () => {
+  it("[UC-22][結合][機能テスト][正常] dashboardHistoryは初期状態でday0の1件を持ち、同日の操作は上書き・ADVANCE_DAYで追記する", () => {
     let state = createInitialState();
     expect(state.dashboardHistory).toHaveLength(1);
     expect(state.dashboardHistory[0].day).toBe(0);
@@ -53,7 +53,7 @@ describe("simulationReducer", () => {
     expect(state.dashboardHistory[1].backlog.order.qty).toBe(10);
   });
 
-  it("SO_CREATE〜SHIPMENT_SHIPまで、一連のactionが対応するドメイン関数へ正しく委譲される", () => {
+  it("[総合][機能テスト] SO_CREATE〜SHIPMENT_SHIPまで、一連のactionが対応するドメイン関数へ正しく委譲される", () => {
     let state = createInitialState();
     state = dispatch(state, {
       type: "SO_CREATE",
@@ -131,7 +131,7 @@ describe("simulationReducer", () => {
     expect(adjTxn).toMatchObject({ itemId: ITEM_IDS.PT_SCREW, qty: -2 });
   });
 
-  it("SO_CANCELは実績の無い受注のペグ先オーダを連鎖的に取消する（design.md EXT-2）", () => {
+  it("[結合][機能テスト][正常] SO_CANCELは実績の無い受注のペグ先オーダを連鎖的に取消する（design.md EXT-2）", () => {
     let state = createInitialState();
     state = dispatch(state, {
       type: "SO_CREATE",
@@ -149,13 +149,13 @@ describe("simulationReducer", () => {
     expect(state.purchaseOrders.every((po) => po.status === "CANCELED")).toBe(true);
   });
 
-  it("ガード違反はエラーログに記録され、stateはクラッシュせずに返る", () => {
+  it("[結合][機能テスト][異常] ガード違反はエラーログに記録され、stateはクラッシュせずに返る", () => {
     const state = createInitialState();
     const next = dispatch(state, { type: "SO_CONFIRM_DELIVERY", payload: { soNo: "SO-999", confirmDay: 10 } });
     expect(next.eventLog[0].message).toMatch(/^\[エラー\]/);
   });
 
-  it("RESETはマスタの編集を保持したままトランザクションのみ初期化する", () => {
+  it("[UC-23][結合][機能テスト][正常] RESETはマスタの編集を保持したままトランザクションのみ初期化する", () => {
     let state = createInitialState();
     state = dispatch(state, {
       type: "MASTER_UPDATE_ITEM",
@@ -179,7 +179,7 @@ describe("simulationReducer", () => {
     expect(next.dashboardHistory[0].backlog.order.qty).toBe(0);
   });
 
-  it("MASTER_UPDATE系はBOM員数・工順標準時間・取引先名称を更新できる", () => {
+  it("[結合][機能テスト][正常] MASTER_UPDATE系はBOM員数・工順標準時間・取引先名称を更新できる", () => {
     let state = createInitialState();
     state = dispatch(state, {
       type: "MASTER_UPDATE_BOM_LINE",

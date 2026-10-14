@@ -37,14 +37,14 @@ function withOpenMfgOrder(state: SimulationState, itemId: string): void {
 }
 
 describe("品目のCRUD", () => {
-  it("内製品目を追加でき、工順が必要な旨が業務メッセージに出る", () => {
+  it("[単体][機能テスト][正常] 内製品目を追加でき、工順が必要な旨が業務メッセージに出る", () => {
     const state = createTestState();
     const message = addItem(state, { itemId: "FG-200", name: "木製テーブル", makeBuy: "MAKE", leadTimeDays: 3 });
     expect(state.items).toHaveLength(6);
     expect(message).toContain("工順を1行以上");
   });
 
-  it("品目コードの重複・空文字は拒否する", () => {
+  it("[単体][機能テスト][異常] 品目コードの重複・空文字は拒否する", () => {
     const state = createTestState();
     expect(() => addItem(state, { itemId: ITEM_IDS.FG_CHAIR, name: "重複", makeBuy: "MAKE", leadTimeDays: 1 })).toThrow(
       MasterDataError,
@@ -52,7 +52,7 @@ describe("品目のCRUD", () => {
     expect(() => addItem(state, { itemId: "  ", name: "空", makeBuy: "MAKE", leadTimeDays: 1 })).toThrow(MasterDataError);
   });
 
-  it("購買品目は既定仕入先が必須（v5仕様書がITEM-PARTNERの対応を欠く点への追加決定 EXT-9の帰結）", () => {
+  it("[単体][機能テスト][異常] 購買品目は既定仕入先が必須（v5仕様書がITEM-PARTNERの対応を欠く点への追加決定 EXT-9の帰結）", () => {
     const state = createTestState();
     expect(() => addItem(state, { itemId: "PT-600", name: "座金", makeBuy: "BUY", leadTimeDays: 2 })).toThrow(
       /既定仕入先/,
@@ -78,7 +78,7 @@ describe("品目のCRUD", () => {
     expect(state.items.find((i) => i.itemId === "PT-600")?.defaultSupplierId).toBe(SUPPLIER_IDS.PT_SCREW);
   });
 
-  it("スカラー値はpatchで部分更新できる", () => {
+  it("[単体][機能テスト][正常] スカラー値はpatchで部分更新できる", () => {
     const state = createTestState();
     updateItem(state, ITEM_IDS.RM_BOARD, { leadTimeDays: 3, purchasePrice: 900 });
     const item = state.items.find((i) => i.itemId === ITEM_IDS.RM_BOARD)!;
@@ -87,7 +87,7 @@ describe("品目のCRUD", () => {
     expect(item.name).toBe("木板");
   });
 
-  it("内製品目に購入単価・既定仕入先は設定できない", () => {
+  it("[単体][機能テスト][異常] 内製品目に購入単価・既定仕入先は設定できない", () => {
     const state = createTestState();
     expect(() => updateItem(state, ITEM_IDS.FG_CHAIR, { purchasePrice: 100 })).toThrow(MasterDataError);
     expect(() => updateItem(state, ITEM_IDS.FG_CHAIR, { defaultSupplierId: SUPPLIER_IDS.PT_LEG })).toThrow(
@@ -95,7 +95,7 @@ describe("品目のCRUD", () => {
     );
   });
 
-  it("区分の変更はBOM子行・工順が残っている間は拒否する（design.md EXT-20）", () => {
+  it("[単体][機能テスト][異常] 区分の変更はBOM子行・工順が残っている間は拒否する（design.md EXT-20）", () => {
     const state = createTestState();
     expect(() => updateItem(state, ITEM_IDS.FG_CHAIR, { makeBuy: "BUY" })).toThrow(/BOM子行/);
 
@@ -113,7 +113,7 @@ describe("品目のCRUD", () => {
     expect(state.items.find((i) => i.itemId === ITEM_IDS.FG_CHAIR)?.makeBuy).toBe("BUY");
   });
 
-  it("既定仕入先を指定せずに購買へ変更しようとすると、何も変更せずに拒否する", () => {
+  it("[単体][機能テスト][異常] 既定仕入先を指定せずに購買へ変更しようとすると、何も変更せずに拒否する", () => {
     const state = createTestState();
     for (const line of state.bom.filter((b) => b.parentItemId === ITEM_IDS.SA_SEAT)) {
       deleteBomLine(state, line.parentItemId, line.childItemId);
@@ -130,13 +130,13 @@ describe("品目のCRUD", () => {
     expect(state.items.find((i) => i.itemId === ITEM_IDS.SA_SEAT)?.makeBuy).toBe("BUY");
   });
 
-  it("未完了の製造オーダがある品目は区分を変更できない", () => {
+  it("[単体][機能テスト][異常] 未完了の製造オーダがある品目は区分を変更できない", () => {
     const state = createTestState();
     withOpenMfgOrder(state, ITEM_IDS.SA_SEAT);
     expect(() => updateItem(state, ITEM_IDS.SA_SEAT, { makeBuy: "BUY" })).toThrow(/未完了の製造オーダ/);
   });
 
-  it("参照されている品目は削除できず、参照が無くなれば削除できる", () => {
+  it("[単体][機能テスト][異常] 参照されている品目は削除できず、参照が無くなれば削除できる", () => {
     const state = createTestState();
     expect(() => deleteItem(state, ITEM_IDS.PT_SCREW)).toThrow(/参照されているため削除できません/);
 
@@ -147,7 +147,7 @@ describe("品目のCRUD", () => {
 });
 
 describe("BOMのCRUD", () => {
-  it("循環する構成は登録時に拒否する（v5-spec.md §3.7 最小機能5）", () => {
+  it("[単体][機能テスト][異常] 循環する構成は登録時に拒否する（v5-spec.md §3.7 最小機能5）", () => {
     const state = createTestState();
     // FG-100 -> SA-200 -> RM-300 の下に FG-100 をぶら下げようとする
     expect(() => addBomLine(state, { parentItemId: ITEM_IDS.SA_SEAT, childItemId: ITEM_IDS.FG_CHAIR, qtyPer: 1 })).toThrow(
@@ -159,14 +159,14 @@ describe("BOMのCRUD", () => {
     );
   });
 
-  it("BOMの親にできるのは内製品目だけ", () => {
+  it("[単体][機能テスト][異常] BOMの親にできるのは内製品目だけ", () => {
     const state = createTestState();
     expect(() => addBomLine(state, { parentItemId: ITEM_IDS.PT_LEG, childItemId: ITEM_IDS.PT_SCREW, qtyPer: 1 })).toThrow(
       /内製品目だけ/,
     );
   });
 
-  it("同じ親子の重複行・員数0は拒否する", () => {
+  it("[単体][機能テスト][異常] 同じ親子の重複行・員数0は拒否する", () => {
     const state = createTestState();
     expect(() => addBomLine(state, { parentItemId: ITEM_IDS.FG_CHAIR, childItemId: ITEM_IDS.PT_LEG, qtyPer: 2 })).toThrow(
       /既にあります/,
@@ -176,7 +176,7 @@ describe("BOMのCRUD", () => {
     );
   });
 
-  it("仕掛中オーダがある品目のBOM編集は禁止せず警告する（design.md EXT-23）", () => {
+  it("[単体][機能テスト][正常] 仕掛中オーダがある品目のBOM編集は禁止せず警告する（design.md EXT-23）", () => {
     const state = createTestState();
     withOpenMfgOrder(state, ITEM_IDS.FG_CHAIR);
     const message = deleteBomLine(state, ITEM_IDS.FG_CHAIR, ITEM_IDS.PT_SCREW);
@@ -186,14 +186,14 @@ describe("BOMのCRUD", () => {
 });
 
 describe("工順（BOP）のCRUD", () => {
-  it("内製品目にのみ工順を持てる", () => {
+  it("[単体][機能テスト][異常] 内製品目にのみ工順を持てる", () => {
     const state = createTestState();
     expect(() =>
       addRoutingStep(state, { itemId: ITEM_IDS.PT_LEG, stepNo: 10, workCenter: WORK_CENTERS.CUT, stdTimeMin: 5 }),
     ).toThrow(/内製品目だけ/);
   });
 
-  it("存在しない作業区・重複する工程順序は拒否する", () => {
+  it("[単体][機能テスト][異常] 存在しない作業区・重複する工程順序は拒否する", () => {
     const state = createTestState();
     expect(() =>
       addRoutingStep(state, { itemId: ITEM_IDS.SA_SEAT, stepNo: 20, workCenter: "WC-NOT-EXIST", stdTimeMin: 5 }),
@@ -203,7 +203,7 @@ describe("工順（BOP）のCRUD", () => {
     ).toThrow(/同じ工程順序/);
   });
 
-  it("未完了オーダがある品目は工順の構造変更を禁止し、標準時間・作業区の変更は許可する（design.md EXT-20）", () => {
+  it("[単体][機能テスト][異常] 未完了オーダがある品目は工順の構造変更を禁止し、標準時間・作業区の変更は許可する（design.md EXT-20）", () => {
     const state = createTestState();
     withOpenMfgOrder(state, ITEM_IDS.FG_CHAIR);
 
@@ -218,7 +218,7 @@ describe("工順（BOP）のCRUD", () => {
     expect(step.workCenter).toBe(WORK_CENTERS.CUT);
   });
 
-  it("段取り時間（Issue #66）は工順の追加時・更新時に設定でき、負の値は拒否する", () => {
+  it("[単体][機能テスト][異常] 段取り時間（Issue #66）は工順の追加時・更新時に設定でき、負の値は拒否する", () => {
     const state = createTestState();
     const added = addRoutingStep(state, {
       itemId: ITEM_IDS.SA_SEAT,
@@ -241,7 +241,7 @@ describe("工順（BOP）のCRUD", () => {
     expect(state.routingSteps.find((s) => s.itemId === ITEM_IDS.SA_SEAT && s.stepNo === 10)?.setupMin).toBe(30);
   });
 
-  it("段取り時間は未完了オーダがある品目でも変更できる（構造変更ではないため。design.md EXT-20・EXT-41）", () => {
+  it("[単体][機能テスト][正常] 段取り時間は未完了オーダがある品目でも変更できる（構造変更ではないため。design.md EXT-20・EXT-41）", () => {
     const state = createTestState();
     withOpenMfgOrder(state, ITEM_IDS.FG_CHAIR);
 
@@ -249,7 +249,7 @@ describe("工順（BOP）のCRUD", () => {
     expect(state.routingSteps.find((s) => s.itemId === ITEM_IDS.FG_CHAIR && s.stepNo === 10)?.setupMin).toBe(25);
   });
 
-  it("最後の1行を消すと、完了できなくなる旨を業務メッセージで知らせる", () => {
+  it("[単体][機能テスト][境界] 最後の1行を消すと、完了できなくなる旨を業務メッセージで知らせる", () => {
     const state = createTestState();
     const message = deleteRoutingStep(state, ITEM_IDS.SA_SEAT, 10);
     expect(message).toContain("工順が0行になりました");
@@ -257,7 +257,7 @@ describe("工順（BOP）のCRUD", () => {
 });
 
 describe("作業区・取引先のCRUD", () => {
-  it("作業区を追加でき、工順から参照されている作業区は削除できない", () => {
+  it("[単体][機能テスト][異常] 作業区を追加でき、工順から参照されている作業区は削除できない", () => {
     const state = createTestState();
     addWorkCenter(state, { workCenter: "WC-PNT", ratePerHour: 1800, capacityMinPerDay: 480 });
     expect(state.workCenters).toHaveLength(4);
@@ -271,7 +271,7 @@ describe("作業区・取引先のCRUD", () => {
     expect(state.workCenters).toHaveLength(3);
   });
 
-  it("負の賃率・負の稼働能力は作業区追加時に拒否する", () => {
+  it("[単体][機能テスト][異常] 負の賃率・負の稼働能力は作業区追加時に拒否する", () => {
     const state = createTestState();
     expect(() => addWorkCenter(state, { workCenter: "WC-NG1", ratePerHour: -1, capacityMinPerDay: 480 })).toThrow(
       /賃率は0以上/,
@@ -281,7 +281,7 @@ describe("作業区・取引先のCRUD", () => {
     );
   });
 
-  it("作業区の賃率・稼働能力をそれぞれ個別に更新できる", () => {
+  it("[単体][機能テスト][正常] 作業区の賃率・稼働能力をそれぞれ個別に更新できる", () => {
     const state = createTestState();
     updateWorkCenter(state, WORK_CENTERS.CUT, { ratePerHour: 2500 });
     expect(state.workCenters.find((w) => w.workCenter === WORK_CENTERS.CUT)).toMatchObject({
@@ -301,7 +301,7 @@ describe("作業区・取引先のCRUD", () => {
     expect(() => updateWorkCenter(state, "WC-NOPE", { ratePerHour: 100 })).toThrow(/作業区が見つかりません/);
   });
 
-  it("得意先・仕入先を追加でき、参照中は削除できない", () => {
+  it("[単体][機能テスト][異常] 得意先・仕入先を追加でき、参照中は削除できない", () => {
     const state = createTestState();
     addPartner(state, "CUSTOMER", "CUST-C", "得意先C");
     expect(state.customers).toHaveLength(3);
@@ -312,7 +312,7 @@ describe("作業区・取引先のCRUD", () => {
     expect(() => deletePartner(state, "SUPPLIER", SUPPLIER_IDS.RM_BOARD)).toThrow(/参照されているため削除できません/);
   });
 
-  it("取引先番号の重複は拒否する", () => {
+  it("[単体][機能テスト][異常] 取引先番号の重複は拒否する", () => {
     const state = createTestState();
     expect(() => addPartner(state, "CUSTOMER", "CUST-A", "重複")).toThrow(/重複/);
     expect(() => addPartner(state, "SUPPLIER", SUPPLIER_IDS.PT_LEG, "重複")).toThrow(/重複/);

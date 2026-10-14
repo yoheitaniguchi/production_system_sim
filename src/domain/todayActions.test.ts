@@ -9,12 +9,12 @@ import { computeTodayActions } from "./todayActions";
 import { createTestState } from "./testUtils";
 
 describe("computeTodayActions（design.md DEV-2：自動再生の軽量代替案）", () => {
-  it("初期状態では実行可能な操作は無い", () => {
+  it("[単体][機能テスト][正常] 初期状態では実行可能な操作は無い", () => {
     const state = createTestState(0);
     expect(computeTodayActions(state)).toHaveLength(0);
   });
 
-  it("受注登録直後は「納期回答待ちの受注」のみ", () => {
+  it("[単体][機能テスト][正常] 受注登録直後は「納期回答待ちの受注」のみ", () => {
     const state = createTestState(0);
     createSalesOrder(state, { customerId: "CUST-A", itemId: ITEM_IDS.FG_CHAIR, qty: 10, requestDay: 15 }, 0);
 
@@ -23,7 +23,7 @@ describe("computeTodayActions（design.md DEV-2：自動再生の軽量代替案
     ]);
   });
 
-  it("納期回答後、MRP実行前は「計画オーダ確定待ち」が出ない（計画オーダが無いため）", () => {
+  it("[単体][機能テスト][正常] 納期回答後、MRP実行前は「計画オーダ確定待ち」が出ない（計画オーダが無いため）", () => {
     const state = createTestState(0);
     const soNo = createSalesOrder(state, { customerId: "CUST-A", itemId: ITEM_IDS.FG_CHAIR, qty: 10, requestDay: 15 }, 0);
     confirmDelivery(state, soNo, 15);
@@ -31,7 +31,7 @@ describe("computeTodayActions（design.md DEV-2：自動再生の軽量代替案
     expect(computeTodayActions(state)).toHaveLength(0);
   });
 
-  it("MRP実行後は「計画オーダ確定待ち」、確定後は購買・製造の着手系操作が並ぶ", () => {
+  it("[単体][機能テスト][正常] MRP実行後は「計画オーダ確定待ち」、確定後は購買・製造の着手系操作が並ぶ", () => {
     const state = createTestState(0);
     const soNo = createSalesOrder(state, { customerId: "CUST-A", itemId: ITEM_IDS.FG_CHAIR, qty: 10, requestDay: 15 }, 0);
     confirmDelivery(state, soNo, 15);
@@ -50,7 +50,7 @@ describe("computeTodayActions（design.md DEV-2：自動再生の軽量代替案
     expect(actions.some((a) => a.label === "計画オーダ確定待ち")).toBe(false);
   });
 
-  it("購買オーダの回答納期に達するまでは「入荷計上可能」に数えない", () => {
+  it("[単体][機能テスト][正常] 購買オーダの回答納期に達するまでは「入荷計上可能」に数えない", () => {
     const state = createTestState(0);
     const soNo = createSalesOrder(state, { customerId: "CUST-A", itemId: ITEM_IDS.FG_CHAIR, qty: 10, requestDay: 15 }, 0);
     confirmDelivery(state, soNo, 15);
@@ -67,7 +67,7 @@ describe("computeTodayActions（design.md DEV-2：自動再生の軽量代替案
     expect(after).toContainEqual({ domain: "procurement", label: "入荷計上可能な購買オーダ", count: 1 });
   });
 
-  it("製造オーダをリリースすると第1工程が「着手可能な工程」に、着手するとその工程が「完了入力待ち」に移る", () => {
+  it("[単体][機能テスト][正常] 製造オーダをリリースすると第1工程が「着手可能な工程」に、着手するとその工程が「完了入力待ち」に移る", () => {
     const state = createTestState(0);
     const soNo = createSalesOrder(state, { customerId: "CUST-A", itemId: ITEM_IDS.FG_CHAIR, qty: 10, requestDay: 15 }, 0);
     confirmDelivery(state, soNo, 15);
@@ -84,7 +84,7 @@ describe("computeTodayActions（design.md DEV-2：自動再生の軽量代替案
     expect(actions.some((a) => a.label === "着手可能な工程")).toBe(false);
   });
 
-  it("完成品が入庫し受注残があれば「引当可能な受注」、引当後は「出荷実績登録待ちの出荷指示」になる", () => {
+  it("[単体][機能テスト][正常] 完成品が入庫し受注残があれば「引当可能な受注」、引当後は「出荷実績登録待ちの出荷指示」になる", () => {
     const state = createTestState(0);
     const soNo = createSalesOrder(state, { customerId: "CUST-A", itemId: ITEM_IDS.FG_CHAIR, qty: 10, requestDay: 15 }, 0);
     confirmDelivery(state, soNo, 15);
@@ -102,7 +102,7 @@ describe("computeTodayActions（design.md DEV-2：自動再生の軽量代替案
     expect(actions.some((a) => a.label === "引当可能な受注")).toBe(false);
   });
 
-  it("receivePurchaseOrder後は当該購買オーダがCLOSEDになり入荷計上対象から外れる", () => {
+  it("[単体][機能テスト][正常] receivePurchaseOrder後は当該購買オーダがCLOSEDになり入荷計上対象から外れる", () => {
     const state = createTestState(0);
     const soNo = createSalesOrder(state, { customerId: "CUST-A", itemId: ITEM_IDS.FG_CHAIR, qty: 10, requestDay: 15 }, 0);
     confirmDelivery(state, soNo, 15);
