@@ -19,7 +19,9 @@ import path from "node:path";
 // 属性値全体に対する部分一致とし、先頭一致を仮定しない（describeとitの連結で印が先頭に来ない場合があるため）。
 // 自動テスト管理アプリ本体（別Issue）がそのまま使えるよう、この抽出ロジックを再利用可能な形でここに置く
 // （runs/<runId>.jsonのスキーマにはタグ専用フィールドを設けず、name属性へタグを含めたまま渡す。9.1参照）
-export const TAG_PATTERN = /\[UC-\d+.*?\]\[.*?\]\[.*?\](\[.*?\])?/;
+// UC番号の無い`[工程][テストの種類][観点]`も拾うため、「[値]」が2つ以上連続する最初の並びを印とみなす
+// （docs/test-tagging.md「書式」）。単独の`[@security]`のような1要素の印は対象外。
+export const TAG_PATTERN = /(?:\[[^[\]]+\]){2,}/;
 
 export function extractTag(name) {
   const match = typeof name === "string" ? name.match(TAG_PATTERN) : null;

@@ -108,8 +108,21 @@ describe("extractTag", () => {
     );
   });
 
-  it("UC番号が無い(UCタグ自体を持たない)テスト名は抽出対象外でnullを返す", () => {
-    expect(extractTag("[単体][機能テスト][正常] BOMに循環参照が無い")).toBeNull();
+  it("UC番号が無い[工程][テストの種類][観点]形式の印も抽出する", () => {
+    expect(extractTag("[単体][機能テスト][正常] BOMに循環参照が無い")).toBe("[単体][機能テスト][正常]");
+  });
+
+  it("UC番号が無い印も、describeとの連結で先頭に来ない場合に部分一致で抽出する", () => {
+    const name = "masterIntegrity > [単体][機能テスト][異常] 自己参照のBOM行を循環として検出する";
+    expect(extractTag(name)).toBe("[単体][機能テスト][異常]");
+  });
+
+  it("UC番号も観点も無い[工程][テストの種類]の2要素の印も抽出する", () => {
+    expect(extractTag("[総合][シナリオテスト] 4階層BOMの通し演習")).toBe("[総合][シナリオテスト]");
+  });
+
+  it("[@security]のような単独の[値]は印とみなさずnullを返す", () => {
+    expect(extractTag("summarizeAuditReport > [@security] highが1件以上ならtrue")).toBeNull();
   });
 
   it("印が全く無いテスト名はnullを返す", () => {

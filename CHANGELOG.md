@@ -302,3 +302,6 @@ CI基盤の新設。検出された実違反の修正は個別Issue化して別�
   （受注〜出荷の連鎖は総合、それ以外は結合）とタグをit()に付ける規則を`docs/test-tagging.md`に追記した
 - テストタグ付与の後半として、`cost`・`capacity`・`production`・`lot`・`dashboard`ほか14ファイルの52件にタグを付け、`src/`配下の全テストのit()にタグが揃った
   （`docs/process/review-report.md` B-5を✅に再判定）
+- 集計スクリプトの印の抽出（`scripts/aggregate-test-results.mjs`の`TAG_PATTERN`）を、UC番号の無い`[工程][テストの種類][観点]`も拾えるよう
+  「[値]が2つ以上連続する並び」に改めた。dataブランチの最新の実行結果に当てると、`src/`配下281件中280件から印を抽出できた（修正前は45件）。
+  書式から外れた印21件が見つかった点を含め、結果は`docs/process/findings.md`（2026-10-19）に記録した
