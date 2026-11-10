@@ -13,7 +13,7 @@ describe("buildCsv（SEC-001: CSV数式インジェクション対策）", () =>
     ["+", "+1+1"],
     ["-", "-1+1"],
     ["@", "@SUM(1+1)"],
-  ])("[@security][異常] セル先頭が%sの場合は数式として評価されないよう無害化される", (_label, dangerous) => {
+  ])("[単体][セキュリティテスト][異常] [@security] セル先頭が%sの場合は数式として評価されないよう無害化される", (_label, dangerous) => {
     const csv = buildCsv(["品目名"], [[dangerous]]);
     const [, dataLine] = csv.split("\r\n");
     // 危険な形のまま出力されていないこと（先頭に無害化のためのプレフィックスが付くはず）
@@ -21,7 +21,7 @@ describe("buildCsv（SEC-001: CSV数式インジェクション対策）", () =>
     expect(dataLine.startsWith(dangerous)).toBe(false);
   });
 
-  it("[@security][正常] 数式を意図しない通常の品目名はこれまでどおり変化しない", () => {
+  it("[単体][セキュリティテスト][正常] [@security] 数式を意図しない通常の品目名はこれまでどおり変化しない", () => {
     const csv = buildCsv(["品目名"], [["木製イス"]]);
     expect(csv).toBe("品目名\r\n木製イス");
   });

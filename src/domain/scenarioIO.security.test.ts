@@ -48,7 +48,7 @@ function toJson(state: unknown): string {
 }
 
 describe("parseScenario（SEC-002: 未知キーの拒否）", () => {
-  it("[@security][異常] 最上位stateに__proto__という名前の余分なキーがあると取り込みを拒否する", () => {
+  it("[単体][セキュリティテスト][異常] [@security] 最上位stateに__proto__という名前の余分なキーがあると取り込みを拒否する", () => {
     const state = { ...validScenarioState(), __proto__: { polluted: "yes" } } as Record<string, unknown>;
     // オブジェクトリテラルの__proto__はプロトタイプ指定として解釈されるため、JSON.parse相当の
     // 「__proto__という名前のown property」を再現するにはdefineProperty経由で明示的に持たせる
@@ -56,7 +56,7 @@ describe("parseScenario（SEC-002: 未知キーの拒否）", () => {
     expect(() => parseScenario(toJson(state))).toThrow();
   });
 
-  it("[@security][異常] 行オブジェクトに未知の余分なキーがあると取り込みを拒否する", () => {
+  it("[単体][セキュリティテスト][異常] [@security] 行オブジェクトに未知の余分なキーがあると取り込みを拒否する", () => {
     const state = { ...validScenarioState(), suppliers: [{ supplierId: "SUP-1", name: "テスト仕入先" }] };
     // makeBuy: "BUY"（工順不要）＋defaultSupplierId設定済みにして、他の業務ルール違反ではなく
     // 「余分なキー」だけを問う
@@ -74,7 +74,7 @@ describe("parseScenario（SEC-002: 未知キーの拒否）", () => {
     expect(() => parseScenario(toJson({ ...state, items: [itemWithExtraKey] }))).toThrow();
   });
 
-  it("[@security][正常] 未知キーの無い正規のシナリオは引き続き取り込める", () => {
+  it("[単体][セキュリティテスト][正常] [@security] 未知キーの無い正規のシナリオは引き続き取り込める", () => {
     expect(() => parseScenario(toJson(validScenarioState()))).not.toThrow();
   });
 });

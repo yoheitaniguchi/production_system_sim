@@ -170,22 +170,22 @@ describe("SCENARIO_IMPORT（reducer）", () => {
 describe("取り込みの拒否（all-or-nothing）", () => {
   const state = buildRichState();
 
-  it("[単体][異常系][異常] JSONとして解釈できない文字列は拒否する", () => {
+  it("[単体][機能テスト][異常] JSONとして解釈できない文字列は拒否する", () => {
     expectRejected("{not json", "JSONとして解釈できません");
   });
 
-  it("[単体][異常系][異常] マスタのJSON（masterIO）を選んだ場合は、取り違えだと分かる専用の案内で拒否する", () => {
+  it("[単体][機能テスト][異常] マスタのJSON（masterIO）を選んだ場合は、取り違えだと分かる専用の案内で拒否する", () => {
     expectRejected(serializeMasterSnapshot(state), "マスタのJSONです");
   });
 
-  it("[単体][異常系][異常] kindが違うJSON・未対応のversionは拒否する", () => {
+  it("[単体][機能テスト][異常] kindが違うJSON・未対応のversionは拒否する", () => {
     expectRejected(tamper(state, (d) => (d.kind = "other")), "kindが一致しません");
     expectRejected(tamper(state, (d) => (d.version = 2)), "未対応のversion");
     expect(SCENARIO_KIND).toBe("production-system-sim-scenario");
     expect(SCENARIO_VERSION).toBe(1);
   });
 
-  it("[単体][異常系][異常] テーブル（配列）が欠けている・型が違う場合は、該当のキーと行番号を示して拒否する", () => {
+  it("[単体][機能テスト][異常] テーブル（配列）が欠けている・型が違う場合は、該当のキーと行番号を示して拒否する", () => {
     expectRejected(tamper(state, (d) => delete d.state.shipments), "state.shipments: 配列が必要です");
     expectRejected(tamper(state, (d) => (d.state.soLines[0].qty = "10")), "state.soLines[0].qty: 数値が必要です");
     expectRejected(
@@ -199,7 +199,7 @@ describe("取り込みの拒否（all-or-nothing）", () => {
     );
   });
 
-  it("[単体][異常系][境界] 任意項目（優先度ランク等）は無くてもよいが、あるなら型が合っている必要がある", () => {
+  it("[単体][機能テスト][境界] 任意項目（優先度ランク等）は無くてもよいが、あるなら型が合っている必要がある", () => {
     expect(() => parseScenario(tamper(state, (d) => delete d.state.customers[1].priorityRank))).not.toThrow();
     expectRejected(
       tamper(state, (d) => (d.state.customers[1].priorityRank = "high")),
@@ -207,7 +207,7 @@ describe("取り込みの拒否（all-or-nothing）", () => {
     );
   });
 
-  it("[単体][異常系][境界] 段取り時間（setupMin）は無くてもよいが、あるなら数値で0以上である必要がある（Issue #66）", () => {
+  it("[単体][機能テスト][境界] 段取り時間（setupMin）は無くてもよいが、あるなら数値で0以上である必要がある（Issue #66）", () => {
     const withSetup = (d: LooseDoc) => d.state.routingSteps.findIndex((r: { setupMin?: number }) => r.setupMin !== undefined);
     const idx = withSetup(JSON.parse(serializeScenario(state)));
     expect(idx).toBeGreaterThanOrEqual(0);
@@ -220,7 +220,7 @@ describe("取り込みの拒否（all-or-nothing）", () => {
     expectRejected(tamper(state, (d) => (d.state.routingSteps[idx].setupMin = -1)), "setupMin");
   });
 
-  it("[単体][異常系][異常] マスタ整合性エラー（BOMの循環）を含むJSONは拒否する", () => {
+  it("[単体][機能テスト][異常] マスタ整合性エラー（BOMの循環）を含むJSONは拒否する", () => {
     expectRejected(
       tamper(state, (d) =>
         d.state.bom.push({ parentItemId: ITEM_IDS.SA_SEAT, childItemId: ITEM_IDS.FG_CHAIR, qtyPer: 1 }),
@@ -229,7 +229,7 @@ describe("取り込みの拒否（all-or-nothing）", () => {
     );
   });
 
-  it("[単体][異常系][異常] 採番用シーケンスが既存の最大番号以下だと拒否する（次の採番が既存と重複するため）", () => {
+  it("[単体][機能テスト][異常] 採番用シーケンスが既存の最大番号以下だと拒否する（次の採番が既存と重複するため）", () => {
     expectRejected(tamper(state, (d) => (d.state.nextSoSeq = 1)), "nextSoSeq（1）が既存の受注番号の最大値（SO-3）以下");
     // 最大番号ちょうど（次に採番される番号が既存と同じ）も拒否し、最大+1は受け入れる
     expectRejected(tamper(state, (d) => (d.state.nextSoSeq = 3)), "nextSoSeq");
@@ -242,7 +242,7 @@ describe("取り込みの拒否（all-or-nothing）", () => {
     expectRejected(tamper(state, (d) => (d.state.nextSoSeq = 0)), "state.nextSoSeq: 1以上の整数が必要です");
   });
 
-  it("[単体][異常系][境界] 番号の形式に合わない主キーが混ざっても、数字の主キーの最大値は正しく検出される", () => {
+  it("[単体][機能テスト][境界] 番号の形式に合わない主キーが混ざっても、数字の主キーの最大値は正しく検出される", () => {
     // 形式外の主キー（LOT-MANUAL）を無視せず数値化するとNaNが最大値の計算を汚染し、nextLotSeq=1が素通りしてしまう
     const json = tamper(state, (d) => {
       d.state.lots[0].lotNo = "LOT-MANUAL";
@@ -259,7 +259,7 @@ describe("取り込みの拒否（all-or-nothing）", () => {
     expect(() => parseScenario(onlyManual)).not.toThrow();
   });
 
-  it("[単体][異常系][異常] マスタの値域（CRUDと同じ強さ）を外れる値は、型が合っていても拒否する", () => {
+  it("[単体][機能テスト][異常] マスタの値域（CRUDと同じ強さ）を外れる値は、型が合っていても拒否する", () => {
     expectRejected(tamper(state, (d) => (d.state.bom[0].qtyPer = -1)), "qtyPer");
     expectRejected(tamper(state, (d) => (d.state.items[0].leadTimeDays = -3)), "leadTimeDays");
     expectRejected(tamper(state, (d) => (d.state.routingSteps[0].stepNo = 0)), "stepNo");
@@ -267,7 +267,7 @@ describe("取り込みの拒否（all-or-nothing）", () => {
     expectRejected(tamper(state, (d) => (d.state.customers[0].name = "")), "name");
   });
 
-  it("[単体][異常系][異常] dashboardHistoryの不変条件（day昇順・重複なし・現在日以前）が崩れていたら拒否する", () => {
+  it("[単体][機能テスト][異常] dashboardHistoryの不変条件（day昇順・重複なし・現在日以前）が崩れていたら拒否する", () => {
     expectRejected(
       tamper(state, (d) => (d.state.dashboardHistory[1].day = d.state.dashboardHistory[0].day)),
       "日の昇順（重複なし）",
@@ -275,7 +275,7 @@ describe("取り込みの拒否（all-or-nothing）", () => {
     expectRejected(tamper(state, (d) => (d.state.dashboardHistory.at(-1).day = d.state.day + 5)), "現在日");
   });
 
-  it("[単体][異常系][境界] エラーが多数あっても一覧は上限で打ち切り、残りの件数を示す", () => {
+  it("[単体][機能テスト][境界] エラーが多数あっても一覧は上限で打ち切り、残りの件数を示す", () => {
     const json = tamper(state, (d) => {
       for (const row of d.state.stockTxns) row.qty = "x";
       for (const row of d.state.eventLog) row.day = "x";

@@ -72,7 +72,7 @@ production_system_sim/
 │   ├── ISSUE_TEMPLATE/feature_request.md
 │   └── PULL_REQUEST_TEMPLATE.md # 開発計画・計画レビュー結果・受け入れ条件の充足などの欄を持つ
 ├── e2e/                    # Playwright：a11y.spec.ts・scenario.spec.ts・security.spec.ts
-├── scripts/                # CI連携（aggregate-test-results.mjs）・依存監査（security-audit.mjs）
+├── scripts/                # CI連携（aggregate-test-results.mjs）・依存監査（security-audit.mjs）・テストの印の書式検査（test-tag-format.mjs）
 ├── security/               # リポジトリ設定・依存関係のセキュリティテスト（@securityタグ）
 ├── package.json
 ├── tsconfig.json

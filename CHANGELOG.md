@@ -305,3 +305,7 @@ CI基盤の新設。検出された実違反の修正は個別Issue化して別�
 - 集計スクリプトの印の抽出（`scripts/aggregate-test-results.mjs`の`TAG_PATTERN`）を、UC番号の無い`[工程][テストの種類][観点]`も拾えるよう
   「[値]が2つ以上連続する並び」に改めた。dataブランチの最新の実行結果に当てると、`src/`配下281件中280件から印を抽出できた（修正前は45件）。
   書式から外れた印21件が見つかった点を含め、結果は`docs/process/findings.md`（2026-10-19）に記録した
+- 書式から外れていたテストの印21件を直した（`scenarioIO.test.ts`の種類の位置の`[異常系]`12件を`[機能テスト]`に、`*.security.test.ts`の8件を
+  `[単体][セキュリティテスト][観点] [@security]`に、`masterIO.test.ts`の`[結合]`のみの1件を`[単体][機能テスト][正常]`に）。あわせて、印が
+  `docs/test-tagging.md`の書式・値の一覧どおりかを厳密に検査する`scripts/test-tag-format.mjs`と、`src/`配下の全テスト名を検査する
+  `scripts/test-tag-format.test.mjs`を追加し、`npm test`（CIの`test`ジョブ）で書式違反を検出するようにした
