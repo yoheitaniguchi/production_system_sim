@@ -124,7 +124,7 @@ describe("数値の範囲検証（CRUD側と同じ強さで課す）", () => {
     expect(parseMasterSnapshot(JSON.stringify(withSetup)).routingSteps[0].setupMin).toBe(25);
   });
 
-  it("[結合] 段取り時間を設定したマスタを書き出して読み直すと、設定済みの行は値が保たれ未設定の行は未設定のままになる（Issue #66）", () => {
+  it("[単体][機能テスト][正常] 段取り時間を設定したマスタを書き出して読み直すと、設定済みの行は値が保たれ未設定の行は未設定のままになる（Issue #66）", () => {
     const state = createTestState();
     const step = state.routingSteps.find((s) => s.itemId === ITEM_IDS.FG_CHAIR && s.stepNo === 10)!;
     step.setupMin = 25;
