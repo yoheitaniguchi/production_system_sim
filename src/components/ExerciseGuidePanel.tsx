@@ -1,10 +1,16 @@
-// 演習ガイド（v5-spec.md §8.1 D3、design.md DEV-4・EXT-17）
-import { computeGuideProgress, computeGuideSummary, currentGuideStep, isPresetMaster } from "../domain/exerciseGuide";
+// 演習ガイド（v5-spec.md §8.1 D3、design.md DEV-4・EXT-17・EXT-43）
+import { computeGuideProgress, computeGuideSummary, currentGuideStep, type GuideStepStatus } from "../domain/exerciseGuide";
 import type { SimulationState } from "../types";
 
 interface ExerciseGuidePanelProps {
   state: SimulationState;
 }
+
+const STATUS_LABELS: Record<GuideStepStatus, string> = {
+  done: "✓",
+  pending: "—",
+  notApplicable: "該当なし",
+};
 
 function formatPercent(value: number | null): string {
   return value != null ? `${(value * 100).toFixed(1)}%` : "—";
@@ -23,14 +29,7 @@ function ExerciseGuidePanel({ state }: ExerciseGuidePanelProps) {
     <div className="panel">
       <h2>演習ガイド</h2>
 
-      {/* 本ガイドはv5-spec.md §9の木製イスシナリオ専用の判定を持つ（design.md EXT-27） */}
-      {isPresetMaster(state) ? null : (
-        <div className="guide__current">
-          現在のマスタは演習用プリセット（木製イス）と異なるため、以下のステップ判定は成立しません。
-          マスタタブの「既定プリセットに戻す」で復元できます。
-        </div>
-      )}
-
+      {/* ステップの判定・文言は現在のマスタから組み立てる（design.md EXT-43）。該当する品目が無いステップは「該当なし」 */}
       {current ? (
         <div className="guide__current">
           <strong>
@@ -109,7 +108,7 @@ function ExerciseGuidePanel({ state }: ExerciseGuidePanelProps) {
         <tbody>
           {steps.map((step) => (
             <tr key={step.tc} className={step.done ? "guide__row--done" : undefined}>
-              <td>{step.done ? "✓" : "—"}</td>
+              <td>{STATUS_LABELS[step.status]}</td>
               <td>{step.tc}</td>
               <td>{step.title}</td>
               <td>{step.instruction}</td>
