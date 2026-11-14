@@ -460,6 +460,17 @@ textarea {
   color: var(--color-text-muted);
 }
 
+/* 該当なし（design.md EXT-43）：完了行と区別するため斜体にする。色は完了行と同じ既存トークン */
+.guide__row--na {
+  color: var(--color-text-muted);
+  font-style: italic;
+}
+
+.guide__target {
+  margin: 0 0 8px;
+  color: var(--color-text-muted);
+}
+
 .panel {
   background: var(--color-surface);
   border: 1px solid var(--border);

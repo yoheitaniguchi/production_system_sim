@@ -313,6 +313,23 @@ const STEP_STOOL_MASTER: MasterSnapshot = {
   suppliers: [{ supplierId: "SUP-1", name: "板仕入先" }],
 };
 
+/** 購買品を持たない題材（箱）。TC-07・TC-08・TC-10は「該当なし」になる */
+const MAKE_ONLY_MASTER: MasterSnapshot = {
+  version: 1,
+  items: [
+    { itemId: "BX-1", name: "箱", makeBuy: "MAKE", leadTimeDays: 1, salesPrice: 1000 },
+    { itemId: "BXL-1", name: "ふた", makeBuy: "MAKE", leadTimeDays: 1 },
+  ],
+  bom: [{ parentItemId: "BX-1", childItemId: "BXL-1", qtyPer: 1 }],
+  routingSteps: [
+    { itemId: "BXL-1", stepNo: 10, workCenter: "WC-1", stdTimeMin: 5 },
+    { itemId: "BX-1", stepNo: 10, workCenter: "WC-1", stdTimeMin: 5 },
+  ],
+  workCenters: [{ workCenter: "WC-1", ratePerHour: 2400, capacityMinPerDay: 4800 }],
+  customers: [{ customerId: "CUST-X", name: "得意先X" }],
+  suppliers: [],
+};
+
 describe("演習ガイドのマスタ非依存化（design.md EXT-43、Issue #65）", () => {
   it("[単体][機能テスト][正常] 木製イスのプリセットでは、マスタから組み立てた文言がIssue #65以前の固定文言と一致する", () => {
     const steps = computeGuideProgress(createTestState(0));
@@ -409,5 +426,80 @@ describe("演習ガイドのマスタ非依存化（design.md EXT-43、Issue #65
     state.bom.push({ parentItemId: ITEM_IDS.SA_SEAT, childItemId: ITEM_IDS.FG_CHAIR, qtyPer: 1 });
     const ctx = buildGuideContext(state);
     expect(ctx.treeItemIds).toHaveLength(5);
+    expect(computeGuideProgress(state)).toHaveLength(18);
+  });
+
+  it("[単体][機能テスト][異常] 受注前にBOMが循環して最上位の内製品目が無くなっても、全ステップが例外なく返る", () => {
+    const state = createTestState(0);
+    state.bom.push({ parentItemId: ITEM_IDS.SA_SEAT, childItemId: ITEM_IDS.FG_CHAIR, qtyPer: 1 });
+    expect(buildGuideContext(state).finalItemId).toBeNull();
+    const steps = computeGuideProgress(state);
+    expect(steps).toHaveLength(18);
+    expect(steps.filter((s) => s.status === "notApplicable").map((s) => s.tc)).toEqual(
+      expect.arrayContaining(["TC-07", "TC-08", "TC-09", "TC-10", "TC-11", "TC-12", "TC-13"]),
+    );
+  });
+
+  it("[単体][機能テスト][正常] 購買品の無いマスタでは、TC-07・TC-08・TC-10が該当なしになり、TC-05は製造オーダだけで完了する", () => {
+    let state = importMaster(MAKE_ONLY_MASTER);
+    const naTcs = computeGuideProgress(state)
+      .filter((s) => s.status === "notApplicable")
+      .map((s) => s.tc);
+    expect(naTcs).toEqual(["TC-07", "TC-08", "TC-10"]);
+    state = dispatch(state, { type: "SO_CREATE", payload: { customerId: "CUST-X", itemId: "BX-1", qty: 5, requestDay: 10 } });
+    state = dispatch(state, { type: "MRP_RUN" });
+    expect(doneTcs(state)).not.toContain("TC-05");
+    state = dispatch(state, { type: "PLANNED_ORDERS_FIRM" });
+    expect(state.purchaseOrders).toHaveLength(0);
+    expect(doneTcs(state)).toContain("TC-05");
+    // 中間品（BXL-1）の製造完了でTC-09、最終製品の完了でTC-11〜13が完了する
+    for (const mo of [...state.mfgOrders].sort((a, b) => b.bomLevel - a.bomLevel)) state = completeMfgOrder(state, mo.moNo);
+    expect(errorLogs(state)).toEqual([]);
+    expect(doneTcs(state)).toEqual(expect.arrayContaining(["TC-09", "TC-11", "TC-12", "TC-13"]));
+  });
+
+  it("[単体][機能テスト][正常] 購買品を受注した場合は、TC-11〜13が該当なしになり、TC-05は購買オーダだけで完了する", () => {
+    let state = importMaster(BOOKSHELF_MASTER);
+    state = dispatch(state, { type: "SO_CREATE", payload: { customerId: "CUST-X", itemId: "BLT-1", qty: 5, requestDay: 10 } });
+    expect(buildGuideContext(state).finalItemId).toBe("BLT-1");
+    const naTcs = computeGuideProgress(state)
+      .filter((s) => s.status === "notApplicable")
+      .map((s) => s.tc);
+    expect(naTcs).toEqual(["TC-08", "TC-09", "TC-11", "TC-12", "TC-13"]);
+    state = dispatch(state, { type: "MRP_RUN" });
+    state = dispatch(state, { type: "PLANNED_ORDERS_FIRM" });
+    expect(state.mfgOrders).toHaveLength(0);
+    expect(doneTcs(state)).toContain("TC-05");
+    expect(doneTcs(state)).not.toContain("TC-10");
+    for (const po of state.purchaseOrders) {
+      state = dispatch(state, { type: "PO_ACK", payload: { poNo: po.poNo, confirmDay: po.dueDay } });
+    }
+    state = receivePurchaseOrders(state, ["BLT-1"]);
+    expect(errorLogs(state)).toEqual([]);
+    expect(doneTcs(state)).toEqual(expect.arrayContaining(["TC-07", "TC-10"]));
+  });
+
+  it("[単体][機能テスト][正常] 最初の受注を取り消すと、最終製品は取消されていない次の受注明細の品目になる", () => {
+    let state = importMaster(BOOKSHELF_MASTER);
+    state = dispatch(state, { type: "SO_CREATE", payload: { customerId: "CUST-X", itemId: "BLT-1", qty: 5, requestDay: 10 } });
+    state = dispatch(state, { type: "SO_CANCEL", payload: { soNo: state.soLines[0].soNo } });
+    state = dispatch(state, { type: "SO_CREATE", payload: { customerId: "CUST-X", itemId: "BK-1", qty: 5, requestDay: 10 } });
+    expect(buildGuideContext(state).finalItemId).toBe("BK-1");
+  });
+
+  it("[単体][機能テスト][正常] TC-07は、補充分の確定で未回答の購買オーダが増えても完了のまま後戻りしない", () => {
+    const checkpoints = runFullExerciseSequence();
+    let state = checkpoints.find((c) => c.tc === "TC-14")!.state;
+    expect(doneTcs(state)).toContain("TC-07");
+    state = dispatch(state, { type: "PLANNED_ORDERS_FIRM" }); // 不足分の計画オーダを確定（未回答の購買オーダが増える）
+    expect(state.purchaseOrders.some((p) => p.confirmDay == null)).toBe(true);
+    expect(doneTcs(state)).toContain("TC-07");
+  });
+
+  it("[単体][機能テスト][正常] 該当なしのステップは、操作方法が対象外の理由に差し替わる", () => {
+    const step = computeGuideProgress(importMaster(STEP_STOOL_MASTER)).find((s) => s.tc === "TC-09")!;
+    expect(step.status).toBe("notApplicable");
+    expect(step.instruction).toBe("このマスタには中間品（最終製品以外の内製品目）が無いため対象外");
+    expect(step.expected).toBe("—");
   });
 });

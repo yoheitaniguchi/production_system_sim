@@ -42,7 +42,7 @@ export interface GuideStepResult extends GuideStep {
 export interface GuideContext {
   /** 木製イスのプリセットそのものか。真のときだけ文言に演習シナリオ固有の数量・日付を添える */
   isChairPreset: boolean;
-  /** 最終製品：最初の受注明細の品目。受注が無ければBOMレベル0（どのBOMの子でもない）MAKE品目の先頭 */
+  /** 最終製品：取消されていない最初の受注明細の品目。受注が無ければBOMレベル0（どのBOMの子でもない）MAKE品目の先頭 */
   finalItemId: string | null;
   /** 最終製品のBOMに含まれる品目（最終製品自身を含む） */
   treeItemIds: string[];
@@ -68,9 +68,9 @@ export function isPresetMaster(state: SimulationState): boolean {
   );
 }
 
-/** 最終製品の決定（EXT-43）：受注品目を優先し、受注前はBOMレベル0のMAKE品目で代える */
+/** 最終製品の決定（EXT-43）：取消されていない最初の受注明細の品目を優先し、受注前はBOMレベル0のMAKE品目で代える */
 function resolveFinalItemId(state: SimulationState): string | null {
-  const soItemId = state.soLines[0]?.itemId;
+  const soItemId = state.soLines.find((l) => l.status !== "CANCELED")?.itemId;
   if (soItemId && state.items.some((i) => i.itemId === soItemId)) return soItemId;
   const childIds = new Set(state.bom.map((b) => b.childItemId));
   return state.items.find((i) => i.makeBuy === "MAKE" && !childIds.has(i.itemId))?.itemId ?? null;
@@ -117,8 +117,9 @@ export function buildGuideContext(state: SimulationState): GuideContext {
     intermediateIds,
     intermediateBuyIds: buyIds.filter((id) => intermediateChildIds.has(id)),
     buyIds,
-    finalFirstStepNo: finalSteps.length > 0 ? Math.min(...finalSteps) : null,
-    finalLastStepNo: finalSteps.length > 0 ? Math.max(...finalSteps) : null,
+    // スプレッド引数（Math.min(...arr)）は要素数がエンジンの引数上限を超えると例外になるためreduceで求める
+    finalFirstStepNo: finalSteps.length > 0 ? finalSteps.reduce((a, b) => Math.min(a, b)) : null,
+    finalLastStepNo: finalSteps.length > 0 ? finalSteps.reduce((a, b) => Math.max(a, b)) : null,
   };
 }
 
@@ -135,11 +136,21 @@ function finalIsMake(state: SimulationState, ctx: GuideContext): boolean {
   return state.items.some((i) => i.itemId === ctx.finalItemId && i.makeBuy === "MAKE");
 }
 
+const NO_BUY_REASON = "このマスタでは最終製品のBOMに購買品が無いため対象外";
+const FINAL_NOT_MAKE_REASON = "最終製品が購買品（BUY）のため対象外";
+
+/** 製造系ステップ（TC-11〜13）が該当なしになる理由。工順の無い内製品目はオーダを確定できない（EXT-20） */
+function finalNotMakeOrNoRouting(state: SimulationState, ctx: GuideContext): string | null {
+  if (!finalIsMake(state, ctx)) return FINAL_NOT_MAKE_REASON;
+  if (ctx.finalFirstStepNo == null) return "最終製品に工順が無いため対象外";
+  return null;
+}
+
 interface InternalStep {
   tc: string;
   build: (state: SimulationState, ctx: GuideContext) => Omit<GuideStep, "tc">;
-  /** 現在のマスタに該当する品目が無いか（省略時は常に該当あり） */
-  notApplicable?: (state: SimulationState, ctx: GuideContext) => boolean;
+  /** 現在のマスタに該当する品目が無いときの理由（該当ありならnull。省略時は常に該当あり） */
+  notApplicable?: (state: SimulationState, ctx: GuideContext) => string | null;
   isDone: (state: SimulationState, ctx: GuideContext) => boolean;
 }
 
@@ -219,8 +230,13 @@ const STEPS: InternalStep[] = [
       instruction: `発注タブで${ctx.buyIds.length}件の購買オーダすべてに納期回答する`,
       expected: `PURCHASE_ORDER status=ACKED（${ctx.buyIds.length}件とも）`,
     }),
-    notApplicable: (_state, ctx) => ctx.buyIds.length === 0,
-    isDone: (state) => state.purchaseOrders.length >= 1 && state.purchaseOrders.every((p) => p.confirmDay != null),
+    notApplicable: (_state, ctx) => (ctx.buyIds.length === 0 ? NO_BUY_REASON : null),
+    // 購買品ごとに「取消されていない回答済みの購買オーダ」が1件あれば完了。TC-14後の補充分の確定で
+    // 未回答の購買オーダが増えても後戻りせず、取消済みの未回答オーダが残っても完了できる（EXT-43②）
+    isDone: (state, ctx) =>
+      ctx.buyIds.every((id) =>
+        state.purchaseOrders.some((p) => p.itemId === id && p.status !== "CANCELED" && p.confirmDay != null),
+      ),
   },
   {
     tc: "TC-08",
@@ -233,7 +249,8 @@ const STEPS: InternalStep[] = [
         expected: "STOCK_TXN +1（RCV）/ PO status=CLOSED",
       };
     },
-    notApplicable: (_state, ctx) => ctx.intermediateBuyIds.length === 0,
+    notApplicable: (_state, ctx) =>
+      ctx.intermediateBuyIds.length === 0 ? "このマスタには中間品の材料（中間品の直下の購買品）が無いため対象外" : null,
     isDone: (state, ctx) => ctx.intermediateBuyIds.some((id) => hasTxn(state, id, "RCV")),
   },
   {
@@ -241,17 +258,19 @@ const STEPS: InternalStep[] = [
     build: (state, ctx) => {
       const names = namesOf(state, ctx.intermediateIds, "・") || "中間品";
       const multiple = ctx.intermediateIds.length > 1;
+      // 中間品の製造で払い出される子品目（重複なし・マスタの登録順）
+      const issSet = new Set(state.bom.filter((b) => ctx.intermediateIds.includes(b.parentItemId)).map((b) => b.childItemId));
+      const issIds = state.items.filter((i) => issSet.has(i.itemId)).map((i) => i.itemId);
       return {
         title: `${names}の製造`,
         instruction: ctx.isChairPreset
           ? `工程タブで${names}の製造オーダをリリース・着手・完了（良品10・不良0）する`
           : `工程タブで${names}の製造オーダをリリース・着手・完了する${multiple ? "（下位の中間品から順に）" : ""}`,
-        expected: ctx.isChairPreset
-          ? "STOCK_TXN +2（ISS 木板 / PRD 座面ASSY）"
-          : `STOCK_TXN（ISS 材料 / PRD ${namesOf(state, ctx.intermediateIds, " / ")}）`,
+        expected: `STOCK_TXN +${issIds.length + ctx.intermediateIds.length}（ISS ${namesOf(state, issIds, " / ")} / PRD ${namesOf(state, ctx.intermediateIds, " / ")}）`,
       };
     },
-    notApplicable: (_state, ctx) => ctx.intermediateIds.length === 0,
+    notApplicable: (_state, ctx) =>
+      ctx.intermediateIds.length === 0 ? "このマスタには中間品（最終製品以外の内製品目）が無いため対象外" : null,
     isDone: (state, ctx) => ctx.intermediateIds.every((id) => hasTxn(state, id, "PRD")),
   },
   {
@@ -266,7 +285,7 @@ const STEPS: InternalStep[] = [
         expected: `STOCK_TXN +${ids.length}（RCV）`,
       };
     },
-    notApplicable: (_state, ctx) => ctx.buyIds.length === 0,
+    notApplicable: (_state, ctx) => (ctx.buyIds.length === 0 ? NO_BUY_REASON : null),
     isDone: (state, ctx) => ctx.buyIds.every((id) => hasTxn(state, id, "RCV")),
   },
   {
@@ -274,6 +293,8 @@ const STEPS: InternalStep[] = [
     build: (state, ctx) => {
       const name = ctx.finalItemId ? itemName(state, ctx.finalItemId) : "最終製品";
       const step = `工程${ctx.finalFirstStepNo ?? ""}${ctx.isChairPreset ? "（組立）" : ""}`;
+      // 工順が無い（該当なし）ときに「工程完了」のような番号抜けの文にならないようにする
+      if (ctx.finalFirstStepNo == null) return { title: `${name} 最初の工程の完了`, instruction: "", expected: "" };
       const children = state.bom.filter((b) => b.parentItemId === ctx.finalItemId).map((b) => b.childItemId);
       return {
         title: `${name} ${step}完了`,
@@ -281,7 +302,7 @@ const STEPS: InternalStep[] = [
         expected: `STOCK_TXN +${children.length}（ISS ${namesOf(state, children, " / ")}）`,
       };
     },
-    notApplicable: (state, ctx) => !finalIsMake(state, ctx) || ctx.finalFirstStepNo == null,
+    notApplicable: (state, ctx) => finalNotMakeOrNoRouting(state, ctx),
     isDone: (state, ctx) =>
       state.mfgOrders.some(
         (mo) =>
@@ -305,7 +326,7 @@ const STEPS: InternalStep[] = [
         expected: `STOCK_TXN +1（PRD ${name}）/ MFG_ORDER status=DONE`,
       };
     },
-    notApplicable: (state, ctx) => !finalIsMake(state, ctx),
+    notApplicable: (state, ctx) => finalNotMakeOrNoRouting(state, ctx),
     isDone: (state, ctx) => finalOrderDone(state, ctx),
   },
   {
@@ -315,7 +336,7 @@ const STEPS: InternalStep[] = [
       instruction: "警告バーで「未充足需要」の表示を確認する（不良が出ていれば不足数量が表示される）",
       expected: "不足数量が表示される（不良が無ければ表示は無く、それで問題無い）",
     }),
-    notApplicable: (state, ctx) => !finalIsMake(state, ctx),
+    notApplicable: (state, ctx) => finalNotMakeOrNoRouting(state, ctx),
     isDone: (state, ctx) => finalOrderDone(state, ctx),
   },
   {
@@ -387,18 +408,34 @@ function finalOrderDone(state: SimulationState, ctx: GuideContext): boolean {
 export function computeGuideProgress(state: SimulationState): GuideStepResult[] {
   const ctx = buildGuideContext(state);
   return STEPS.map((step) => {
-    const status: GuideStepStatus = step.notApplicable?.(state, ctx)
-      ? "notApplicable"
-      : step.isDone(state, ctx)
-        ? "done"
-        : "pending";
-    return { tc: step.tc, ...step.build(state, ctx), status, done: status !== "pending" };
+    const built = step.build(state, ctx);
+    const naReason = step.notApplicable?.(state, ctx) ?? null;
+    if (naReason) {
+      // 該当なしの行は操作方法を理由に差し替える（残作業と誤読されないように。期待結果は空）
+      return { tc: step.tc, title: built.title, instruction: naReason, expected: "—", status: "notApplicable", done: true };
+    }
+    const status: GuideStepStatus = step.isDone(state, ctx) ? "done" : "pending";
+    return { tc: step.tc, ...built, status, done: status === "done" };
   });
 }
 
 /** 次に取り組むべきステップ（最初の未完了ステップ。該当なしのステップは飛ばす）。全完了ならnull */
 export function currentGuideStep(state: SimulationState): GuideStepResult | null {
   return computeGuideProgress(state).find((s) => !s.done) ?? null;
+}
+
+/** 画面に「どの品目で判定しているか」を示すための要約（EXT-43） */
+export interface GuideTarget {
+  itemId: string;
+  name: string;
+  /** 受注が無く、BOMの最上位の内製品目を仮に使っているか */
+  provisional: boolean;
+}
+
+export function guideTarget(state: SimulationState): GuideTarget | null {
+  const ctx = buildGuideContext(state);
+  if (!ctx.finalItemId) return null;
+  return { itemId: ctx.finalItemId, name: itemName(state, ctx.finalItemId), provisional: state.soLines.length === 0 };
 }
 
 export interface GuideSummary {
