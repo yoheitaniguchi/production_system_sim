@@ -53,13 +53,10 @@ function MasterIOToolbar({ state, dispatch }: Props) {
   const handleSwitchPreset = () => {
     const preset = MASTER_PRESETS.find((p) => p.id === selectedPresetId);
     if (!preset) return;
-    // 既定プリセット（木製イス）以外へ切り替えると演習ガイドの自動判定が使えなくなる（design.md EXT-27・EXT-34）
-    // ため、切替の入口であるこの確認ダイアログでその旨も伝える
-    const guideCaveat =
-      preset.id === DEFAULT_PRESET_ID ? "" : " 既定プリセット（木製イス）以外では演習ガイドの自動判定が使用できません。";
+    // 演習ガイドはEXT-43でマスタ非依存になったため、プリセット切替時の注意書きは不要になった
     if (
       window.confirm(
-        `マスタをプリセット「${preset.label}」に切り替えます。トランザクションはすべて初期化されます。${guideCaveat}`,
+        `マスタをプリセット「${preset.label}」に切り替えます。トランザクションはすべて初期化されます。`,
       )
     ) {
       dispatch({ type: "MASTER_RESET_TO_PRESET", payload: { presetId: preset.id } });
